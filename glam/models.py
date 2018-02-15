@@ -100,10 +100,10 @@ class GLAM(object):
 
 		# Set up parameters
 		if kind is 'hierarchical':
-			default_parameters = dict(v=dict(mu=0.0002, sd=0.01, bounds=(0.00001, 0.01)),
-									  s=dict(mu=0.01, sd=0.005, bounds=(0.001, 0.05)),
+			default_parameters = dict(v=dict(mu=0.00007, sd=0.00001, bounds=(0.00003, 0.00015)),
+									  s=dict(mu=0.008, sd=0.001, bounds=(0.005, 0.011)),
 									  gamma=dict(mu=0.3, sd=0.3, bounds=(-1.0, 1.0)),
-									  tau=dict(mu=0.8, sd=0.1, bounds=(0.0, 3)),
+									  tau=dict(mu=0.8, sd=0.1, bounds=(0.2, 2)),
 									  t0=dict(mu=0, sd=0, bounds=(0.0, 0.0)) # results in no t0
 									  )
 
