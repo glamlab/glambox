@@ -387,7 +387,7 @@ def make_subject_model(rts, gaze, values, error_ll,
         tau = generate_subject_model_parameters(parameter='tau',
                                                 depends_on=depends_on,
                                                 lower=0, upper=5,
-                                                val=tau_val, testval=0.0002)
+                                                val=tau_val, testval=1)
 
         t0 = generate_subject_model_parameters(parameter='t0',
                                                depends_on=depends_on,
