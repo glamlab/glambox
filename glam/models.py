@@ -393,6 +393,7 @@ def make_subject_model(rts, gaze, values, error_ll,
             mixed_ll = ((1-p_error) * glam_ll + p_error * error_ll)
 
             mixed_ll = tt.where(tt.isnan(mixed_ll), 0., mixed_ll)
+            mixed_ll = tt.where(tt.isinf(mixed_ll), 0., mixed_ll)
             return tt.sum(tt.log(mixed_ll + zerotol))
 
         obs = pm.DensityDist('obs', logp=lda_logp,
