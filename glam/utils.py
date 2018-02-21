@@ -151,23 +151,31 @@ def map_individual_estimates(model):
     subjects = model.data['subject'].unique()
     parameters = ['v', 'gamma', 's', 'tau', 't0']
 
-    estimate_df = pd.DataFrame(dict(subject=subjects))
+    if model.type == 'hierarchical':
+        estimate_df = pd.DataFrame(dict(subject=subjects))
+        for parameter in parameters:
+            dependence = model.depends_on.get(parameter, None)
+            if dependence is not None:
+                conditions = model.data[dependence].unique()
+                for condition in conditions:
+                    par_con = parameter + '_' + condition
+                    condition_index = design[parameter + '_mapping'][condition]
+                    subject_map = design['subject_parameter_mapping'][par_con]
+                    estimate_df[par_con] = np.zeros(subjects.size) * np.nan
+                    for i, estimate in enumerate(model.estimates[par_con]):
+                        estimate_df[par_con][estimate_df['subject'] == subject_map[i]] = estimate
 
-    for parameter in parameters:
-        dependence = model.depends_on.get(parameter, None)
-        if dependence is not None:
-            conditions = model.data[dependence].unique()
-            for condition in conditions:
-                par_con = parameter + '_' + condition
-                condition_index = design[parameter + '_mapping'][condition]
-                subject_map = design['subject_parameter_mapping'][par_con]
-                estimate_df[par_con] = np.zeros(subjects.size) * np.nan
-                for i, estimate in enumerate(model.estimates[par_con]):
-                    estimate_df[par_con][estimate_df['subject'] == subject_map[i]] = estimate
-
-        else:
-            estimate_df[parameter] = np.zeros(subjects.size) * np.nan
-            for i, estimate in enumerate(model.estimates[parameter]):
-                estimate_df[parameter][estimate_df['subject'] == i] = estimate
-
+            else:
+                estimate_df[parameter] = np.zeros(subjects.size) * np.nan
+                for i, estimate in enumerate(model.estimates[parameter]):
+                    estimate_df[parameter][estimate_df['subject'] == i] = estimate
+    elif model.type == 'individual':
+        estimate_df = pd.DataFrame()
+        for s, subject_estimates in enumerate(model.estimates):
+            subject_estimates_flat = {key: val.ravel() for key, val in subject_estimates.items()}
+            tmp = pd.DataFrame(subject_estimates_flat, index=np.array([s]))
+            tmp['subject'] = s
+            estimate_df = pd.concat([estimate_df, tmp])
+    else:
+        raise ValueError('Model type not understood. Have you called `make_model` before?')
     return estimate_df

@@ -197,7 +197,6 @@ class GLAM(object):
             subject = row['subject']
             trial = row['trial']
             subject_estimates = estimates[estimates['subject'] == subject]
-
             # Get the right parameter estimates for the trial
             parameters = np.zeros(5) * np.nan
             for p, parameter in enumerate(['v', 'gamma', 's', 'tau', 't0']):
