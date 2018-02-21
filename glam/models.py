@@ -5,6 +5,7 @@ import pymc3 as pm
 import theano.tensor as tt
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
 
 
 class GLAM(object):
@@ -158,6 +159,7 @@ class GLAM(object):
 
     def make_model(self, kind, depends_on=dict(v=None,gamma=None,s=None,tau=None,t0=None), **kwargs):
         self.model = make_models(df=self.data, kind=kind, depends_on=depends_on, **kwargs)
+        self.depends_on = depends_on
         self.type = kind
 
     def fit(self, method='NUTS', **kwargs):
@@ -171,47 +173,61 @@ class GLAM(object):
             self.dic = np.array([pm.dic(trace=trace, model=model)
                                  for (trace, model) in zip(self.trace, self.model)])
 
-    def predict(self, n_repeats=1, boundary=1., error_weight=0.05):
+    def predict(self, n_repeats=1, boundary=1., error_weight=0.05, verbose=True):
 
         prediction = pd.DataFrame()
 
         subjects = np.unique(self.data['subject'])
+        estimates = glam.utils.map_individual_estimates(self)
 
-        for s, subject in enumerate(subjects):
+        value_cols = ['item_value_{}'.format(i)
+                      for i in range(self.n_items)]
+        gaze_cols = ['gaze_{}'.format(i)
+                     for i in range(self.n_items)]
 
-            if self.type is 'individual':
-                parameters = [self.estimates[s].get(parameter)
-                              for parameter in ['v', 'gamma', 's', 'tau', 't0']]
-            elif self.type is 'pooled':
-                parameters = [self.estimates.get(parameter)
-                              for parameter in ['v', 'gamma', 's', 'tau', 't0']]
-            elif self.type is 'hierarchical':
-                parameters = [self.estimates.get(parameter)[s]
-                              for parameter in ['v', 'gamma', 's', 'tau', 't0']]
-            else:
-                raise ValueError('Use .fit method first to obtain parameter estimates.')
+        running_idx = 0
 
-            value_cols = ['item_value_{}'.format(i)
-                          for i in range(self.n_items)]
-            gaze_cols = ['gaze_{}'.format(i)
-                         for i in range(self.n_items)]
+        if not verbose:
+            row_iterator = self.data.iterrows()
+        else:
+            row_iterator = tqdm(self.data.iterrows())
 
-            values = self.data[value_cols][self.data['subject'] == subject].values
-            gaze = self.data[gaze_cols][self.data['subject'] == subject].values
+        for index, row in row_iterator:
 
+            subject = row['subject']
+            trial = row['trial']
+            subject_estimates = estimates[estimates['subject'] == subject]
+            # Get the right parameter estimates for the trial
+            parameters = np.zeros(5) * np.nan
+            for p, parameter in enumerate(['v', 'gamma', 's', 'tau', 't0']):
+                if self.depends_on.get(parameter) is not None:
+                    condition = row[self.depends_on[parameter]]
+                    parameters[p] = subject_estimates[parameter + '_' + condition]
+                else:
+                    parameters[p] = subject_estimates[parameter]
+
+            # Compute error RT range
             rt_min = self.data['rt'][self.data['subject'] == subject].values.min()
             rt_max = self.data['rt'][self.data['subject'] == subject].values.max()
             error_range = (rt_min, rt_max)
 
-            subject_prediction = glam.simulation.simulate_subject(parameters,
-                                                                  values,
-                                                                  gaze,
-                                                                  n_repeats=n_repeats,
-                                                                  subject=subject,
-                                                                  boundary=boundary,
-                                                                  error_weight=error_weight,
-                                                                  error_range=error_range)
-            prediction = pd.concat([prediction, subject_prediction])
+            values = row[value_cols].values
+            gaze = row[gaze_cols].values
+
+            for r in range(n_repeats):
+                choice, rt = glam.simulation.simulate_trial(parameters=parameters,
+                                                            values=values, gaze=gaze,
+                                                            boundary=boundary,
+                                                            error_weight=error_weight,
+                                                            error_range=error_range)
+                pred_row = row.copy()
+                pred_row['choice'] = choice
+                pred_row['rt'] = rt
+                pred_row['repeat'] = r
+
+                prediction = prediction.append(pred_row, ignore_index=True)
+
+                running_idx += 1
 
         self.prediction = prediction
 
