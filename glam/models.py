@@ -247,12 +247,6 @@ def make_models(df, kind, verbose=True, depends_on=dict(v=None, gamma=None, s=No
             depends_on_extended['{}_conditions'.format(key)] = np.array([])
             depends_on_extended['{}_condition_index'.format(key)] = np.zeros(df.shape[0]).astype(np.int)
             depends_on_extended['{}_subject_index'.format(key)] = subject_idx[:]
-    # # add SNR; match to s as they are deterministic
-    # depends_on_extended['SNR'] = depends_on_extended['s']
-    # depends_on_extended['SNR_conditions'] = depends_on_extended['s_conditions'][:]
-    # depends_on_extended['SNR_condition_index'] = depends_on_extended['s_condition_index'][:]
-    # depends_on_extended['SNR_subject_index'] = depends_on_extended['s_subject_index'][:]
-    # depends_on_extended['SNR_subject_mapping'] = depends_on_extended['s_subject_mapping'][:]
 
     if kind == 'individual':
         data = glam.utils.format_data(df)
@@ -261,7 +255,7 @@ def make_models(df, kind, verbose=True, depends_on=dict(v=None, gamma=None, s=No
         models = []
         for s, subject in enumerate(data['subjects']):
             depends_on_subject = dict(depends_on_extended)
-            for key in ['v', 'gamma', 'SNR', 's', 'tau', 't0']:
+            for key in ['v', 'gamma', 's', 'tau', 't0']:
                 depends_on_subject['{}_condition_index'.format(key)] = depends_on_extended['{}_condition_index'.format(key)][data['subject_idx'] == subject]
             subject_model = make_subject_model(rts=data['rts'][data['subject_idx'] == subject],
                                                gaze=data['gaze'][data['subject_idx'] == subject],
@@ -355,14 +349,10 @@ def make_subject_model(rts, gaze, values, error_ll,
                                                   lower=gamma_bounds[0], upper=gamma_bounds[1],
                                                   val=gamma_val, testval=0)
 
-        SNR = generate_subject_model_parameters(parameter='SNR',
+        s = generate_subject_model_parameters(parameter='s',
                                                 depends_on=depends_on,
-                                                lower=1, upper=500,
-                                                val=s_val, testval=100)
-        if s_val is None:
-            s = pm.Deterministic('s', v*SNR)
-        else:
-            s = pm.Deterministic('s', SNR)
+                                                lower=zerotol, upper=0.02,
+                                                val=s_val, testval=0.0075)
 
         tau = generate_subject_model_parameters(parameter='tau',
                                                 depends_on=depends_on,
@@ -525,27 +515,6 @@ def make_hierarchical_model(rts, gaze, values, error_lls,
                                                    sd_lower=zerotol, sd_upper=0.02,
                                                    bound_lower=zerotol, bound_upper=0.02,
                                                    val=s_val, testval=0.0075)
-
-        # SNR = generate_hierarchical_model_parameters(parameter='SNR',
-        #                                            n_subjects=n_subjects,
-        #                                            depends_on=depends_on,
-        #                                            mu_lower=1, mu_upper=500,
-        #                                            sd_lower=1, sd_upper=500,
-        #                                            bound_lower=1, bound_upper=500,
-        #                                            val=s_val, testval=100)
-
-        # if s_val is None:
-        #   if (len(depends_on['s_conditions']) > 0) & (len(depends_on['v_conditions']) == 0):
-        #       s = pm.Deterministic('s', tt.max(v * SNR, axis=1)[:,None])
-
-        #   elif (len(depends_on['s_conditions']) == 0) & (len(depends_on['v_conditions']) > 0):
-        #       s = pm.Deterministic('s', tt.max(v * SNR, axis=1)[:,None])
-
-        #   else:
-        #       s = pm.Deterministic('s', v * SNR)
-
-        # else:
-        #   s = pm.Deterministic('s', SNR) # if s_val is not None, SNR = s_val
 
         tau = generate_hierarchical_model_parameters(parameter='tau',
                                                      n_subjects=n_subjects,
