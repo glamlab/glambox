@@ -320,17 +320,31 @@ def generate_subject_model_parameters(parameter,
 
     if depends_on[parameter] is not None:
         if val is None:
-            parms = tt.concatenate([pm.Uniform('{}_{}'.format(parameter, condition),
-                                               lower,
-                                               upper,
-                                               testval=testval,
-                                               shape=(1, 1)) for condition in depends_on['{}_conditions'.format(parameter)]], axis=1)
+          parms = []
+          for condition_i, condition in enumerate(depends_on['{}_conditions'.format(parameter)]):
+            if len(np.unique(depends_on['{}_condition_index'.format(parameter)])) == 1:
+              if condition_i == np.unique(depends_on['{}_condition_index'.format(parameter)]) :
+                parms.append(pm.Uniform('{}'.format(parameter),
+                                        lower,
+                                        upper,
+                                        testval=testval,
+                                        shape=(1, 1)))
+              else:
+                parms.append(tt.zeros((1,1)))
+            else:
+              parms.append(pm.Uniform('{}_{}'.format(parameter, condition),
+                                      lower,
+                                      upper,
+                                      testval=testval,
+                                      shape=(1, 1)))
+          parms = tt.concatenate(parms, axis=1)
         else:
             if len(val) != len(depends_on['{}_conditions'.format(parameter)]):
                 raise ValueError('Number of values in {}_val does not match the number of conditions.'.format(parameter))
             else:
                 parms = tt.stack([pm.Deterministic('{}_{}'.format(parameter, condition),
-                                                   tt.ones((1, 1))*val) for condition, val in zip(depends_on['{}_conditions'.format(parameter)], val)])
+                                                   tt.ones((1, 1))*v)
+                                  for condition, v in zip(depends_on['{}_conditions'.format(parameter)], val)])
     else:
         if val is None:
             parms = pm.Uniform(parameter, lower, upper, testval=testval, shape=(1, 1))
