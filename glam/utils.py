@@ -84,51 +84,79 @@ def extract_modes(traces, parameters=None, precision=None, f_burn=0.5):
         return modes
 
 
-def get_design(model):
+def get_design(data, depends_on):
     """
     Extract information about the experimental design
-    from `model.data` and `model.depends_on`.
+    from `data` and `depends_on`.
     This information is used to map parameter estimates
     back to subjects, etc.
 
     Parameters:
-    model: GLAM.model
+    data: df
+    depends_on: dict
 
     Returns:
     dict
     """
     parameters = ['v', 'gamma', 's', 'tau', 't0']
 
-    subjects = model.data['subject'].unique()
+    subject_idx = data['subject']
+    subjects = subject_idx.unique()
 
     design = dict()
-    subject_parameter_mapping = dict()  # this contains index: ID mappings for every parameter condition
-
+    
     for parameter in parameters:
-        dependence = model.depends_on.get(parameter)
-
+        design[parameter] = dict()
+        design[parameter]['subject_index'] = subject_idx[:].astype(np.int)
+        dependence = depends_on.get(parameter)
         if dependence is not None:
-            conditions = model.data[dependence].unique()
-            m = np.zeros((subjects.size, conditions.size))  # empty design matrix for this parameter
-            # create parameter_mapping containing condition names and indices (i.e., columns of design matrix)
-            design[parameter + '_mapping'] = {condition: c
-                                              for c, condition in enumerate(conditions)}
-            design[parameter + '_conditions'] = conditions
+            # extract condition levels
+            conditions = data[dependence].unique()
+            design[parameter]['conditions'] = conditions
+            
+            # Initialize empty design matrix D for this parameter
+            D = np.zeros((subjects.size, conditions.size))
+            # create parameter mapping containing condition names and indices (i.e., columns of design matrix)
+            design[parameter]['condition_mapping'] = {condition: c
+                                                      for c, condition in enumerate(conditions)}
+            # create an array to index which condition each trial-entry in the data belongs to
+            design[parameter]['condition_index'] = np.zeros_like(subject_idx, dtype=np.int)
+
+            # For each condition level
             for c, condition in enumerate(conditions):
-                data_subset = model.data[model.data[dependence] == condition].copy()
+                # mark which trial-entries belong to this condition
+                design[parameter]['condition_index'][data[dependence]==condition] = c
+
+                design[parameter][condition] = dict()
+                # Subset data to condition-specific data
+                data_subset = data[design[parameter]['condition_index'] == c].copy()
                 # find all subject_IDs in this condition
                 subject_subset = data_subset['subject'].unique()
-                # within this condition, generate mapping between subject_IDs and indices
-                subject_parameter_mapping[parameter + '_' + condition] = {s: int(subject)
-                                                                          for s, subject in enumerate(subject_subset)}
+                # within this level, generate mapping between subject_ids and indices
+                # e.g., gamma_high[5] corresponds to subject_id 10
+                design[parameter][condition]['subject_mapping'] = {s: int(subject)
+                                                               for s, subject in enumerate(subject_subset)}
                 # Set cells with subject in this condition to 1
                 for s, subject in enumerate(subject_subset):
-                    m[subject_parameter_mapping[parameter + '_' + condition][s], c] = 1
+                    D[design[parameter][condition]['subject_mapping'][s], c] = np.int(s+1)
         else:
-            m = np.ones((subjects.size, 1))
+            D = (np.arange(subjects.size)[:,None] + 1).astype(np.int)
+            design[parameter]['conditions'] = None
+            design[parameter]['condition_index'] = np.zeros_like(subject_idx, dtype=np.int)
 
-        design[parameter] = m
-        design['subject_parameter_mapping'] = subject_parameter_mapping
+        # Save design matrix D
+        design[parameter]['D'] = D
+
+        # Detect within / between subject design
+        if D.shape[1] == 1:
+            design_type = 'fixed'
+        elif np.all((D!=0).sum(axis=1) > 1):
+            design_type = 'within'
+        elif np.all((D!=0).sum(axis=1) == 1):
+            design_type = 'between'
+        else:
+            design_type = 'mixed'
+        design[parameter]['type'] = design_type
 
     return design
 
