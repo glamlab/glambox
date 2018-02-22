@@ -107,7 +107,9 @@ def get_design(data, depends_on):
     
     for parameter in parameters:
         design[parameter] = dict()
+        # adding an index defining which entry in data belongs to which subject
         design[parameter]['subject_index'] = subject_idx[:].astype(np.int)
+        
         dependence = depends_on.get(parameter)
         if dependence is not None:
             # extract condition levels
@@ -135,7 +137,7 @@ def get_design(data, depends_on):
                 # within this level, generate mapping between subject_ids and indices
                 # e.g., gamma_high[5] corresponds to subject_id 10
                 design[parameter][condition]['subject_mapping'] = {s: int(subject)
-                                                               for s, subject in enumerate(subject_subset)}
+                                                                   for s, subject in enumerate(subject_subset)}
                 # Set cells with subject in this condition to 1
                 for s, subject in enumerate(subject_subset):
                     D[np.int(subject), c] = np.int(s+1)
