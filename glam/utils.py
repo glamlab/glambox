@@ -115,7 +115,7 @@ def get_design(data, depends_on):
             design[parameter]['conditions'] = conditions
             
             # Initialize empty design matrix D for this parameter
-            D = np.zeros((subjects.size, conditions.size))
+            D = np.zeros((subjects.size, conditions.size), dtype=np.int)
             # create parameter mapping containing condition names and indices (i.e., columns of design matrix)
             design[parameter]['condition_mapping'] = {condition: c
                                                       for c, condition in enumerate(conditions)}
@@ -129,7 +129,7 @@ def get_design(data, depends_on):
 
                 design[parameter][condition] = dict()
                 # Subset data to condition-specific data
-                data_subset = data[design[parameter]['condition_index'] == c].copy()
+                data_subset = data[data[dependence]==condition].copy()
                 # find all subject_IDs in this condition
                 subject_subset = data_subset['subject'].unique()
                 # within this level, generate mapping between subject_ids and indices
@@ -138,7 +138,7 @@ def get_design(data, depends_on):
                                                                for s, subject in enumerate(subject_subset)}
                 # Set cells with subject in this condition to 1
                 for s, subject in enumerate(subject_subset):
-                    D[design[parameter][condition]['subject_mapping'][s], c] = np.int(s+1)
+                    D[np.int(subject), c] = np.int(s+1)
         else:
             D = (np.arange(subjects.size)[:,None] + 1).astype(np.int)
             design[parameter]['conditions'] = None
