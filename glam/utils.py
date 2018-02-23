@@ -220,7 +220,7 @@ def get_estimates(model):
                             parameter_condition = parameter + '_' + condition
                             index = model.design[parameter][condition]['subject_mapping'][subject]
                             estimate = MAP[parameter_condition][index]
-                            subject_estimates[parameter][subject_estimates[dependence] == condition] = estimate
+                            subject_estimates.loc[subject_estimates[dependence] == condition, parameter] = estimate
 
             estimates = pd.concat([estimates, subject_estimates])
     elif model.type == 'individual':
