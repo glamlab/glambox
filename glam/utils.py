@@ -198,35 +198,44 @@ def get_estimates(model):
     subject_template = pd.DataFrame({factor: [combination[f]
                                               for combination in combinations]
                                      for f, factor
-                                     in enumerate(model.design['factors'])})
-    for parameter in parameters:
-        subject_template[parameter] = np.nan
+                                     in enumerate(model.design['factors'])})    
 
-    if model.type == 'hierarchical':
-        for subject in subjects:
-            subject_estimates = subject_template.copy()
-            subject_estimates['subject'] = subject
-            for parameter in parameters:
-                dependence = model.design[parameter]['dependence']
-                if dependence is None:
-                    # Parameter is fixed
+    for subject in subjects:
+        subject_estimates = subject_template.copy()
+        subject_estimates['subject'] = subject
+        for parameter in parameters:
+            subject_template[parameter] = np.nan
+            dependence = model.design[parameter]['dependence']
+            if dependence is None:
+                # Parameter is fixed
+                if model.type == 'hierarchical':
                     subject_estimates[parameter] = MAP[parameter][subject][0]
+                elif model.type == 'individual':
+                    subject_estimates[parameter] = MAP[subject][parameter][0][0]
                 else:
-                    # Parameter has dependence
-                    conditions = model.design[parameter]['conditions']
-                    for condition in conditions:
-                        # Check if subject is in condition
-                        if subject in model.design[parameter][condition]['subjects']:
-                            parameter_condition = parameter + '_' + condition
+                    raise ValueError('Model type not understood. Make sure "make_model" has already been called.')
+            else:
+                # Parameter has dependence
+                conditions = model.design[parameter]['conditions']
+                for condition in conditions:
+                    # Check if subject is in condition
+                    if subject in model.design[parameter][condition]['subjects']:
+                        parameter_condition = parameter + '_' + condition
+                        if model.type == 'hierarchical':
                             index = model.design[parameter][condition]['subject_mapping'][subject]
                             estimate = MAP[parameter_condition][index]
-                            subject_estimates.loc[subject_estimates[dependence] == condition, parameter] = estimate
+                        elif model.type == 'individual':
+                            if model.design[parameter]['type'] == 'between':
+                                estimate = MAP[subject][parameter]
+                            elif model.design[parameter]['type'] == 'within':
+                                estimate = MAP[subject][parameter_condition]
+                            else:
+                                raise ValueError('Parameter dependence not understood for {}: {} ({}).'.format(parameter, dependence, condition))
+                        else:
+                            raise ValueError('Model type not understood. Make sure "make_model" has already been called.')
+                        subject_estimates.loc[subject_estimates[dependence] == condition, parameter] = estimate
 
-            estimates = pd.concat([estimates, subject_estimates])
-    elif model.type == 'individual':
-        raise NotImplementedError('get_estimation not yet implemented for individual models.')
-    else:
-        raise ValueError('Model type not understood.')
+        estimates = pd.concat([estimates, subject_estimates])
 
     estimates.reset_index(inplace=True, drop=True)
     return estimates
