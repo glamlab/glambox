@@ -157,15 +157,15 @@ class GLAM(object):
             print('Not implemented yet. Please run again with "stimuli=None".')
             return
 
-    def make_model(self, kind, depends_on=dict(v=None,gamma=None,s=None,tau=None,t0=None), **kwargs):
-        self.design = glam.utils.get_design(self.data, depends_on)
-        self.model = make_models(df=self.data, kind=kind, design=self.design, **kwargs)
-        self.depends_on = depends_on
+    def make_model(self, kind, depends_on=dict(v=None, gamma=None, s=None, tau=None, t0=None), **kwargs):
         self.type = kind
+        self.depends_on = depends_on
+        self.design = glam.utils.get_design(self)
+        self.model = make_models(df=self.data, kind=kind, design=self.design, **kwargs)
 
     def fit(self, method='NUTS', **kwargs):
         self.trace = glam.fit.fit_models(self.model, method=method, **kwargs)
-        self.estimates = glam.utils.extract_modes(self.trace)
+        self.estimates = glam.utils.get_estimates(self)
 
     def compute_dic(self):
         if not isinstance(self.model, list):
