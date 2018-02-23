@@ -186,6 +186,7 @@ def get_estimates(model):
     DataFrame
     """
     from itertools import product
+    from pymc3 import summary
 
     subjects = model.data['subject'].unique().astype(np.int)
     parameters = ['v', 'gamma', 's', 'tau', 't0']
@@ -199,21 +200,33 @@ def get_estimates(model):
                                               for combination in combinations]
                                      for f, factor
                                      in enumerate(model.design['factors'])})    
-
+    if model.type == 'hierarchical':
+        summary_table = summary(model.trace)
+    elif model.type == 'individual':
+        summary_tables = [summary(trace)
+                          for trace in model.trace]
+    else:
+        raise ValueError('Model type not understood. Make sure "make_model" has already been called.')
     for subject in subjects:
         subject_estimates = subject_template.copy()
         subject_estimates['subject'] = subject
         for parameter in parameters:
             subject_template[parameter] = np.nan
+            subject_template[parameter + '_hpd_2.5'] = np.nan
+            subject_template[parameter + '_hpd_97.5'] = np.nan
+            subject_template[parameter] = np.nan
+
             dependence = model.design[parameter]['dependence']
             if dependence is None:
                 # Parameter is fixed
                 if model.type == 'hierarchical':
                     subject_estimates[parameter] = MAP[parameter][subject][0]
+                    subject_estimates[parameter + '_hpd_2.5'] = summary_table.loc[parameter + '__{}_0'.format(subject), 'hpd_2.5']
+                    subject_estimates[parameter + '_hpd_97.5'] = summary_table.loc[parameter + '__{}_0'.format(subject), 'hpd_97.5']
                 elif model.type == 'individual':
                     subject_estimates[parameter] = MAP[subject][parameter][0][0]
-                else:
-                    raise ValueError('Model type not understood. Make sure "make_model" has already been called.')
+                    subject_estimates[parameter + '_hpd_2.5'] = summary_tables[subject].loc[parameter + '__0_0', 'hpd_2.5']
+                    subject_estimates[parameter + '_hpd_97.5'] = summary_tables[subject].loc[parameter + '__0_0', 'hpd_97.5']
             else:
                 # Parameter has dependence
                 conditions = model.design[parameter]['conditions']
@@ -224,16 +237,24 @@ def get_estimates(model):
                         if model.type == 'hierarchical':
                             index = model.design[parameter][condition]['subject_mapping'][subject]
                             estimate = MAP[parameter_condition][index]
+                            hpd25 = summary_table.loc[parameter_condition + '__{}'.format(index), 'hpd_2.5']
+                            hpd975 = summary_table.loc[parameter_condition + '__{}'.format(index), 'hpd_97.5']
                         elif model.type == 'individual':
                             if model.design[parameter]['type'] == 'between':
                                 estimate = MAP[subject][parameter]
+                                hpd25 = summary_tables[subject].loc[parameter + '__0_0', 'hpd_2.5']
+                                hpd975 = summary_tables[subject].loc[parameter + '__0_0', 'hpd_97.5']
                             elif model.design[parameter]['type'] == 'within':
                                 estimate = MAP[subject][parameter_condition]
+                                hpd25 = summary_tables[subject].loc[parameter_condition + '__0_0', 'hpd_2.5']
+                                hpd975 = summary_tables[subject].loc[parameter_condition + '__0_0', 'hpd_97.5']
                             else:
                                 raise ValueError('Parameter dependence not understood for {}: {} ({}).'.format(parameter, dependence, condition))
                         else:
                             raise ValueError('Model type not understood. Make sure "make_model" has already been called.')
                         subject_estimates.loc[subject_estimates[dependence] == condition, parameter] = estimate
+                        subject_estimates.loc[subject_estimates[dependence] == condition, parameter + '_hpd_2.5'] = hpd25
+                        subject_estimates.loc[subject_estimates[dependence] == condition, parameter + '_hpd_97.5'] = hpd975
 
         estimates = pd.concat([estimates, subject_estimates])
 
