@@ -92,90 +92,171 @@ def get_design(model):
     back to subjects, etc.
 
     Parameters:
-    model: GLAM.model
+    model: GLAM object
 
     Returns:
     dict
     """
     parameters = ['v', 'gamma', 's', 'tau', 't0']
 
-    subjects = model.data['subject'].unique()
+    subject_idx = model.data['subject']
+    subjects = subject_idx.unique()
 
     design = dict()
-    subject_parameter_mapping = dict()  # this contains index: ID mappings for every parameter condition
+    design['factors'] = [value for key, value in model.depends_on.items()]
+    design['factor_levels'] = {factor: model.data[factor].unique()
+                               for factor in design['factors']}
 
     for parameter in parameters:
+        design[parameter] = dict()
+        # adding an index defining which entry in data belongs to which subject
+        design[parameter]['subject_index'] = subject_idx[:].values.astype(np.int)
+
         dependence = model.depends_on.get(parameter)
+        design[parameter]['dependence'] = dependence
 
         if dependence is not None:
+            # extract condition levels
             conditions = model.data[dependence].unique()
-            m = np.zeros((subjects.size, conditions.size))  # empty design matrix for this parameter
-            # create parameter_mapping containing condition names and indices (i.e., columns of design matrix)
-            design[parameter + '_mapping'] = {condition: c
-                                              for c, condition in enumerate(conditions)}
-            design[parameter + '_conditions'] = conditions
+            design[parameter]['conditions'] = conditions
+
+            # Initialize empty design matrix D for this parameter
+            D = np.zeros((subjects.size, conditions.size), dtype=np.int)
+            # create parameter mapping containing condition names and indices (i.e., columns of design matrix)
+            design[parameter]['condition_mapping'] = {condition: c
+                                                      for c, condition in enumerate(conditions)}
+            # create an array to index which condition each trial-entry in the data belongs to
+            design[parameter]['condition_index'] = np.zeros_like(subject_idx, dtype=np.int)
+
+            # For each condition level
             for c, condition in enumerate(conditions):
+                design[parameter][condition] = dict()
+
+                # mark which trial-entries belong to this condition
+                design[parameter]['condition_index'][model.data[dependence] == condition] = c
+
+                # Subset data to condition-specific data
                 data_subset = model.data[model.data[dependence] == condition].copy()
+
                 # find all subject_IDs in this condition
                 subject_subset = data_subset['subject'].unique()
-                # within this condition, generate mapping between subject_IDs and indices
-                subject_parameter_mapping[parameter + '_' + condition] = {s: int(subject)
-                                                                          for s, subject in enumerate(subject_subset)}
+
+                # within this level, generate mapping between subject_ids and indices
+                # e.g., gamma_high[5] corresponds to subject_id 10
+                design[parameter][condition]['subject_mapping'] = {int(subject): s
+                                                                   for s, subject in enumerate(subject_subset)}
+                # attach a list of all subjects in this condition
+                design[parameter][condition]['subjects'] = subject_subset
+
                 # Set cells with subject in this condition to 1
                 for s, subject in enumerate(subject_subset):
-                    m[subject_parameter_mapping[parameter + '_' + condition][s], c] = 1
+                    D[np.int(subject), c] = np.int(s+1)
         else:
-            m = np.ones((subjects.size, 1))
+            D = (np.arange(subjects.size)[:, None] + 1).astype(np.int)
+            design[parameter]['conditions'] = None
+            design[parameter]['condition_index'] = np.zeros_like(subject_idx, dtype=np.int)
 
-        design[parameter] = m
-        design['subject_parameter_mapping'] = subject_parameter_mapping
+        # Save design matrix D
+        design[parameter]['D'] = D
+
+        # Detect within / between subject design
+        if D.shape[1] == 1:
+            design_type = 'fixed'
+        elif np.all((D != 0).sum(axis=1) > 1):
+            design_type = 'within'
+        elif np.all((D != 0).sum(axis=1) == 1):
+            design_type = 'between'
+        else:
+            design_type = 'mixed'
+        design[parameter]['type'] = design_type
 
     return design
 
 
-def map_individual_estimates(model):
+def get_estimates(model):
     """
-    Generate a DataFrame containing estimates,
-    with one row per participant and one column
-    per parameter. Note: If a parameter has multiple
-    conditions, multiple columns are added (e.g.,
-    v_slow, v_high).
+    Generate a DataFrame containing parameter estimates
+    and summary statistics. Each row corresponds to one
+    participant in one condition.
 
     Parameters:
-    model: GLAM.model
+    model: GLAM object
 
     Returns:
     DataFrame
     """
-    design = get_design(model)
-    subjects = model.data['subject'].unique()
+    from itertools import product
+    from pymc3 import summary
+
+    subjects = model.data['subject'].unique().astype(np.int)
     parameters = ['v', 'gamma', 's', 'tau', 't0']
+    estimates = pd.DataFrame()
+    MAP = extract_modes(model.trace)
+    combinations = list(product(*[levels
+                                for factor, levels
+                                in model.design['factor_levels'].items()]))
 
+    subject_template = pd.DataFrame({factor: [combination[f]
+                                              for combination in combinations]
+                                     for f, factor
+                                     in enumerate(model.design['factors'])})    
     if model.type == 'hierarchical':
-        estimate_df = pd.DataFrame(dict(subject=subjects))
-        for parameter in parameters:
-            dependence = model.depends_on.get(parameter, None)
-            if dependence is not None:
-                conditions = model.data[dependence].unique()
-                for condition in conditions:
-                    par_con = parameter + '_' + condition
-                    condition_index = design[parameter + '_mapping'][condition]
-                    subject_map = design['subject_parameter_mapping'][par_con]
-                    estimate_df[par_con] = np.zeros(subjects.size) * np.nan
-                    for i, estimate in enumerate(model.estimates[par_con]):
-                        estimate_df[par_con][estimate_df['subject'] == subject_map[i]] = estimate
-
-            else:
-                estimate_df[parameter] = np.zeros(subjects.size) * np.nan
-                for i, estimate in enumerate(model.estimates[parameter]):
-                    estimate_df[parameter][estimate_df['subject'] == i] = estimate
+        summary_table = summary(model.trace)
     elif model.type == 'individual':
-        estimate_df = pd.DataFrame()
-        for s, subject_estimates in enumerate(model.estimates):
-            subject_estimates_flat = {key: val.ravel() for key, val in subject_estimates.items()}
-            tmp = pd.DataFrame(subject_estimates_flat, index=np.array([s]))
-            tmp['subject'] = s
-            estimate_df = pd.concat([estimate_df, tmp])
+        summary_tables = [summary(trace)
+                          for trace in model.trace]
     else:
-        raise ValueError('Model type not understood. Have you called `make_model` before?')
-    return estimate_df
+        raise ValueError('Model type not understood. Make sure "make_model" has already been called.')
+    for subject in subjects:
+        subject_estimates = subject_template.copy()
+        subject_estimates['subject'] = subject
+        for parameter in parameters:
+            subject_template[parameter] = np.nan
+            subject_template[parameter + '_hpd_2.5'] = np.nan
+            subject_template[parameter + '_hpd_97.5'] = np.nan
+            subject_template[parameter] = np.nan
+
+            dependence = model.design[parameter]['dependence']
+            if dependence is None:
+                # Parameter is fixed
+                if model.type == 'hierarchical':
+                    subject_estimates[parameter] = MAP[parameter][subject][0]
+                    subject_estimates[parameter + '_hpd_2.5'] = summary_table.loc[parameter + '__{}_0'.format(subject), 'hpd_2.5']
+                    subject_estimates[parameter + '_hpd_97.5'] = summary_table.loc[parameter + '__{}_0'.format(subject), 'hpd_97.5']
+                elif model.type == 'individual':
+                    subject_estimates[parameter] = MAP[subject][parameter][0][0]
+                    subject_estimates[parameter + '_hpd_2.5'] = summary_tables[subject].loc[parameter + '__0_0', 'hpd_2.5']
+                    subject_estimates[parameter + '_hpd_97.5'] = summary_tables[subject].loc[parameter + '__0_0', 'hpd_97.5']
+            else:
+                # Parameter has dependence
+                conditions = model.design[parameter]['conditions']
+                for condition in conditions:
+                    # Check if subject is in condition
+                    if subject in model.design[parameter][condition]['subjects']:
+                        parameter_condition = parameter + '_' + condition
+                        if model.type == 'hierarchical':
+                            index = model.design[parameter][condition]['subject_mapping'][subject]
+                            estimate = MAP[parameter_condition][index]
+                            hpd25 = summary_table.loc[parameter_condition + '__{}'.format(index), 'hpd_2.5']
+                            hpd975 = summary_table.loc[parameter_condition + '__{}'.format(index), 'hpd_97.5']
+                        elif model.type == 'individual':
+                            if model.design[parameter]['type'] == 'between':
+                                estimate = MAP[subject][parameter]
+                                hpd25 = summary_tables[subject].loc[parameter + '__0_0', 'hpd_2.5']
+                                hpd975 = summary_tables[subject].loc[parameter + '__0_0', 'hpd_97.5']
+                            elif model.design[parameter]['type'] == 'within':
+                                estimate = MAP[subject][parameter_condition]
+                                hpd25 = summary_tables[subject].loc[parameter_condition + '__0_0', 'hpd_2.5']
+                                hpd975 = summary_tables[subject].loc[parameter_condition + '__0_0', 'hpd_97.5']
+                            else:
+                                raise ValueError('Parameter dependence not understood for {}: {} ({}).'.format(parameter, dependence, condition))
+                        else:
+                            raise ValueError('Model type not understood. Make sure "make_model" has already been called.')
+                        subject_estimates.loc[subject_estimates[dependence] == condition, parameter] = estimate
+                        subject_estimates.loc[subject_estimates[dependence] == condition, parameter + '_hpd_2.5'] = hpd25
+                        subject_estimates.loc[subject_estimates[dependence] == condition, parameter + '_hpd_97.5'] = hpd975
+
+        estimates = pd.concat([estimates, subject_estimates])
+
+    estimates.reset_index(inplace=True, drop=True)
+    return estimates
