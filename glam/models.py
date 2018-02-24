@@ -5,7 +5,6 @@ import pymc3 as pm
 import theano.tensor as tt
 import numpy as np
 import pandas as pd
-from tqdm import tqdm
 
 
 class GLAM(object):
@@ -174,63 +173,12 @@ class GLAM(object):
             self.dic = np.array([pm.dic(trace=trace, model=model)
                                  for (trace, model) in zip(self.trace, self.model)])
 
-    def predict(self, n_repeats=1, boundary=1., error_weight=0.05, verbose=True):
-
-        prediction = pd.DataFrame()
-
-        subjects = np.unique(self.data['subject'])
-        estimates = glam.utils.map_individual_estimates(self)
-
-        value_cols = ['item_value_{}'.format(i)
-                      for i in range(self.n_items)]
-        gaze_cols = ['gaze_{}'.format(i)
-                     for i in range(self.n_items)]
-
-        running_idx = 0
-
-        if not verbose:
-            row_iterator = self.data.iterrows()
-        else:
-            row_iterator = tqdm(self.data.iterrows())
-
-        for index, row in row_iterator:
-
-            subject = row['subject']
-            trial = row['trial']
-            subject_estimates = estimates[estimates['subject'] == subject]
-            # Get the right parameter estimates for the trial
-            parameters = np.zeros(5) * np.nan
-            for p, parameter in enumerate(['v', 'gamma', 's', 'tau', 't0']):
-                if self.depends_on.get(parameter) is not None:
-                    condition = row[self.depends_on[parameter]]
-                    parameters[p] = subject_estimates[parameter + '_' + condition]
-                else:
-                    parameters[p] = subject_estimates[parameter]
-
-            # Compute error RT range
-            rt_min = self.data['rt'][self.data['subject'] == subject].values.min()
-            rt_max = self.data['rt'][self.data['subject'] == subject].values.max()
-            error_range = (rt_min, rt_max)
-
-            values = row[value_cols].values
-            gaze = row[gaze_cols].values
-
-            for r in range(n_repeats):
-                choice, rt = glam.simulation.simulate_trial(parameters=parameters,
-                                                            values=values, gaze=gaze,
-                                                            boundary=boundary,
-                                                            error_weight=error_weight,
-                                                            error_range=error_range)
-                pred_row = row.copy()
-                pred_row['choice'] = choice
-                pred_row['rt'] = rt
-                pred_row['repeat'] = r
-
-                prediction = prediction.append(pred_row, ignore_index=True)
-
-                running_idx += 1
-
-        self.prediction = prediction
+    def predict(self, n_repeats=1, boundary=1.0, error_weight=0.05, verbose=True):
+        self.prediction = glam.simulation.predict(self,
+                                                  n_repeats=n_repeats,
+                                                  boundary=boundary,
+                                                  error_weight=error_weight,
+                                                  verbose=verbose)
 
     def exchange_data(self, new_data, verbose=True):
         if verbose:
