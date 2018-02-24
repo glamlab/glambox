@@ -101,8 +101,6 @@ def predict(model, n_repeats=1, boundary=1., error_weight=0.05, verbose=True):
     gaze_cols = ['gaze_{}'.format(i)
                  for i in range(model.n_items)]
 
-    running_idx = 0
-
     if not verbose:
         row_iterator = range(model.data.shape[0])
     else:
@@ -146,7 +144,5 @@ def predict(model, n_repeats=1, boundary=1., error_weight=0.05, verbose=True):
             pred_row['repeat'] = r
 
             prediction = prediction.append(pred_row, ignore_index=True)
-
-            running_idx += 1
 
     return prediction
