@@ -241,43 +241,47 @@ def get_estimates(model):
                 # Parameter has dependence
                 conditions = model.design[parameter]['conditions']
                 for condition in conditions:
-                    # Check if subject is in condition
-                    if subject in model.design[parameter][condition]['subjects']:
-                        parameter_condition = parameter + '_' + condition
-                        if model.type == 'hierarchical':
-                            index = model.design[parameter][condition]['subject_mapping'][subject]
-                            # extract participant parameters
-                            estimate = MAP[parameter_condition][index]
-                            hpd25 = summary_table.loc[parameter_condition + '__{}'.format(index), 'hpd_2.5']
-                            hpd975 = summary_table.loc[parameter_condition + '__{}'.format(index), 'hpd_97.5']
-                            # extract population parameters
-                            if (parameter_condition + '_mu') in summary_table.index:
-                                pop_estimate = summary_table.loc[parameter_condition + '_mu', 'mean']
-                                pop_hpd25 = summary_table.loc[parameter_condition + '_mu', 'hpd_2.5']
-                                pop_hpd975 = summary_table.loc[parameter_condition + '_mu', 'hpd_97.5']
+                    if condition not in model.data.loc[model.data['subject'] == subject, dependence].values:
+                        subject_estimates = subject_estimates.drop(subject_estimates[subject_estimates[dependence]==condition].index,
+                                                                   axis=0)
+                    else:
+                        # Check if subject is in condition
+                        if subject in model.design[parameter][condition]['subjects']:
+                            parameter_condition = parameter + '_' + condition
+                            if model.type == 'hierarchical':
+                                index = model.design[parameter][condition]['subject_mapping'][subject]
+                                # extract participant parameters
+                                estimate = MAP[parameter_condition][index]
+                                hpd25 = summary_table.loc[parameter_condition + '__{}'.format(index), 'hpd_2.5']
+                                hpd975 = summary_table.loc[parameter_condition + '__{}'.format(index), 'hpd_97.5']
+                                # extract population parameters
+                                if (parameter_condition + '_mu') in summary_table.index:
+                                    pop_estimate = summary_table.loc[parameter_condition + '_mu', 'mean']
+                                    pop_hpd25 = summary_table.loc[parameter_condition + '_mu', 'hpd_2.5']
+                                    pop_hpd975 = summary_table.loc[parameter_condition + '_mu', 'hpd_97.5']
 
-                        elif model.type == 'individual':
-                            if model.design[parameter]['type'] == 'between':
-                                estimate = MAP[subject][parameter]
-                                hpd25 = summary_tables[subject].loc[parameter + '__0_0', 'hpd_2.5']
-                                hpd975 = summary_tables[subject].loc[parameter + '__0_0', 'hpd_97.5']
-                            elif model.design[parameter]['type'] == 'within':
-                                estimate = MAP[subject][parameter_condition]
-                                hpd25 = summary_tables[subject].loc[parameter_condition + '__0_0', 'hpd_2.5']
-                                hpd975 = summary_tables[subject].loc[parameter_condition + '__0_0', 'hpd_97.5']
+                            elif model.type == 'individual':
+                                if model.design[parameter]['type'] == 'between':
+                                    estimate = MAP[subject][parameter]
+                                    hpd25 = summary_tables[subject].loc[parameter + '__0_0', 'hpd_2.5']
+                                    hpd975 = summary_tables[subject].loc[parameter + '__0_0', 'hpd_97.5']
+                                elif model.design[parameter]['type'] == 'within':
+                                    estimate = MAP[subject][parameter_condition]
+                                    hpd25 = summary_tables[subject].loc[parameter_condition + '__0_0', 'hpd_2.5']
+                                    hpd975 = summary_tables[subject].loc[parameter_condition + '__0_0', 'hpd_97.5']
+                                else:
+                                    raise ValueError('Parameter dependence not understood for {}: {} ({}).'.format(parameter, dependence, condition))
                             else:
-                                raise ValueError('Parameter dependence not understood for {}: {} ({}).'.format(parameter, dependence, condition))
-                        else:
-                            raise ValueError('Model type not understood. Make sure "make_model" has already been called.')
-                        # add participant parameters
-                        subject_estimates.loc[subject_estimates[dependence] == condition, parameter] = estimate
-                        subject_estimates.loc[subject_estimates[dependence] == condition, parameter + '_hpd_2.5'] = hpd25
-                        subject_estimates.loc[subject_estimates[dependence] == condition, parameter + '_hpd_97.5'] = hpd975
-                        # add population parameters
-                        if model.type == 'hierarchical':
-                            subject_estimates.loc[subject_estimates[dependence] == condition, parameter + '_mu'] = pop_estimate
-                            subject_estimates.loc[subject_estimates[dependence] == condition, parameter + '_mu_hpd_2.5'] = pop_hpd25
-                            subject_estimates.loc[subject_estimates[dependence] == condition, parameter + '_mu_hpd_97.5'] = pop_hpd975
+                                raise ValueError('Model type not understood. Make sure "make_model" has already been called.')
+                            # add participant parameters                        
+                            subject_estimates.loc[subject_estimates[dependence] == condition, parameter] = estimate
+                            subject_estimates.loc[subject_estimates[dependence] == condition, parameter + '_hpd_2.5'] = hpd25
+                            subject_estimates.loc[subject_estimates[dependence] == condition, parameter + '_hpd_97.5'] = hpd975
+                            # add population parameters
+                            if model.type == 'hierarchical':
+                                subject_estimates.loc[subject_estimates[dependence] == condition, parameter + '_mu'] = pop_estimate
+                                subject_estimates.loc[subject_estimates[dependence] == condition, parameter + '_mu_hpd_2.5'] = pop_hpd25
+                                subject_estimates.loc[subject_estimates[dependence] == condition, parameter + '_mu_hpd_97.5'] = pop_hpd975
 
         estimates = pd.concat([estimates, subject_estimates])
 
