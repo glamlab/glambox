@@ -104,7 +104,7 @@ def get_design(model):
 
     design = dict()
     design['factors'] = [value for key, value in model.depends_on.items()]
-    design['factor_levels'] = {factor: model.data[factor].unique()
+    design['factor_conditions'] = {factor: model.data[factor].unique()
                                for factor in design['factors']}
 
     for parameter in parameters:
@@ -194,7 +194,7 @@ def get_estimates(model):
     MAP = extract_modes(model.trace)
     combinations = list(product(*[levels
                                 for factor, levels
-                                in model.design['factor_levels'].items()]))
+                                in model.design['factor_conditions'].items()]))
 
     subject_template = pd.DataFrame({factor: [combination[f]
                                               for combination in combinations]
