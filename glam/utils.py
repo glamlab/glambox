@@ -186,7 +186,11 @@ def get_estimates(model):
     DataFrame
     """
     from itertools import product
-    from pymc3 import summary
+    import pymc3
+    if np.float(pymc3.__version__) < 3.3:
+        from pymc3 import df_summary as summary
+    else:
+        from pymc3 import summary
 
     subjects = model.data['subject'].unique().astype(np.int)
     parameters = ['v', 'gamma', 's', 'tau', 't0']
@@ -223,6 +227,7 @@ def get_estimates(model):
                     subject_estimates[parameter] = MAP[parameter][subject][0]
                     subject_estimates[parameter + '_hpd_2.5'] = summary_table.loc[parameter + '__{}_0'.format(subject), 'hpd_2.5']
                     subject_estimates[parameter + '_hpd_97.5'] = summary_table.loc[parameter + '__{}_0'.format(subject), 'hpd_97.5']
+
                 elif model.type == 'individual':
                     subject_estimates[parameter] = MAP[subject][parameter][0][0]
                     subject_estimates[parameter + '_hpd_2.5'] = summary_tables[subject].loc[parameter + '__0_0', 'hpd_2.5']
