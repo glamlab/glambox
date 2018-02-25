@@ -196,14 +196,12 @@ def get_estimates(model):
     parameters = ['v', 'gamma', 's', 'tau', 't0']
     estimates = pd.DataFrame()
     MAP = extract_modes(model.trace)
-    combinations = list(product(*[levels
-                                for factor, levels
-                                in model.design['factor_conditions'].items()]))
-
+    combinations = list(product(*[model.design['factor_conditions'][factor]
+                                  for factor in model.design['factors']]))
     subject_template = pd.DataFrame({factor: [combination[f]
                                               for combination in combinations]
                                      for f, factor
-                                     in enumerate(model.design['factors'])})    
+                                     in enumerate(model.design['factors'])})  
     if model.type == 'hierarchical':
         summary_table = summary(model.trace)
     elif model.type == 'individual':
