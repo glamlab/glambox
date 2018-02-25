@@ -224,11 +224,18 @@ def get_estimates(model):
             if dependence is None:
                 # Parameter is fixed
                 if model.type == 'hierarchical':
+                    # add participant paramaters
                     subject_estimates[parameter] = MAP[parameter][subject][0]
                     subject_estimates[parameter + '_hpd_2.5'] = summary_table.loc[parameter + '__{}_0'.format(subject), 'hpd_2.5']
                     subject_estimates[parameter + '_hpd_97.5'] = summary_table.loc[parameter + '__{}_0'.format(subject), 'hpd_97.5']
+                    # add population parameters
+                    if (parameter + '_mu') in summary_table.index:
+                        subject_estimates[parameter + '_mu'] = summary_table.loc[parameter + '_mu', 'mean']
+                        subject_estimates[parameter + '_mu_hpd_2.5'] = summary_table.loc[parameter + '_mu', 'hpd_2.5']
+                        subject_estimates[parameter + '_mu_hpd_97.5'] = summary_table.loc[parameter + '_mu', 'hpd_97.5']
 
                 elif model.type == 'individual':
+                    # add participant paramaters
                     subject_estimates[parameter] = MAP[subject][parameter][0][0]
                     subject_estimates[parameter + '_hpd_2.5'] = summary_tables[subject].loc[parameter + '__0_0', 'hpd_2.5']
                     subject_estimates[parameter + '_hpd_97.5'] = summary_tables[subject].loc[parameter + '__0_0', 'hpd_97.5']
@@ -241,9 +248,16 @@ def get_estimates(model):
                         parameter_condition = parameter + '_' + condition
                         if model.type == 'hierarchical':
                             index = model.design[parameter][condition]['subject_mapping'][subject]
+                            # extract participant parameters
                             estimate = MAP[parameter_condition][index]
                             hpd25 = summary_table.loc[parameter_condition + '__{}'.format(index), 'hpd_2.5']
                             hpd975 = summary_table.loc[parameter_condition + '__{}'.format(index), 'hpd_97.5']
+                            # extract population parameters
+                            if (parameter_condition + '_mu') in summary_table.index:
+                                pop_estimate = summary_table.loc[parameter_condition + '_mu', 'mean']
+                                pop_hpd25 = summary_table.loc[parameter_condition + '_mu', 'hpd_2.5']
+                                pop_hpd975 = summary_table.loc[parameter_condition + '_mu', 'hpd_97.5']
+
                         elif model.type == 'individual':
                             if model.design[parameter]['type'] == 'between':
                                 estimate = MAP[subject][parameter]
@@ -257,9 +271,15 @@ def get_estimates(model):
                                 raise ValueError('Parameter dependence not understood for {}: {} ({}).'.format(parameter, dependence, condition))
                         else:
                             raise ValueError('Model type not understood. Make sure "make_model" has already been called.')
+                        # add participant parameters
                         subject_estimates.loc[subject_estimates[dependence] == condition, parameter] = estimate
                         subject_estimates.loc[subject_estimates[dependence] == condition, parameter + '_hpd_2.5'] = hpd25
                         subject_estimates.loc[subject_estimates[dependence] == condition, parameter + '_hpd_97.5'] = hpd975
+                        # add population parameters
+                        if model.type == 'hierarchical':
+                            subject_estimates.loc[subject_estimates[dependence] == condition, parameter + '_mu'] = pop_estimate
+                            subject_estimates.loc[subject_estimates[dependence] == condition, parameter + '_mu_hpd_2.5'] = pop_hpd25
+                            subject_estimates.loc[subject_estimates[dependence] == condition, parameter + '_mu_hpd_97.5'] = pop_hpd975
 
         estimates = pd.concat([estimates, subject_estimates])
 
