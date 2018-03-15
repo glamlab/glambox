@@ -104,7 +104,7 @@ def get_design(model):
     subjects = subject_idx.unique()
 
     design = dict()
-    design['factors'] = [value for key, value in model.depends_on.items()]
+    design['factors'] = list({value for key, value in model.depends_on.items()})
     design['factor_conditions'] = {factor: model.data[factor].unique()
                                    for factor in design['factors']}
 
