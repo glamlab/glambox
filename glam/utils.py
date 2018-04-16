@@ -208,7 +208,8 @@ def get_estimates(model):
     subject_template = pd.DataFrame({factor: [combination[f]
                                               for combination in combinations]
                                      for f, factor
-                                     in enumerate(model.design['factors'])})
+                                     in enumerate(model.design['factors'])},
+                                     index=np.zeros(1))
     if model.type == 'hierarchical':
         summary_table = summary(model.trace)
     elif model.type == 'individual':
@@ -219,7 +220,7 @@ def get_estimates(model):
             'Model type not understood. Make sure "make_model" has already been called.')
     for subject in subjects:
         subject_estimates = subject_template.copy()
-        subject_estimates['subject'] = subject
+        subject_estimates.loc[:, 'subject'] = np.array([subject])
         for parameter in parameters:
             subject_template[parameter] = np.nan
             subject_template[parameter + '_hpd_2.5'] = np.nan
