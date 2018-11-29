@@ -209,7 +209,7 @@ def get_estimates(model):
                                               for combination in combinations]
                                      for f, factor
                                      in enumerate(model.design['factors'])},
-                                     index=np.zeros(1))
+                                     sort=True) # index=np.zeros(1)
     if model.type == 'hierarchical':
         summary_table = summary(model.trace)
     elif model.type == 'individual':
