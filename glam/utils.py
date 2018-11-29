@@ -208,8 +208,7 @@ def get_estimates(model):
     subject_template = pd.DataFrame({factor: [combination[f]
                                               for combination in combinations]
                                      for f, factor
-                                     in enumerate(model.design['factors'])},
-                                     sort=True) # index=np.zeros(1)
+                                     in enumerate(model.design['factors'])}) # ,index=np.zeros(1)
     if model.type == 'hierarchical':
         summary_table = summary(model.trace)
     elif model.type == 'individual':
@@ -315,7 +314,7 @@ def get_estimates(model):
                                 subject_estimates.loc[subject_estimates[dependence] ==
                                                       condition, parameter + '_mu_hpd_97.5'] = pop_hpd975
 
-        estimates = pd.concat([estimates, subject_estimates])
+        estimates = pd.concat([estimates, subject_estimates], sort=True)
 
     estimates.reset_index(inplace=True, drop=True)
     return estimates
