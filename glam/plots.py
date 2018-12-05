@@ -484,7 +484,7 @@ def plot_corpleft_by_left_gaze_advantage(data, predictions=None, ax=None, n_bins
     despine()
 
 
-def plot_nodes(model, parameter, comparisons=None, fs=12, alpha=0.5):
+def plot_node(model, parameter, comparisons=None, fs=12, alpha=0.5):
 
     # determine model type
     model_type = model.type
