@@ -509,7 +509,10 @@ def plot_node(model, parameter, comparisons=None, fontsize=12, alpha=0.5, hpd_al
         raise ValueError(error_msg)
     parameter_design = model.design[parameter]
     conditions = parameter_design['conditions']
-    n_conditions = len(conditions)
+    if conditions is not None:
+        n_conditions = len(conditions)
+    else:
+        n_conditions = 1
 
     # extract subjects
     subjects = parameter_design[conditions[0]]['subjects']
@@ -530,7 +533,7 @@ def plot_node(model, parameter, comparisons=None, fontsize=12, alpha=0.5, hpd_al
             raise ValueError(error_msg)
 
     # set up figure
-    fig = plt.figure(figsize=(4*(1+n_comparisons), 2*(1+n_traces)), dpi=300)
+    fig = plt.figure(figsize=(4*(1+n_comparisons), 2*n_traces), dpi=300)
 
     # set up dict for figure axes
     axs = dict()
@@ -553,7 +556,7 @@ def plot_node(model, parameter, comparisons=None, fontsize=12, alpha=0.5, hpd_al
         # add y-label
         if model_type == 'individual':
             axs[0][-1].set_ylabel(
-                'Subject: {}'.format(subjects[r], parameter), fontsize=fontsize)
+                'Subject {}'.format(subjects[r], parameter), fontsize=fontsize)
 
         # plot condition traces
         for ci, condition in enumerate(conditions):
@@ -590,7 +593,7 @@ def plot_node(model, parameter, comparisons=None, fontsize=12, alpha=0.5, hpd_al
                 else:
                     contition_label = ''
                 axs[0][-1].hist(condition_trace, histtype='stepfilled',
-                                bins=100, alpha=alpha, label=contition_label)
+                                bins=50, alpha=alpha, label=contition_label)
 
         # set y-lim
         if not plot_histogram:
@@ -740,7 +743,7 @@ def plot_individual_node_comparison(model, parameter, comparisons, fontsize=12, 
         raise ValueError(error_msg)
 
     # set up figure
-    fig, axs = plt.subplots(1, n_comparisons, figsize=(5*n_comparisons, np.max([np.int(n_subjects * 1/2), 2.5])),
+    fig, axs = plt.subplots(1, n_comparisons, figsize=(4*n_comparisons, np.max([np.int(n_subjects * 1/2), 2])),
                             dpi=300, sharey=True, sharex=True)
 
     # plot
@@ -781,8 +784,8 @@ def plot_individual_node_comparison(model, parameter, comparisons, fontsize=12, 
             ax.set_ylim(-1, n_subjects)
             ax.set_yticks(np.arange(n_subjects))
             if c == 0:
-                ax.set_yticklabels(["Subject: {}".format(s)
-                                    for s in subjects], fontsize=fontsize)
+                ax.set_yticklabels(subjects, fontsize=fontsize)
+                ax.set_ylabel('Subject', fontsize=fontsize)
 
             # set x-label
             if parameter in ['sigma', 'gamma', 'tau']:
