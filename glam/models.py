@@ -96,7 +96,7 @@ class GLAM(object):
                 n_existing_individuals = self.data['subject'].max() + 1
             else:
                 n_existing_individuals = 0
-            individual_idx = np.arange(n_existing_individuals, n_existing_individuals+n_individuals)
+            individual_idx = np.arange(n_existing_individuals, n_existing_individuals + n_individuals)
 
         # Set up parameters
         if kind is 'hierarchical':
@@ -196,9 +196,9 @@ def make_models(df, kind, verbose=True, design=dict(v=None, gamma=None, s=None, 
         for s, subject in enumerate(data['subjects']):
             design_subject = dict()
             for parameter in ['v', 'gamma', 's', 'tau', 't0']:
-              design_subject[parameter] = dict()
-              design_subject[parameter]['conditions'] = design[parameter]['conditions']
-              design_subject[parameter]['condition_index'] = design[parameter]['condition_index'][data['subject_idx'] == subject]
+                design_subject[parameter] = dict()
+                design_subject[parameter]['conditions'] = design[parameter]['conditions']
+                design_subject[parameter]['condition_index'] = design[parameter]['condition_index'][data['subject_idx'] == subject]
             subject_model = make_subject_model(rts=data['rts'][data['subject_idx'] == subject],
                                                gaze=data['gaze'][data['subject_idx'] == subject],
                                                values=data['values'][data['subject_idx'] == subject],
@@ -246,43 +246,42 @@ def generate_subject_model_parameters(parameter,
 
     if design['conditions'] is not None:
         if val is None:
-          parms = []
-          # if we want a meta distribution, we need to initialize meta mean and ds priors here.
-          # if we_want_meta:
-            # meta_mu = pm.Uniform...
-            # meta_sd = pm.Uniform...
-          for c, condition in enumerate(design['conditions']):
-            if len(np.unique(design['condition_index'])) == 1:
-              if c == np.unique(design['condition_index']):
-                parms.append(pm.Uniform('{}'.format(parameter),
-                                        lower,
-                                        upper,
-                                        testval=testval,
-                                        shape=(1, 1)))
-              else:
-                parms.append(tt.zeros((1,1)))
-            else:
-              # if we want meta distribution for conditions, now drawn parameters should come from meta distribution
-              # if we_want_meta:
-              #  parms.append(pm.Normal(.., mu=meta_mu, sd=meta_sd))
-              parms.append(pm.Uniform('{}_{}'.format(parameter, condition),
-                                      lower,
-                                      upper,
-                                      testval=testval,
-                                      shape=(1, 1)))
-          parms = tt.concatenate(parms, axis=1)
+            parms = []
+            # if we want a meta distribution, we need to initialize meta mean and ds priors here.
+            # if we_want_meta:
+            #     meta_mu = pm.Uniform...
+            #     meta_sd = pm.Uniform...
+            for c, condition in enumerate(design['conditions']):
+                if len(np.unique(design['condition_index'])) == 1:
+                    if c == np.unique(design['condition_index']):
+                        parms.append(pm.Uniform('{}'.format(parameter),
+                                                lower,
+                                                upper,
+                                                testval=testval,
+                                                shape=(1, 1)))
+                    else:
+                        parms.append(tt.zeros((1, 1)))
+                else:
+                    # if we want meta distribution for conditions, now drawn parameters should come from meta distribution
+                    # if we_want_meta:
+                    #    parms.append(pm.Normal(.., mu=meta_mu, sd=meta_sd))
+                    parms.append(pm.Uniform('{}_{}'.format(parameter, condition),
+                                            lower,
+                                            upper,
+                                            testval=testval,
+                                            shape=(1, 1)))
+            parms = tt.concatenate(parms, axis=1)
         else:
             if len(val) != len(design['conditions']):
                 raise ValueError('Number of values in {}_val does not match the number of conditions.'.format(parameter))
             else:
-                parms = tt.stack([pm.Deterministic('{}_{}'.format(parameter, condition),
-                                                   tt.ones((1, 1))*v)
+                parms = tt.stack([pm.Deterministic('{}_{}'.format(parameter, condition), tt.ones((1, 1)) * v)
                                   for condition, v in zip(design['{}_conditions'.format(parameter)], val)])
     else:
         if val is None:
             parms = pm.Uniform(parameter, lower, upper, testval=testval, shape=(1, 1))
         else:
-            parms = pm.Deterministic(parameter, tt.ones((1, 1))*val)
+            parms = pm.Deterministic(parameter, tt.ones((1, 1)) * val)
 
     return parms
 
@@ -353,7 +352,7 @@ def make_subject_model(rts, gaze, values, error_ll,
                                                         zerotol)
 
             # mix likelihoods
-            mixed_ll = ((1-p_error) * glam_ll + p_error * error_ll)
+            mixed_ll = ((1 - p_error) * glam_ll + p_error * error_ll)
 
             mixed_ll = tt.where(tt.isnan(mixed_ll), 0., mixed_ll)
             mixed_ll = tt.where(tt.isinf(mixed_ll), 0., mixed_ll)
@@ -404,7 +403,7 @@ def generate_hierarchical_model_parameters(parameter,
                 parms_tmp = tt.concatenate([tt.zeros(1), parms_tmp])
                 parms.append(parms_tmp[design['D'][:, c]][:, None])
             parms = tt.concatenate(parms, axis=1)
-        
+
         else:
             parms = []
             n_subjects_per_condition = []
@@ -412,15 +411,13 @@ def generate_hierarchical_model_parameters(parameter,
                 n_subjects_in_condition = np.unique(design['subject_index'][design['condition_index'] == c]).size
                 n_subjects_per_condition.append(n_subjects_in_condition)
                 if len(val) == len(design['conditions']):
-                    parms.append(pm.Deterministic('{}_{}'.format(parameter, condition),
-                                                  tt.ones(n_subjects_in_condition, 1) * val[c]))
+                    parms.append(pm.Deterministic('{}_{}'.format(parameter, condition), tt.ones(n_subjects_in_condition, 1) * val[c]))
                 else:
-                    raise ValueError('Number of values in {}_val does not match the number of specified {}-conditions.'.format(parameter, parameter))               
+                    raise ValueError('Number of values in {}_val does not match the number of specified {}-conditions.'.format(parameter, parameter))
             # make sure all elements in parms have same size
             for set_i, parm_set in enumerate(parms):
                 if n_subjects_per_condition[set_i] < n_subjects:
-                    parms[set_i] = tt.concatenate([parm_set,
-                                                   tt.zeros((n_subjects-n_subjects_per_condition[set_i], 1))],
+                    parms[set_i] = tt.concatenate([parm_set, tt.zeros((n_subjects - n_subjects_per_condition[set_i], 1))],
                                                   axis=0)
             parms = tt.concatenate(parms, axis=1)
 
@@ -523,11 +520,11 @@ def make_hierarchical_model(rts, gaze, values, error_lls,
                                                           tt.cast(s_condition_index, dtype='int32')][:, None],
                                                         b,
                                                         t0[tt.cast(t0_subject_index, dtype='int32'),
-                                                          tt.cast(t0_condition_index, dtype='int32')][:, None],
+                                                           tt.cast(t0_condition_index, dtype='int32')][:, None],
                                                         zerotol)
 
             # mix likelihoods
-            mixed_ll = ((1-p_error) * glam_ll + p_error * error_lls[subject_idx])
+            mixed_ll = ((1 - p_error) * glam_ll + p_error * error_lls[subject_idx])
 
             mixed_ll = tt.where(tt.isnan(mixed_ll), 0., mixed_ll)
             mixed_ll = tt.where(tt.isinf(mixed_ll), 0., mixed_ll)

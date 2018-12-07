@@ -18,7 +18,7 @@ def fit_models(models, method='MCMC', verbose=True, n_samples=2000, n_vi=200000,
 
     for m, model in enumerate(models):
         if verbose:
-            print('  Fitting model {} of {}...'.format(m+1, len(models)))
+            print('  Fitting model {} of {}...'.format(m + 1, len(models)))
         with model:
             if method == 'MCMC':
                 trace = pm.sample(draws=n_samples, **kwargs)
