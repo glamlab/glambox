@@ -4,7 +4,7 @@ import pymc3 as pm
 import numpy as np
 
 
-def fit_models(models, method='MCMC', verbose=True, n_samples=2000, n_vi=200000, step=pm.DEMetropolis, **kwargs):
+def fit_models(models, method='MCMC', verbose=True, draws=2000, n_vi=200000, step=pm.DEMetropolis, **kwargs):
     if isinstance(models, pm.model.Model):
         models = [models]
     elif isinstance(models, list) and np.alltrue(np.array([isinstance(model, pm.model.Model)
@@ -22,10 +22,10 @@ def fit_models(models, method='MCMC', verbose=True, n_samples=2000, n_vi=200000,
         with model:
             if method == 'MCMC':
                 step = step()
-                trace = pm.sample(draws=n_samples, step=step, **kwargs)
+                trace = pm.sample(draws=draws, step=step, **kwargs)
             elif method == 'VI':
                 vi_est = pm.fit(n=n_vi, **kwargs)
-                trace = vi_est.sample(n_samples)
+                trace = vi_est.sample(draws)
             else:
                 raise ValueError("Method must be 'MCMC' or 'VI'.")
             traces.append(trace)
