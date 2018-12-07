@@ -159,18 +159,19 @@ def get_design(model):
         design[parameter]['D'] = D
 
         # Detect within / between subject design
+        within_dependent = False   # Default to assuming that parameters from different conditions within a subject are not related
         if D.shape[1] == 1:
             design_type = 'independent'
         elif np.all((D != 0).sum(axis=1) > 1):
-            if model.force_between[parameter]:
-                design_type = 'between'
-            else:
-                design_type = 'within'
+            design_type = 'within'
+            if parameter in model.within_dependent:   # For within factors, if specifically indicated, assume relation between parameters within subject
+                within_dependent = True
         elif np.all((D != 0).sum(axis=1) == 1):
             design_type = 'between'
         else:
             design_type = 'mixed'  # some subjects have multiple conditions, others not
         design[parameter]['type'] = design_type
+        design[parameter]['within_dependent'] = within_dependent
 
     return design
 

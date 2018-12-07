@@ -158,13 +158,13 @@ class GLAM(object):
 
     def make_model(self, kind,
                    depends_on=dict(v=None, gamma=None, s=None, tau=None, t0=None),
-                   force_between=dict(v=False, gamma=False, s=False, tau=False, t0=False),
+                   within_dependent=[],
                    **kwargs):
         """
         """
         self.type = kind
         self.depends_on = depends_on
-        self.force_between = force_between
+        self.within_dependent = within_dependent
         self.design = glam.utils.get_design(self)
         self.model = make_models(df=self.data, kind=kind, design=self.design, **kwargs)
 
@@ -316,31 +316,31 @@ def make_subject_model(rts, gaze, values, error_ll,
                                               design=design['v'],
                                               lower=zerotol, upper=0.01,
                                               val=v_val, testval=0.0002,
-                                              meta_dist=(design['v']['type'] == 'within'))
+                                              meta_dist=(design['v']['within_dependent']))
 
         gamma = generate_subject_model_parameters(parameter='gamma',
                                                   design=design['gamma'],
                                                   lower=gamma_bounds[0], upper=gamma_bounds[1],
                                                   val=gamma_val, testval=0,
-                                                  meta_dist=(design['gamma']['type'] == 'within'))
+                                                  meta_dist=(design['gamma']['within_dependent']))
 
         s = generate_subject_model_parameters(parameter='s',
                                               design=design['s'],
                                               lower=zerotol, upper=0.02,
                                               val=s_val, testval=0.0075,
-                                              meta_dist=(design['s']['type'] == 'within'))
+                                              meta_dist=(design['s']['within_dependent']))
 
         tau = generate_subject_model_parameters(parameter='tau',
                                                 design=design['tau'],
                                                 lower=0, upper=5,
                                                 val=tau_val, testval=1,
-                                                meta_dist=(design['tau']['type'] == 'within'))
+                                                meta_dist=(design['tau']['within_dependent']))
 
         t0 = generate_subject_model_parameters(parameter='t0',
                                                design=design['t0'],
                                                lower=0, upper=500,
                                                val=t0_val, testval=1,
-                                               meta_dist=(design['t0']['type'] == 'within'))
+                                               meta_dist=(design['t0']['within_dependent']))
 
         # Likelihood
         def lda_logp(rt,
