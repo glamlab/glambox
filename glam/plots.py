@@ -486,7 +486,7 @@ def plot_corpleft_by_left_gaze_advantage(data, predictions=None, ax=None, n_bins
     despine()
 
 
-def plot_node(model, parameter, comparisons=None, fontsize=12, alpha=0.5):
+def plot_node(model, parameter, comparisons=None, fontsize=12, alpha=0.5, hpd_alpha=0.05):
 
     # determine model type
     model_type = model.type
@@ -581,7 +581,7 @@ def plot_node(model, parameter, comparisons=None, fontsize=12, alpha=0.5):
 
             # plot trace
             if model_type == 'individual':
-                trace_hpd = hpd(condition_trace)
+                trace_hpd = hpd(condition_trace, alpha=hpd_alpha)
                 trace_mean = np.mean(condition_trace)
                 axs[0][-1].plot(trace_hpd, [ci, ci], lw=3, color='C{}'.format(ci))
                 axs[0][-1].scatter(x=trace_mean, y=ci, color='C{}'.format(ci), s=100)
@@ -626,7 +626,7 @@ def plot_node(model, parameter, comparisons=None, fontsize=12, alpha=0.5):
 
             # plot trace difference
             if model_type == 'individual':
-                trace_diff_hpd = hpd(trace_diff)
+                trace_diff_hpd = hpd(trace_diff, alpha=hpd_alpha)
                 trace_diff_mean = np.mean(trace_diff)
                 axs[c+1][-1].plot(trace_diff_hpd, [0, 0], lw=3, color='gray')
                 axs[c+1][-1].scatter(x=trace_diff_mean, y=0, color='gray', s=100)
@@ -642,6 +642,7 @@ def plot_node(model, parameter, comparisons=None, fontsize=12, alpha=0.5):
                                color='gray',
                                histtype='stepfilled',
                                alpha=alpha,
+                               alpha_level=hpd_alpha,
                                bins=50,
                                ax=axs[c+1][-1])
 
