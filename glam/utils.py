@@ -53,7 +53,7 @@ def sort_according_to_choice(x, choices):
     return x_sorted
 
 
-def extract_modes(traces, parameters=None, precision=None, f_burn=0.5):
+def extract_modes(traces, parameters=None, precision=None, f_burn=0):
 
     if not isinstance(traces, list):
         traces = [traces]
