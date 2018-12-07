@@ -553,7 +553,7 @@ def plot_node(model, parameter, comparisons=None, fontsize=12, alpha=0.5, hpd_al
         # add y-label
         if model_type == 'individual':
             axs[0][-1].set_ylabel(
-                'Subject: {}'.format(subjects[r], parameter), fontsize=fontsize)
+                'Subject {}'.format(subjects[r], parameter), fontsize=fontsize)
 
         # plot condition traces
         for ci, condition in enumerate(conditions):
@@ -590,7 +590,7 @@ def plot_node(model, parameter, comparisons=None, fontsize=12, alpha=0.5, hpd_al
                 else:
                     contition_label = ''
                 axs[0][-1].hist(condition_trace, histtype='stepfilled',
-                                bins=100, alpha=alpha, label=contition_label)
+                                bins=50, alpha=alpha, label=contition_label)
 
         # set y-lim
         if not plot_histogram:
@@ -781,8 +781,8 @@ def plot_individual_node_comparison(model, parameter, comparisons, fontsize=12, 
             ax.set_ylim(-1, n_subjects)
             ax.set_yticks(np.arange(n_subjects))
             if c == 0:
-                ax.set_yticklabels(["Subject: {}".format(s)
-                                    for s in subjects], fontsize=fontsize)
+                ax.set_yticklabels(subjects, fontsize=fontsize)
+                ax.set_ylabel('Subject', fontsize=fontsize)
 
             # set x-label
             if parameter in ['sigma', 'gamma', 'tau']:
