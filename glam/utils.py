@@ -218,7 +218,7 @@ def get_estimates(model):
                 # Parameter is fixed
                 if model.type == 'hierarchical':
                     # add participant paramaters
-                    subject_estimates[parameter] = MAP[parameter][subject][0]
+                    subject_estimates[parameter] = MAP[0][parameter][subject][0]
                     subject_estimates[parameter + '_hpd_2.5'] = summary_tables[0].loc[parameter + '__{}_0'.format(subject), 'hpd_2.5']
                     subject_estimates[parameter + '_hpd_97.5'] = summary_tables[0].loc[parameter + '__{}_0'.format(subject), 'hpd_97.5']
                     # add population parameters
@@ -246,7 +246,7 @@ def get_estimates(model):
                             if model.type == 'hierarchical':
                                 index = model.design[parameter][condition]['subject_mapping'][subject]
                                 # extract participant parameters
-                                estimate = MAP[parameter_condition][index]
+                                estimate = MAP[0][parameter_condition][index]
                                 hpd25 = summary_tables[0].loc[parameter_condition + '__{}'.format(index), 'hpd_2.5']
                                 hpd975 = summary_tables[0].loc[parameter_condition + '__{}'.format(index), 'hpd_97.5']
                                 # extract population parameters
