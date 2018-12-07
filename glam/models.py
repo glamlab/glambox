@@ -162,7 +162,7 @@ class GLAM(object):
         self.design = glam.utils.get_design(self)
         self.model = make_models(df=self.data, kind=kind, design=self.design, **kwargs)
 
-    def fit(self, method='NUTS', **kwargs):
+    def fit(self, method='MCMC', **kwargs):
         self.trace = glam.fit.fit_models(self.model, method=method, **kwargs)
         self.estimates = glam.utils.get_estimates(self)
 
@@ -247,6 +247,10 @@ def generate_subject_model_parameters(parameter,
     if design['conditions'] is not None:
         if val is None:
           parms = []
+          # if we want a meta distribution, we need to initialize meta mean and ds priors here.
+          # if we_want_meta:
+            # meta_mu = pm.Uniform...
+            # meta_sd = pm.Uniform...
           for c, condition in enumerate(design['conditions']):
             if len(np.unique(design['condition_index'])) == 1:
               if c == np.unique(design['condition_index']):
@@ -258,6 +262,9 @@ def generate_subject_model_parameters(parameter,
               else:
                 parms.append(tt.zeros((1,1)))
             else:
+              # if we want meta distribution for conditions, now drawn parameters should come from meta distribution
+              # if we_want_meta:
+              #  parms.append(pm.Normal(.., mu=meta_mu, sd=meta_sd))
               parms.append(pm.Uniform('{}_{}'.format(parameter, condition),
                                       lower,
                                       upper,
