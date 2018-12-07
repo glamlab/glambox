@@ -160,13 +160,16 @@ def get_design(model):
 
         # Detect within / between subject design
         if D.shape[1] == 1:
-            design_type = 'fixed'
+            design_type = 'independent'
         elif np.all((D != 0).sum(axis=1) > 1):
-            design_type = 'within'
+            if model.force_between[parameter]:
+                design_type = 'between'
+            else:
+                design_type = 'within'
         elif np.all((D != 0).sum(axis=1) == 1):
             design_type = 'between'
         else:
-            design_type = 'mixed'
+            design_type = 'mixed'  # some subjects have multiple conditions, others not
         design[parameter]['type'] = design_type
 
     return design

@@ -156,9 +156,15 @@ class GLAM(object):
             print('Not implemented yet. Please run again with "stimuli=None".')
             return
 
-    def make_model(self, kind, depends_on=dict(v=None, gamma=None, s=None, tau=None, t0=None), **kwargs):
+    def make_model(self, kind,
+                   depends_on=dict(v=None, gamma=None, s=None, tau=None, t0=None),
+                   force_between=dict(v=False, gamma=False, s=False, tau=False, t0=False),
+                   **kwargs):
+        """
+        """
         self.type = kind
         self.depends_on = depends_on
+        self.force_between = force_between
         self.design = glam.utils.get_design(self)
         self.model = make_models(df=self.data, kind=kind, design=self.design, **kwargs)
 
@@ -196,7 +202,7 @@ def make_models(df, kind, verbose=True, design=dict(v=None, gamma=None, s=None, 
         for s, subject in enumerate(data['subjects']):
             design_subject = dict()
             for parameter in ['v', 'gamma', 's', 'tau', 't0']:
-                design_subject[parameter] = dict()
+                design_subject[parameter] = design[parameter].copy()
                 design_subject[parameter]['conditions'] = design[parameter]['conditions']
                 design_subject[parameter]['condition_index'] = design[parameter]['condition_index'][data['subject_idx'] == subject]
             subject_model = make_subject_model(rts=data['rts'][data['subject_idx'] == subject],
@@ -242,15 +248,19 @@ def make_models(df, kind, verbose=True, design=dict(v=None, gamma=None, s=None, 
 def generate_subject_model_parameters(parameter,
                                       design,
                                       lower, upper,
-                                      val, testval):
+                                      val, testval,
+                                      meta_dist=False):
 
     if design['conditions'] is not None:
         if val is None:
             parms = []
+
             # if we want a meta distribution, we need to initialize meta mean and ds priors here.
-            # if we_want_meta:
-            #     meta_mu = pm.Uniform...
-            #     meta_sd = pm.Uniform...
+            if meta_dist:
+                bounded = pm.Bound(pm.Normal, lower, upper)
+                meta_mu = pm.Uniform('{}_mu'.format(parameter), lower, upper)
+                meta_sd = pm.Uniform('{}_sd'.format(parameter), 1e-10, upper - lower)
+
             for c, condition in enumerate(design['conditions']):
                 if len(np.unique(design['condition_index'])) == 1:
                     if c == np.unique(design['condition_index']):
@@ -263,13 +273,14 @@ def generate_subject_model_parameters(parameter,
                         parms.append(tt.zeros((1, 1)))
                 else:
                     # if we want meta distribution for conditions, now drawn parameters should come from meta distribution
-                    # if we_want_meta:
-                    #    parms.append(pm.Normal(.., mu=meta_mu, sd=meta_sd))
-                    parms.append(pm.Uniform('{}_{}'.format(parameter, condition),
-                                            lower,
-                                            upper,
-                                            testval=testval,
-                                            shape=(1, 1)))
+                    if meta_dist:
+                        parms.append(bounded('{}_{}'.format(parameter, condition), mu=meta_mu, sd=meta_sd, shape=(1, 1)))
+                    else:
+                        parms.append(pm.Uniform('{}_{}'.format(parameter, condition),
+                                                lower,
+                                                upper,
+                                                testval=testval,
+                                                shape=(1, 1)))
             parms = tt.concatenate(parms, axis=1)
         else:
             if len(val) != len(design['conditions']):
@@ -304,27 +315,32 @@ def make_subject_model(rts, gaze, values, error_ll,
         v = generate_subject_model_parameters(parameter='v',
                                               design=design['v'],
                                               lower=zerotol, upper=0.01,
-                                              val=v_val, testval=0.0002)
+                                              val=v_val, testval=0.0002,
+                                              meta_dist=(design['v']['type'] == 'within'))
 
         gamma = generate_subject_model_parameters(parameter='gamma',
                                                   design=design['gamma'],
                                                   lower=gamma_bounds[0], upper=gamma_bounds[1],
-                                                  val=gamma_val, testval=0)
+                                                  val=gamma_val, testval=0,
+                                                  meta_dist=(design['gamma']['type'] == 'within'))
 
         s = generate_subject_model_parameters(parameter='s',
                                               design=design['s'],
                                               lower=zerotol, upper=0.02,
-                                              val=s_val, testval=0.0075)
+                                              val=s_val, testval=0.0075,
+                                              meta_dist=(design['s']['type'] == 'within'))
 
         tau = generate_subject_model_parameters(parameter='tau',
                                                 design=design['tau'],
                                                 lower=0, upper=5,
-                                                val=tau_val, testval=1)
+                                                val=tau_val, testval=1,
+                                                meta_dist=(design['tau']['type'] == 'within'))
 
         t0 = generate_subject_model_parameters(parameter='t0',
                                                design=design['t0'],
                                                lower=0, upper=500,
-                                               val=t0_val, testval=1)
+                                               val=t0_val, testval=1,
+                                               meta_dist=(design['t0']['type'] == 'within'))
 
         # Likelihood
         def lda_logp(rt,
