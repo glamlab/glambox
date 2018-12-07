@@ -486,7 +486,7 @@ def plot_corpleft_by_left_gaze_advantage(data, predictions=None, ax=None, n_bins
     despine()
 
 
-def plot_node(model, parameter, comparisons=None, fontsize=12, alpha=0.5, hpd_alpha=0.05):
+def plot_node(model, parameter, comparisons=None, fontsize=12, alpha=0.5, hpd_alpha=0.05, plot_histogram=True):
 
     # determine model type
     model_type = model.type
@@ -530,12 +530,7 @@ def plot_node(model, parameter, comparisons=None, fontsize=12, alpha=0.5, hpd_al
             raise ValueError(error_msg)
 
     # set up figure
-    if model_type == 'individual':
-        fig = plt.figure(figsize=(4*(1+n_comparisons),
-                                  1.5*(1+n_traces)), dpi=300)
-    else:
-        fig = plt.figure(
-            figsize=(4*(1+n_comparisons), 2*(1+n_traces)), dpi=300)
+    fig = plt.figure(figsize=(4*(1+n_comparisons), 2*(1+n_traces)), dpi=300)
 
     # set up dict for figure axes
     axs = dict()
@@ -582,7 +577,7 @@ def plot_node(model, parameter, comparisons=None, fontsize=12, alpha=0.5, hpd_al
                     xlims[0, 1] = np.max(condition_trace)
 
             # plot trace
-            if model_type == 'individual':
+            if not plot_histogram:
                 trace_hpd = hpd(condition_trace, alpha=hpd_alpha)
                 trace_mean = np.mean(condition_trace)
                 axs[0][-1].plot(trace_hpd, [ci, ci], lw=3,
@@ -598,7 +593,7 @@ def plot_node(model, parameter, comparisons=None, fontsize=12, alpha=0.5, hpd_al
                                 bins=100, alpha=alpha, label=contition_label)
 
         # set y-lim
-        if model_type == 'individual':
+        if not plot_histogram:
             axs[0][-1].set_ylim(-1, n_conditions)
             axs[0][-1].set_yticks(np.arange(n_conditions))
             axs[0][-1].set_yticklabels(conditions, fontsize=fontsize)
@@ -629,7 +624,7 @@ def plot_node(model, parameter, comparisons=None, fontsize=12, alpha=0.5, hpd_al
                     xlims[c+1, 1] = np.max(trace_diff)
 
             # plot trace difference
-            if model_type == 'individual':
+            if not plot_histogram:
                 trace_diff_hpd = hpd(trace_diff, alpha=hpd_alpha)
                 trace_diff_mean = np.mean(trace_diff)
                 axs[c+1][-1].plot(trace_diff_hpd, [0, 0], lw=3, color='gray')
