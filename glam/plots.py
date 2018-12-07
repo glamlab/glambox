@@ -509,7 +509,10 @@ def plot_node(model, parameter, comparisons=None, fontsize=12, alpha=0.5, hpd_al
         raise ValueError(error_msg)
     parameter_design = model.design[parameter]
     conditions = parameter_design['conditions']
-    n_conditions = len(conditions)
+    if conditions is not None:
+        n_conditions = len(conditions)
+    else:
+        n_conditions = 1
 
     # extract subjects
     subjects = parameter_design[conditions[0]]['subjects']
@@ -530,7 +533,7 @@ def plot_node(model, parameter, comparisons=None, fontsize=12, alpha=0.5, hpd_al
             raise ValueError(error_msg)
 
     # set up figure
-    fig = plt.figure(figsize=(4*(1+n_comparisons), 2*(1+n_traces)), dpi=300)
+    fig = plt.figure(figsize=(4*(1+n_comparisons), 2*n_traces), dpi=300)
 
     # set up dict for figure axes
     axs = dict()
