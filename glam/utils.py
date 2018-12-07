@@ -200,13 +200,10 @@ def get_estimates(model):
                                               for combination in combinations]
                                      for f, factor
                                      in enumerate(model.design['factors'])})
-    if model.type == 'hierarchical':
-        summary_table = summary(model.trace)
-    elif model.type == 'individual':
-        summary_tables = [summary(trace)
-                          for trace in model.trace]
-    else:
-        raise ValueError('Model type not understood. Make sure "make_model" has already been called.')
+
+    summary_tables = [summary(trace)
+                      for trace in model.trace]
+
     for subject in subjects:
         subject_estimates = subject_template.copy()
         subject_estimates.loc[:, 'subject'] = np.array([subject])
@@ -222,13 +219,13 @@ def get_estimates(model):
                 if model.type == 'hierarchical':
                     # add participant paramaters
                     subject_estimates[parameter] = MAP[parameter][subject][0]
-                    subject_estimates[parameter + '_hpd_2.5'] = summary_table.loc[parameter + '__{}_0'.format(subject), 'hpd_2.5']
-                    subject_estimates[parameter + '_hpd_97.5'] = summary_table.loc[parameter + '__{}_0'.format(subject), 'hpd_97.5']
+                    subject_estimates[parameter + '_hpd_2.5'] = summary_tables[0].loc[parameter + '__{}_0'.format(subject), 'hpd_2.5']
+                    subject_estimates[parameter + '_hpd_97.5'] = summary_tables[0].loc[parameter + '__{}_0'.format(subject), 'hpd_97.5']
                     # add population parameters
-                    if (parameter + '_mu') in summary_table.index:
-                        subject_estimates[parameter + '_mu'] = summary_table.loc[parameter + '_mu', 'mean']
-                        subject_estimates[parameter + '_mu_hpd_2.5'] = summary_table.loc[parameter + '_mu', 'hpd_2.5']
-                        subject_estimates[parameter + '_mu_hpd_97.5'] = summary_table.loc[parameter + '_mu', 'hpd_97.5']
+                    if (parameter + '_mu') in summary_tables[0].index:
+                        subject_estimates[parameter + '_mu'] = summary_tables[0].loc[parameter + '_mu', 'mean']
+                        subject_estimates[parameter + '_mu_hpd_2.5'] = summary_tables[0].loc[parameter + '_mu', 'hpd_2.5']
+                        subject_estimates[parameter + '_mu_hpd_97.5'] = summary_tables[0].loc[parameter + '_mu', 'hpd_97.5']
 
                 elif model.type == 'individual':
                     # add participant paramaters
@@ -250,13 +247,13 @@ def get_estimates(model):
                                 index = model.design[parameter][condition]['subject_mapping'][subject]
                                 # extract participant parameters
                                 estimate = MAP[parameter_condition][index]
-                                hpd25 = summary_table.loc[parameter_condition + '__{}'.format(index), 'hpd_2.5']
-                                hpd975 = summary_table.loc[parameter_condition + '__{}'.format(index), 'hpd_97.5']
+                                hpd25 = summary_tables[0].loc[parameter_condition + '__{}'.format(index), 'hpd_2.5']
+                                hpd975 = summary_tables[0].loc[parameter_condition + '__{}'.format(index), 'hpd_97.5']
                                 # extract population parameters
-                                if (parameter_condition + '_mu') in summary_table.index:
-                                    pop_estimate = summary_table.loc[parameter_condition + '_mu', 'mean']
-                                    pop_hpd25 = summary_table.loc[parameter_condition + '_mu', 'hpd_2.5']
-                                    pop_hpd975 = summary_table.loc[parameter_condition + '_mu', 'hpd_97.5']
+                                if (parameter_condition + '_mu') in summary_tables[0].index:
+                                    pop_estimate = summary_tables[0].loc[parameter_condition + '_mu', 'mean']
+                                    pop_hpd25 = summary_tables[0].loc[parameter_condition + '_mu', 'hpd_2.5']
+                                    pop_hpd975 = summary_tables[0].loc[parameter_condition + '_mu', 'hpd_97.5']
 
                             elif model.type == 'individual':
                                 if model.design[parameter]['type'] == 'between':
