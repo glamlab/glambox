@@ -531,9 +531,11 @@ def plot_node(model, parameter, comparisons=None, fontsize=12, alpha=0.5, hpd_al
 
     # set up figure
     if model_type == 'individual':
-        fig = plt.figure(figsize=(4*(1+n_comparisons), 1.5*(1+n_traces)), dpi=300)
+        fig = plt.figure(figsize=(4*(1+n_comparisons),
+                                  1.5*(1+n_traces)), dpi=300)
     else:
-        fig = plt.figure(figsize=(4*(1+n_comparisons), 2*(1+n_traces)), dpi=300)
+        fig = plt.figure(
+            figsize=(4*(1+n_comparisons), 2*(1+n_traces)), dpi=300)
 
     # set up dict for figure axes
     axs = dict()
@@ -583,8 +585,10 @@ def plot_node(model, parameter, comparisons=None, fontsize=12, alpha=0.5, hpd_al
             if model_type == 'individual':
                 trace_hpd = hpd(condition_trace, alpha=hpd_alpha)
                 trace_mean = np.mean(condition_trace)
-                axs[0][-1].plot(trace_hpd, [ci, ci], lw=3, color='C{}'.format(ci))
-                axs[0][-1].scatter(x=trace_mean, y=ci, color='C{}'.format(ci), s=100)
+                axs[0][-1].plot(trace_hpd, [ci, ci], lw=3,
+                                color='C{}'.format(ci))
+                axs[0][-1].scatter(x=trace_mean, y=ci,
+                                   color='C{}'.format(ci), s=100)
             else:
                 if r == 0:
                     contition_label = condition
@@ -629,8 +633,10 @@ def plot_node(model, parameter, comparisons=None, fontsize=12, alpha=0.5, hpd_al
                 trace_diff_hpd = hpd(trace_diff, alpha=hpd_alpha)
                 trace_diff_mean = np.mean(trace_diff)
                 axs[c+1][-1].plot(trace_diff_hpd, [0, 0], lw=3, color='gray')
-                axs[c+1][-1].scatter(x=trace_diff_mean, y=0, color='gray', s=100)
-                hpd_string = '95% HPD:\n[{}, {}]'.format(np.round(trace_diff_hpd[0], 2), np.round(trace_diff_hpd[1], 2))
+                axs[c+1][-1].scatter(x=trace_diff_mean,
+                                     y=0, color='gray', s=100)
+                hpd_string = '95% HPD:\n[{}, {}]'.format(
+                    np.round(trace_diff_hpd[0], 2), np.round(trace_diff_hpd[1], 2))
                 axs[c+1][-1].text(0.5, 0.7, hpd_string,
                                   horizontalalignment='center',
                                   verticalalignment='center',
@@ -648,7 +654,8 @@ def plot_node(model, parameter, comparisons=None, fontsize=12, alpha=0.5, hpd_al
 
             # set title
             if r == 0:
-                axs[c+1][-1].set_title('{} - {}'.format(*comparison), fontsize=fontsize)
+                axs[c+1][-1].set_title('{} - {}'.format(*
+                                                        comparison), fontsize=fontsize)
 
     # label x-axis
     if parameter in ['sigma', 'gamma', 'tau']:
@@ -676,7 +683,7 @@ def plot_node(model, parameter, comparisons=None, fontsize=12, alpha=0.5, hpd_al
             if (model_type != 'individual') or (i > 0):
                 ax.set_yticks([])
                 ax.set_yticklabels([])
-            
+
     # add legend
     axs[0][0].legend(loc='upper center', frameon=False,
                      fontsize=fontsize, ncol=len(conditions))
@@ -739,7 +746,7 @@ def plot_individual_node_comparison(model, parameter, comparisons, fontsize=12, 
 
     # set up figure
     fig, axs = plt.subplots(1, n_comparisons, figsize=(5*n_comparisons, np.max([np.int(n_subjects * 1/2), 2.5])),
-        dpi=300, sharey=True, sharex=True)
+                            dpi=300, sharey=True, sharex=True)
 
     # plot
     for r in range(n_subjects):
@@ -762,11 +769,11 @@ def plot_individual_node_comparison(model, parameter, comparisons, fontsize=12, 
             # plot trace difference
             trace_diff_hpd = hpd(trace_diff, alpha=hpd_alpha)
             trace_diff_mean = np.mean(trace_diff)
-            if (trace_diff_hpd[0]<0) & (trace_diff_hpd[1]>0):
-                ax.plot(trace_diff_hpd, [r,r], lw=3, color='red')
+            if (trace_diff_hpd[0] < 0) & (trace_diff_hpd[1] > 0):
+                ax.plot(trace_diff_hpd, [r, r], lw=3, color='red')
                 ax.scatter(x=trace_diff_mean, y=r, color='red', s=100)
             else:
-                ax.plot(trace_diff_hpd, [r,r], lw=3, color='k')
+                ax.plot(trace_diff_hpd, [r, r], lw=3, color='k')
                 ax.scatter(x=trace_diff_mean, y=r, color='k', s=100)
 
             # set title
@@ -779,11 +786,13 @@ def plot_individual_node_comparison(model, parameter, comparisons, fontsize=12, 
             ax.set_ylim(-1, n_subjects)
             ax.set_yticks(np.arange(n_subjects))
             if c == 0:
-                ax.set_yticklabels(["Subject: {}".format(s) for s in subjects], fontsize=fontsize)
+                ax.set_yticklabels(["Subject: {}".format(s)
+                                    for s in subjects], fontsize=fontsize)
 
             # set x-label
             if parameter in ['sigma', 'gamma', 'tau']:
-                ax.set_xlabel(r'$\{}$'.format(parameter), fontsize=fontsize*1.2)
+                ax.set_xlabel(r'$\{}$'.format(parameter),
+                              fontsize=fontsize*1.2)
             else:
                 ax.set_xlabel(r'${}$'.format(parameter), fontsize=fontsize)
 
