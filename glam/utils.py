@@ -185,11 +185,7 @@ def get_estimates(model):
     DataFrame
     """
     from itertools import product
-    import pymc3
-    if np.float(pymc3.__version__) < 3.3:
-        from pymc3 import df_summary as summary
-    else:
-        from pymc3 import summary
+    from pymc3 import summary
 
     subjects = model.data['subject'].unique().astype(np.int)
     parameters = ['v', 'gamma', 's', 'tau', 't0']
