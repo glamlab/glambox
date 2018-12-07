@@ -738,7 +738,7 @@ def plot_individual_node_comparison(model, parameter, comparisons, fontsize=12, 
         raise ValueError(error_msg)
 
     # set up figure
-    fig, axs = plt.subplots(1, n_comparisons, figsize=(5*n_comparisons, np.int(n_traces * 1/2)),
+    fig, axs = plt.subplots(1, n_comparisons, figsize=(5*n_comparisons, np.max([np.int(n_subjects * 1/2), 2.5])),
         dpi=300, sharey=True, sharex=True)
 
     # plot
