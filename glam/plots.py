@@ -545,6 +545,8 @@ def plot_node(model, parameter, comparisons=None, fontsize=12, alpha=0.5):
 
     # plot
     for r in range(n_traces):
+
+        # extract trace
         trace = model_traces[r]
 
         # create & collect axis
@@ -681,6 +683,108 @@ def plot_node(model, parameter, comparisons=None, fontsize=12, alpha=0.5):
     # re-shape axs
     axs = np.concatenate([axs[i][None]
                           for i in range(1+n_comparisons)], axis=1)
+
+    # autmomatic cleaning
+    fig.tight_layout()
+    despine()
+
+    return fig, axs
+
+
+def plot_individual_node_comparison(model, parameter, comparisons, fontsize=12, hpd_alpha=0.05):
+
+    # determine model type
+    model_type = model.type
+    if model_type != 'individual':
+        error_msg = 'plot_individual_node_comparison requires model of "'"individual"'" type.'
+        raise
+
+    # make sure comparisons specified correctly
+    if comparisons is not None:
+        if not getattr(comparisons, '__iter__', False):
+            error_msg = 'comparisons must be iterable (e.g.[(condition(A), condition(B))]).'
+            raise ValueError(error_msg)
+        else:
+            if not np.all([len(c) == 2 for c in comparisons]):
+                error_msg = 'Each comparison must be of length 2 (e.g.[(condition(A), condition(B))]).'
+                raise ValueError(error_msg)
+            else:
+                n_comparisons = len(comparisons)
+
+    # extract design for parameter
+    if parameter not in model.design.keys():
+        error_msg = '"'"{}"'" not part of model parameters.'.format(parameter)
+        raise ValueError(error_msg)
+    parameter_design = model.design[parameter]
+    conditions = parameter_design['conditions']
+
+    # extract subjects
+    subjects = parameter_design[conditions[0]]['subjects']
+    try:
+        subjects = subjects.astype(np.int)
+    except:
+        None
+    n_subjects = subjects.size
+
+    # read out number of traces
+    if not getattr(model.trace, '__iter__', False):
+        model_traces = [model.trace]
+    else:
+        model_traces = model.trace
+    n_traces = len(model_traces)
+    if n_subjects != n_traces:
+        error_msg = 'Number of subjects contained in model does not match number of traces.'
+        raise ValueError(error_msg)
+
+    # set up figure
+    fig, axs = plt.subplots(1, n_comparisons, figsize=(5*n_comparisons, np.int(n_traces * 1/2)),
+        dpi=300, sharey=True, sharex=True)
+
+    # plot
+    for r in range(n_subjects):
+
+        # extract trace
+        trace = model_traces[r]
+
+        # plot comparisons
+        for c, comparison in enumerate(comparisons):
+
+            if n_comparisons > 1:
+                ax = axs[c]
+            else:
+                ax = axs
+
+            # compute trace difference
+            trace_diff = (trace['{}_{}'.format(parameter, comparison[0])].ravel() -
+                          trace['{}_{}'.format(parameter, comparison[1])].ravel())
+
+            # plot trace difference
+            trace_diff_hpd = hpd(trace_diff, alpha=hpd_alpha)
+            trace_diff_mean = np.mean(trace_diff)
+            if (trace_diff_hpd[0]<0) & (trace_diff_hpd[1]>0):
+                ax.plot(trace_diff_hpd, [r,r], lw=3, color='red')
+                ax.scatter(x=trace_diff_mean, y=r, color='red', s=100)
+            else:
+                ax.plot(trace_diff_hpd, [r,r], lw=3, color='k')
+                ax.scatter(x=trace_diff_mean, y=r, color='k', s=100)
+
+            # set title
+            ax.set_title('{} - {}'.format(*comparison), fontsize=fontsize)
+
+            # add 0-line
+            ax.axvline(0, color='red', ls='--', alpha=0.5)
+
+            # set y-labels
+            ax.set_ylim(-1, n_subjects)
+            ax.set_yticks(np.arange(n_subjects))
+            if c == 0:
+                ax.set_yticklabels(["Subject: {}".format(s) for s in subjects], fontsize=fontsize)
+
+            # set x-label
+            if parameter in ['sigma', 'gamma', 'tau']:
+                ax.set_xlabel(r'$\{}$'.format(parameter), fontsize=fontsize*1.2)
+            else:
+                ax.set_xlabel(r'${}$'.format(parameter), fontsize=fontsize)
 
     # autmomatic cleaning
     fig.tight_layout()
