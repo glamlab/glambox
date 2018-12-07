@@ -79,11 +79,7 @@ def extract_modes(traces, parameters=None, precision=None, f_burn=0.5):
                 parameter, burn=int(f_burn*n_samples)), prec))[0][0]
         modes.append(trace_modes)
 
-    if len(modes) == 1:
-        return modes[0]
-    else:
-        return modes
-
+    return modes
 
 def get_design(model):
     """

@@ -27,7 +27,4 @@ def fit_models(models, method='MCMC', verbose=True, n_samples=2000, n_advi=20000
                 trace = vi_est.sample(n_samples)
             traces.append(trace)
 
-    if len(traces) == 1:
-        return traces[0]
-    else:
-        return traces
+    return traces
