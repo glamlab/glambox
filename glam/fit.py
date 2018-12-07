@@ -25,6 +25,8 @@ def fit_models(models, method='MCMC', verbose=True, n_samples=2000, n_vi=200000,
             elif method == 'VI':
                 vi_est = pm.fit(n=n_vi, **kwargs)
                 trace = vi_est.sample(n_samples)
+            else:
+                raise ValueError("Method must be 'MCMC' or 'VI'.")
             traces.append(trace)
 
     return traces
