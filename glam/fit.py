@@ -4,7 +4,7 @@ import pymc3 as pm
 import numpy as np
 
 
-def fit_models(models, method='NUTS', verbose=True, n_samples=2000, n_advi=200000, **kwargs):
+def fit_models(models, method='MCMC', verbose=True, n_samples=2000, n_advi=200000, **kwargs):
     if isinstance(models, pm.model.Model):
         models = [models]
     elif isinstance(models, list) and np.alltrue(np.array([isinstance(model, pm.model.Model)
@@ -20,9 +20,9 @@ def fit_models(models, method='NUTS', verbose=True, n_samples=2000, n_advi=20000
         if verbose:
             print('  Fitting model {} of {}...'.format(m+1, len(models)))
         with model:
-            if method == 'NUTS':
+            if method == 'MCMC':
                 trace = pm.sample(draws=n_samples, **kwargs)
-            elif method == 'ADVI':
+            elif method == 'VI':
                 vi_est = pm.fit(n=n_advi, **kwargs)
                 trace = vi_est.sample(n_samples)
             traces.append(trace)
