@@ -2,7 +2,9 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from seaborn import despine
-import pymc3 as pm
+from pymc3 import plot_posterior
+from pymc3.stats import hpd
+from scipy.stats import mode
 
 
 def plot_fit(data, predictions, prediction_labels=None):
@@ -484,7 +486,7 @@ def plot_corpleft_by_left_gaze_advantage(data, predictions=None, ax=None, n_bins
     despine()
 
 
-def plot_node(model, parameter, comparisons=None, fs=12, alpha=0.5):
+def plot_node(model, parameter, comparisons=None, fontsize=12, alpha=0.5, hpd_alpha=0.05):
 
     # determine model type
     model_type = model.type
@@ -507,9 +509,14 @@ def plot_node(model, parameter, comparisons=None, fs=12, alpha=0.5):
         raise ValueError(error_msg)
     parameter_design = model.design[parameter]
     conditions = parameter_design['conditions']
+    n_conditions = len(conditions)
 
     # extract subjects
     subjects = parameter_design[conditions[0]]['subjects']
+    try:
+        subjects = subjects.astype(np.int)
+    except:
+        None
 
     # read out number of traces
     if not getattr(model.trace, '__iter__', False):
@@ -523,7 +530,10 @@ def plot_node(model, parameter, comparisons=None, fs=12, alpha=0.5):
             raise ValueError(error_msg)
 
     # set up figure
-    fig = plt.figure(figsize=(5*(1+n_comparisons), 2*(1+n_traces)), dpi=300)
+    if model_type == 'individual':
+        fig = plt.figure(figsize=(4*(1+n_comparisons), 1.5*(1+n_traces)), dpi=300)
+    else:
+        fig = plt.figure(figsize=(4*(1+n_comparisons), 2*(1+n_traces)), dpi=300)
 
     # set up dict for figure axes
     axs = dict()
@@ -535,6 +545,8 @@ def plot_node(model, parameter, comparisons=None, fs=12, alpha=0.5):
 
     # plot
     for r in range(n_traces):
+
+        # extract trace
         trace = model_traces[r]
 
         # create & collect axis
@@ -544,10 +556,10 @@ def plot_node(model, parameter, comparisons=None, fs=12, alpha=0.5):
         # add y-label
         if model_type == 'individual':
             axs[0][-1].set_ylabel(
-                'Subject: {}'.format(subjects[r], parameter), fontsize=fs)
+                'Subject: {}'.format(subjects[r], parameter), fontsize=fontsize)
 
         # plot condition traces
-        for condition in conditions:
+        for ci, condition in enumerate(conditions):
 
             # extract trace
             if model_type == 'hierarchical':
@@ -568,12 +580,24 @@ def plot_node(model, parameter, comparisons=None, fs=12, alpha=0.5):
                     xlims[0, 1] = np.max(condition_trace)
 
             # plot trace
-            if r == 0:
-                contition_label = condition
+            if model_type == 'individual':
+                trace_hpd = hpd(condition_trace, alpha=hpd_alpha)
+                trace_mean = np.mean(condition_trace)
+                axs[0][-1].plot(trace_hpd, [ci, ci], lw=3, color='C{}'.format(ci))
+                axs[0][-1].scatter(x=trace_mean, y=ci, color='C{}'.format(ci), s=100)
             else:
-                contition_label = ''
-            axs[0][-1].hist(condition_trace, histtype='stepfilled',
-                            bins=100, alpha=alpha, label=contition_label)
+                if r == 0:
+                    contition_label = condition
+                else:
+                    contition_label = ''
+                axs[0][-1].hist(condition_trace, histtype='stepfilled',
+                                bins=100, alpha=alpha, label=contition_label)
+
+        # set y-lim
+        if model_type == 'individual':
+            axs[0][-1].set_ylim(-1, n_conditions)
+            axs[0][-1].set_yticks(np.arange(n_conditions))
+            axs[0][-1].set_yticklabels(conditions, fontsize=fontsize)
 
         # plot comparisons
         for c, comparison in enumerate(comparisons):
@@ -601,50 +625,167 @@ def plot_node(model, parameter, comparisons=None, fs=12, alpha=0.5):
                     xlims[c+1, 1] = np.max(trace_diff)
 
             # plot trace difference
-            pm.plot_posterior(trace_diff,
-                              color='red',
-                              histtype='stepfilled',
-                              alpha=alpha,
-                              bins=50,
-                              ax=axs[c+1][-1])
+            if model_type == 'individual':
+                trace_diff_hpd = hpd(trace_diff, alpha=hpd_alpha)
+                trace_diff_mean = np.mean(trace_diff)
+                axs[c+1][-1].plot(trace_diff_hpd, [0, 0], lw=3, color='gray')
+                axs[c+1][-1].scatter(x=trace_diff_mean, y=0, color='gray', s=100)
+                hpd_string = '95% HPD:\n[{}, {}]'.format(np.round(trace_diff_hpd[0], 2), np.round(trace_diff_hpd[1], 2))
+                axs[c+1][-1].text(0.5, 0.7, hpd_string,
+                                  horizontalalignment='center',
+                                  verticalalignment='center',
+                                  transform=axs[c+1][-1].transAxes,
+                                  fontsize=fontsize)
+                axs[c+1][-1].set_ylim(-1, n_conditions)
+            else:
+                plot_posterior(trace_diff,
+                               color='gray',
+                               histtype='stepfilled',
+                               alpha=alpha,
+                               alpha_level=hpd_alpha,
+                               bins=50,
+                               ax=axs[c+1][-1])
 
             # set title
             if r == 0:
-                axs[c+1][-1].set_title('{} - {}'.format(*
-                                                        comparison), fontsize=fs)
+                axs[c+1][-1].set_title('{} - {}'.format(*comparison), fontsize=fontsize)
 
-        # label x-axis
-        if parameter in ['sigma', 'gamma', 'tau']:
-            for i in range(n_comparisons+1):
-                if model_type == 'hierarchical':
-                    axs[i][-1].set_xlabel(r'$\{}$'.format(parameter) +
-                                          r'$_{mu}$', fontsize=fs*1.2)
-                else:
-                    axs[i][-1].set_xlabel(r'$\{}$'.format(parameter),
-                                          fontsize=fs*1.2)
-        else:
-            for i in range(n_comparisons):
-                if model_type == 'hierarchical':
-                    axs[i][-1].set_xlabel(r'${}$'.format(parameter) +
-                                          r'$_{mu}$', fontsize=fs)
-                else:
-                    axs[i][-1].set_xlabel(r'${}$'.format(parameter),
-                                          fontsize=fs)
+    # label x-axis
+    if parameter in ['sigma', 'gamma', 'tau']:
+        for i in range(1+n_comparisons):
+            if model_type == 'hierarchical':
+                axs[i][-1].set_xlabel(r'$\{}$'.format(parameter) +
+                                      r'$_{mu}$', fontsize=fontsize*1.2)
+            else:
+                axs[i][-1].set_xlabel(r'$\{}$'.format(parameter),
+                                      fontsize=fontsize*1.2)
+    else:
+        for i in range(1+n_comparisons):
+            if model_type == 'hierarchical':
+                axs[i][-1].set_xlabel(r'${}$'.format(parameter) +
+                                      r'$_{mu}$', fontsize=fontsize)
+            else:
+                axs[i][-1].set_xlabel(r'${}$'.format(parameter),
+                                      fontsize=fontsize)
 
     # set x-lims
     for i in range(1+n_comparisons):
         for ax in axs[i]:
             ax.set_xlim(xlims[i, 0], xlims[i, 1])
-            ax.set_yticks([])
-            ax.set_yticklabels([])
-
+            ax.tick_params(axis='both', which='major', labelsize=fontsize)
+            if (model_type != 'individual') or (i > 0):
+                ax.set_yticks([])
+                ax.set_yticklabels([])
+            
     # add legend
-    axs[0][0].legend(loc='upper left', frameon=False,
-                     fontsize=fs)
+    axs[0][0].legend(loc='upper center', frameon=False,
+                     fontsize=fontsize, ncol=len(conditions))
 
     # re-shape axs
     axs = np.concatenate([axs[i][None]
                           for i in range(1+n_comparisons)], axis=1)
+
+    # autmomatic cleaning
+    fig.tight_layout()
+    despine()
+
+    return fig, axs
+
+
+def plot_individual_node_comparison(model, parameter, comparisons, fontsize=12, hpd_alpha=0.05):
+
+    # determine model type
+    model_type = model.type
+    if model_type != 'individual':
+        error_msg = 'plot_individual_node_comparison requires model of "'"individual"'" type.'
+        raise
+
+    # make sure comparisons specified correctly
+    if comparisons is not None:
+        if not getattr(comparisons, '__iter__', False):
+            error_msg = 'comparisons must be iterable (e.g.[(condition(A), condition(B))]).'
+            raise ValueError(error_msg)
+        else:
+            if not np.all([len(c) == 2 for c in comparisons]):
+                error_msg = 'Each comparison must be of length 2 (e.g.[(condition(A), condition(B))]).'
+                raise ValueError(error_msg)
+            else:
+                n_comparisons = len(comparisons)
+
+    # extract design for parameter
+    if parameter not in model.design.keys():
+        error_msg = '"'"{}"'" not part of model parameters.'.format(parameter)
+        raise ValueError(error_msg)
+    parameter_design = model.design[parameter]
+    conditions = parameter_design['conditions']
+
+    # extract subjects
+    subjects = parameter_design[conditions[0]]['subjects']
+    try:
+        subjects = subjects.astype(np.int)
+    except:
+        None
+    n_subjects = subjects.size
+
+    # read out number of traces
+    if not getattr(model.trace, '__iter__', False):
+        model_traces = [model.trace]
+    else:
+        model_traces = model.trace
+    n_traces = len(model_traces)
+    if n_subjects != n_traces:
+        error_msg = 'Number of subjects contained in model does not match number of traces.'
+        raise ValueError(error_msg)
+
+    # set up figure
+    fig, axs = plt.subplots(1, n_comparisons, figsize=(5*n_comparisons, np.max([np.int(n_subjects * 1/2), 2.5])),
+        dpi=300, sharey=True, sharex=True)
+
+    # plot
+    for r in range(n_subjects):
+
+        # extract trace
+        trace = model_traces[r]
+
+        # plot comparisons
+        for c, comparison in enumerate(comparisons):
+
+            if n_comparisons > 1:
+                ax = axs[c]
+            else:
+                ax = axs
+
+            # compute trace difference
+            trace_diff = (trace['{}_{}'.format(parameter, comparison[0])].ravel() -
+                          trace['{}_{}'.format(parameter, comparison[1])].ravel())
+
+            # plot trace difference
+            trace_diff_hpd = hpd(trace_diff, alpha=hpd_alpha)
+            trace_diff_mean = np.mean(trace_diff)
+            if (trace_diff_hpd[0]<0) & (trace_diff_hpd[1]>0):
+                ax.plot(trace_diff_hpd, [r,r], lw=3, color='red')
+                ax.scatter(x=trace_diff_mean, y=r, color='red', s=100)
+            else:
+                ax.plot(trace_diff_hpd, [r,r], lw=3, color='k')
+                ax.scatter(x=trace_diff_mean, y=r, color='k', s=100)
+
+            # set title
+            ax.set_title('{} - {}'.format(*comparison), fontsize=fontsize)
+
+            # add 0-line
+            ax.axvline(0, color='red', ls='--', alpha=0.5)
+
+            # set y-labels
+            ax.set_ylim(-1, n_subjects)
+            ax.set_yticks(np.arange(n_subjects))
+            if c == 0:
+                ax.set_yticklabels(["Subject: {}".format(s) for s in subjects], fontsize=fontsize)
+
+            # set x-label
+            if parameter in ['sigma', 'gamma', 'tau']:
+                ax.set_xlabel(r'$\{}$'.format(parameter), fontsize=fontsize*1.2)
+            else:
+                ax.set_xlabel(r'${}$'.format(parameter), fontsize=fontsize)
 
     # autmomatic cleaning
     fig.tight_layout()
