@@ -249,14 +249,14 @@ def generate_subject_model_parameters(parameter,
                                       design,
                                       lower, upper,
                                       val, testval,
-                                      meta_dist=False):
+                                      within_dependent=False):
 
     if design['conditions'] is not None:
         if val is None:
             parms = []
 
             # if we want a meta distribution, we need to initialize meta mean and ds priors here.
-            if meta_dist:
+            if within_dependent:
                 bounded = pm.Bound(pm.Normal, lower, upper)
                 meta_mu = pm.Uniform('{}_mu'.format(parameter), lower, upper)
                 meta_sd = pm.Uniform('{}_sd'.format(parameter), 1e-10, upper - lower)
@@ -273,7 +273,7 @@ def generate_subject_model_parameters(parameter,
                         parms.append(tt.zeros((1, 1)))
                 else:
                     # if we want meta distribution for conditions, now drawn parameters should come from meta distribution
-                    if meta_dist:
+                    if within_dependent:
                         parms.append(bounded('{}_{}'.format(parameter, condition), mu=meta_mu, sd=meta_sd, shape=(1, 1)))
                     else:
                         parms.append(pm.Uniform('{}_{}'.format(parameter, condition),
@@ -316,31 +316,31 @@ def make_subject_model(rts, gaze, values, error_ll,
                                               design=design['v'],
                                               lower=zerotol, upper=0.01,
                                               val=v_val, testval=0.0002,
-                                              meta_dist=(design['v']['within_dependent']))
+                                              within_dependent=(design['v']['within_dependent']))
 
         gamma = generate_subject_model_parameters(parameter='gamma',
                                                   design=design['gamma'],
                                                   lower=gamma_bounds[0], upper=gamma_bounds[1],
                                                   val=gamma_val, testval=0,
-                                                  meta_dist=(design['gamma']['within_dependent']))
+                                                  within_dependent=(design['gamma']['within_dependent']))
 
         s = generate_subject_model_parameters(parameter='s',
                                               design=design['s'],
                                               lower=zerotol, upper=0.02,
                                               val=s_val, testval=0.0075,
-                                              meta_dist=(design['s']['within_dependent']))
+                                              within_dependent=(design['s']['within_dependent']))
 
         tau = generate_subject_model_parameters(parameter='tau',
                                                 design=design['tau'],
                                                 lower=0, upper=5,
                                                 val=tau_val, testval=1,
-                                                meta_dist=(design['tau']['within_dependent']))
+                                                within_dependent=(design['tau']['within_dependent']))
 
         t0 = generate_subject_model_parameters(parameter='t0',
                                                design=design['t0'],
                                                lower=0, upper=500,
                                                val=t0_val, testval=1,
-                                               meta_dist=(design['t0']['within_dependent']))
+                                               within_dependent=(design['t0']['within_dependent']))
 
         # Likelihood
         def lda_logp(rt,
@@ -394,31 +394,68 @@ def generate_hierarchical_model_parameters(parameter,
                                            mu_lower, mu_upper,
                                            sd_lower, sd_upper,
                                            bound_lower, bound_upper,
-                                           val, testval):
+                                           val, testval,
+                                           within_dependent=False):
 
     if (design['conditions'] is not None):
         if val is None:
-            mu = tt.stack([pm.Uniform('{}_{}_mu'.format(parameter, condition),
-                                      mu_lower,
-                                      mu_upper,
-                                      testval=testval) for condition in design['conditions']])
-            sd = tt.stack([pm.Uniform('{}_{}_sd'.format(parameter, condition),
-                                      sd_lower,
-                                      sd_upper,
-                                      testval=testval) for condition in design['conditions']])
-            bounded = pm.Bound(pm.Normal, bound_lower, bound_upper)
-            parms = []
-            n_subjects_per_condition = []
-            for c, condition in enumerate(design['conditions']):
-                n_subjects_in_condition = np.unique(design['subject_index'][design['condition_index'] == c]).size
-                n_subjects_per_condition.append(n_subjects_in_condition)
-                parms_tmp = bounded('{}_{}'.format(parameter, condition),
-                                    mu=mu[c],
-                                    sd=sd[c],
-                                    shape=(n_subjects_in_condition))
-                parms_tmp = tt.concatenate([tt.zeros(1), parms_tmp])
-                parms.append(parms_tmp[design['D'][:, c]][:, None])
-            parms = tt.concatenate(parms, axis=1)
+            if not within_dependent:
+                mu = tt.stack([pm.Uniform('{}_{}_mu'.format(parameter, condition),
+                                          mu_lower,
+                                          mu_upper,
+                                          testval=testval) for condition in design['conditions']])
+                sd = tt.stack([pm.Uniform('{}_{}_sd'.format(parameter, condition),
+                                          sd_lower,
+                                          sd_upper,
+                                          testval=testval) for condition in design['conditions']])
+                bounded = pm.Bound(pm.Normal, bound_lower, bound_upper)
+                parms = []
+                n_subjects_per_condition = []
+                for c, condition in enumerate(design['conditions']):
+                    n_subjects_in_condition = np.unique(design['subject_index'][design['condition_index'] == c]).size
+                    n_subjects_per_condition.append(n_subjects_in_condition)
+                    parms_tmp = bounded('{}_{}'.format(parameter, condition),
+                                        mu=mu[c],
+                                        sd=sd[c],
+                                        shape=(n_subjects_in_condition))
+                    parms_tmp = tt.concatenate([tt.zeros(1), parms_tmp])
+                    parms.append(parms_tmp[design['D'][:, c]][:, None])
+                parms = tt.concatenate(parms, axis=1)
+            
+            else:  # within dependent
+                # population distribution (not dependent on condition)
+                #   this is a distribution per parameter, from which single subject's mean parameters are drawn
+                mu = pm.Uniform('{}_mu'.format(parameter), mu_lower, mu_upper, testval=testval)
+                sd = pm.Uniform('{}_sd'.format(parameter), sd_lower, sd_upper, testval=testval)
+
+                # individual distributions (not dependent on condition)
+                #   this is a distribution of parameter means and sds per subject,
+                #   from which this subject's parameters for different conditions are drawn
+                bounded_mu = pm.Bound(pm.Normal, lower=mu_lower, upper=mu_upper)
+                bounded_sd = pm.Bound(pm.Normal, lower=sd_lower, upper=sd_upper)
+
+                mu_subject = bounded_mu('{}_mu_subject'.format(parameter), mu=mu, sd=sd, shape=n_subjects)
+                sd_subject = bounded_sd('{}_sd_subject'.format(parameter), mu=mu, sd=sd, shape=n_subjects)
+
+                # subject condition parameters
+                #   for every subject, draw a parameter for from this subject's parameter distribution
+                #   for every condition this subject is in.
+                parameters = []
+                
+                bounded_subject = pm.Bound(pm.Normal, lower=bound_lower, upper=bound_upper)
+
+                for s, subject in enumerate(np.arange(n_subjects)):
+                    subject_parameters = []
+                    for c, condition in enumerate(design['conditions']):
+                        subject_parameters.append(
+                            bounded_subject('{}_{}__{}'.format(parameter, condition, subject),
+                                            mu=mu_subject[s],
+                                            sd=sd_subject[s],
+                                            shape=(1, 1))
+                                                 )
+                    subject_parameters = tt.concatenate(subject_parameters)
+                    parameters.append(subject_parameters[None, :])
+                parms = tt.concatenate(parameters, axis=0)
 
         else:
             parms = []
@@ -475,7 +512,8 @@ def make_hierarchical_model(rts, gaze, values, error_lls,
                                                    mu_lower=zerotol, mu_upper=0.0005,
                                                    sd_lower=zerotol, sd_upper=0.0005,
                                                    bound_lower=0, bound_upper=0.0005,
-                                                   val=v_val, testval=0.0001)
+                                                   val=v_val, testval=0.0001,
+                                                   within_dependent=design['v']['within_dependent'])
 
         gamma = generate_hierarchical_model_parameters(parameter='gamma',
                                                        n_subjects=n_subjects,
@@ -483,7 +521,8 @@ def make_hierarchical_model(rts, gaze, values, error_lls,
                                                        mu_lower=gamma_bounds[0], mu_upper=gamma_bounds[1],
                                                        sd_lower=zerotol, sd_upper=gamma_bounds[1] - gamma_bounds[0],
                                                        bound_lower=gamma_bounds[0], bound_upper=gamma_bounds[1],
-                                                       val=gamma_val, testval=.5)
+                                                       val=gamma_val, testval=.5,
+                                                       within_dependent=design['gamma']['within_dependent'])
 
         s = generate_hierarchical_model_parameters(parameter='s',
                                                    n_subjects=n_subjects,
@@ -491,7 +530,8 @@ def make_hierarchical_model(rts, gaze, values, error_lls,
                                                    mu_lower=zerotol, mu_upper=0.02,
                                                    sd_lower=zerotol, sd_upper=0.02,
                                                    bound_lower=zerotol, bound_upper=0.02,
-                                                   val=s_val, testval=0.0075)
+                                                   val=s_val, testval=0.0075,
+                                                   within_dependent=design['s']['within_dependent'])
 
         tau = generate_hierarchical_model_parameters(parameter='tau',
                                                      n_subjects=n_subjects,
@@ -499,7 +539,8 @@ def make_hierarchical_model(rts, gaze, values, error_lls,
                                                      mu_lower=0, mu_upper=5,
                                                      sd_lower=zerotol, sd_upper=5,
                                                      bound_lower=0, bound_upper=5,
-                                                     val=tau_val, testval=.5)
+                                                     val=tau_val, testval=.5,
+                                                     within_dependent=design['tau']['within_dependent'])
 
         if t0_val is None:
             t0 = pm.Uniform('t0', 0, 500, testval=50, shape=(n_subjects, 1))
