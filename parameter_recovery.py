@@ -179,12 +179,6 @@ def recover_and_save_hierarchical(generated_input, output_folder=None, label=Non
             all_converged = summary(result.trace[0], varnames=['v', 'gamma', 's', 'tau'])[
                 'Rhat'].between(0.95, 1.05).all()
 
-        # assemble output dataframe row
-        print(result.estimates.head(1))
-        print('level_set', level_set['v'])
-        print('parameter_set', parameter_set['v'])
-        print('recovered', result.estimates['v_mu'][0])
-
         output = pd.DataFrame(dict(index=[index],
                                    v_level=[level_set['v']],
                                    gamma_level=[level_set['gamma']],
