@@ -68,10 +68,35 @@ def generate_parameter_sets(parameter_info, levels=['low', 'medium', 'high'], pa
 
                 for o, other in enumerate(others):
                     level_set[other] = other_constellation[o]
-                    parameter_set[other] = [parameter_info[other][other_constellation[o]]]
+                    parameter_set[other] = [
+                        parameter_info[other][other_constellation[o]]]
 
                 index += 1
                 yield index, level_set, parameter_set
+
+
+def generate_hierarchical_parameter_sets(parameter_info, levels=['low', 'medium', 'high'], parameters=['v', 'gamma', 's', 'tau']):
+    """
+    Generates parameter sets for hierarchical simulation.
+    
+    Args:
+        parameter_info (dict): dict containing information about parameter levels
+        levels (list, optional): list of level labels
+        parameters (list, optional): list of parameter names
+    Yields:
+        tuple: int index, dict of parameter levels, dict of population parameters
+    """
+    all_parameter_levels = list(product(levels, levels, levels, levels))
+    
+    for index, parameter_levels in enumerate(all_parameter_levels):
+        parameter_set = dict()
+        level_set = dict()
+        for p, parameter in enumerate(parameters):
+            level_set[parameter] = parameter_levels[p]
+            parameter_set[parameter] = dict(mu=parameter_info[parameter]['mu'][level_set[parameter]],
+                                            sd=parameter_info[parameter]['sd'],
+                                            bounds=parameter_info[parameter]['bounds'])          
+        yield index, level_set, parameter_set
 
 
 def recover_and_save(generated_input, output_folder=None, label=None,
@@ -84,7 +109,8 @@ def recover_and_save(generated_input, output_folder=None, label=None,
     index, level_set, parameter_set = generated_input
 
     # check if already done:
-    filename = join(output_folder, 'parameter-recovery_{}_part{}.csv'.format(label, index))
+    filename = join(
+        output_folder, 'parameter-recovery_{}_part{}.csv'.format(label, index))
     if isfile(filename):
         print("Found previous result for index {}. Skipping...".format(index))
         return
@@ -99,7 +125,8 @@ def recover_and_save(generated_input, output_folder=None, label=None,
         if fit_args['method'] == 'VI':
             all_converged = np.nan
         else:
-            all_converged = summary(result.trace[0], varnames=['v', 'gamma', 's', 'tau'])['Rhat'].between(0.95, 1.05).all()
+            all_converged = summary(result.trace[0], varnames=['v', 'gamma', 's', 'tau'])[
+                'Rhat'].between(0.95, 1.05).all()
 
         # assemble output dataframe row
         output = pd.DataFrame(dict(index=[index],
@@ -115,6 +142,64 @@ def recover_and_save(generated_input, output_folder=None, label=None,
                                    gamma_rec=result.estimates['gamma'][0],
                                    s_rec=result.estimates['s'][0],
                                    tau_rec=result.estimates['tau'][0],
+                                   converged=[all_converged]))
+
+        output.to_csv(filename,
+                      index=False)
+
+        return output
+
+
+def recover_and_save_hierarchical(generated_input, output_folder=None, label=None,
+                                  simulate_group_args=None, make_model_args=None, fit_args=None):
+    """
+    Recovers a single GLAM using `recover_glam`
+    using input from `generate_hierarchical_parameter_sets`
+    and saves the output.
+    """
+    index, level_set, parameter_set = generated_input
+
+    # check if already done:
+    filename = join(
+        output_folder, 'parameter-recovery_{}_part{}.csv'.format(label, index))
+    if isfile(filename):
+        print("Found previous result for index {}. Skipping...".format(index))
+        return
+    else:
+        # perform actual recovery
+        result = recover_glam(parameter_set,
+                              simulate_group_args=simulate_group_args,
+                              make_model_args=make_model_args,
+                              fit_args=fit_args)
+
+        # check for convergence:
+        if fit_args['method'] == 'VI':
+            all_converged = np.nan
+        else:
+            all_converged = summary(result.trace[0], varnames=['v', 'gamma', 's', 'tau'])[
+                'Rhat'].between(0.95, 1.05).all()
+
+        output = pd.DataFrame(dict(index=[index],
+                                   v_level=[level_set['v']],
+                                   gamma_level=[level_set['gamma']],
+                                   s_level=[level_set['s']],
+                                   tau_level=[level_set['tau']],
+                                   v_gen=parameter_set['v']['mu'],
+                                   gamma_gen=parameter_set['gamma']['mu'],
+                                   s_gen=parameter_set['s']['mu'],
+                                   tau_gen=parameter_set['tau']['mu'],
+                                   v_rec=result.estimates['v_mu'][0],
+                                   v_rec_hpd_lower=result.estimates['v_mu_hpd_2.5'][0],
+                                   v_rec_hpd_upper=result.estimates['v_mu_hpd_97.5'][0],
+                                   gamma_rec=result.estimates['gamma_mu'][0],
+                                   gamma_rec_hpd_lower=result.estimates['gamma_mu_hpd_2.5'][0],
+                                   gamma_rec_hpd_upper=result.estimates['gamma_mu_hpd_97.5'][0],
+                                   s_rec=result.estimates['s_mu'][0],
+                                   s_rec_hpd_lower=result.estimates['s_mu_hpd_2.5'][0],
+                                   s_rec_hpd_upper=result.estimates['s_mu_hpd_97.5'][0],
+                                   tau_rec=result.estimates['tau_mu'][0],
+                                   tau_rec_hpd_lower=result.estimates['tau_mu_hpd_2.5'][0],
+                                   tau_rec_hpd_upper=result.estimates['tau_mu_hpd_97.5'][0],
                                    converged=[all_converged]))
 
         output.to_csv(filename,
