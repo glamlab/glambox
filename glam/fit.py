@@ -21,7 +21,10 @@ def fit_models(models, method='MCMC', verbose=True, draws=2000, n_vi=200000, ste
             print('  Fitting model {} of {}...'.format(m + 1, len(models)))
         with model:
             if method == 'MCMC':
-                step_method = step()
+                if step is not None:
+                    step_method = step()
+                else:
+                    step_method = None
                 trace = pm.sample(draws=draws, step=step_method, **kwargs)
             elif method == 'VI':
                 vi_est = pm.fit(n=n_vi, **kwargs)
