@@ -1259,7 +1259,7 @@ def absolute_fit_individual(observed,
     # extract oberved value ranges
     rt_range = extract_range(observed['rt']['mean'], bound=(0,None))
     best_chosen_range = extract_range(observed['best_chosen']['mean'], bound=(0,1))
-    gaze_influence_range = extract_range(observed['gaze_influence'], bond=(-1,1))
+    gaze_influence_range = extract_range(observed['gaze_influence'], bound=(-1,1))
 
     # plot observed vs predicted
     for m, prediction in enumerate(predictions):
