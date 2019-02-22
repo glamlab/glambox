@@ -99,7 +99,7 @@ class GLAM(object):
             individual_idx = np.arange(n_existing_individuals, n_existing_individuals + n_individuals)
 
         # Set up parameters
-        if kind is 'hierarchical':
+        if kind == 'hierarchical':
             default_parameters = dict(v=dict(mu=0.00007, sd=0.00001, bounds=(0.00003, 0.00015)),
                                       s=dict(mu=0.008, sd=0.001, bounds=(0.005, 0.011)),
                                       gamma=dict(mu=0.3, sd=0.3, bounds=(-1.0, 1.0)),
@@ -118,8 +118,10 @@ class GLAM(object):
                 tmp[tmp < default_parameters[p]['bounds'][0]] = default_parameters[p]['bounds'][0]
                 tmp[tmp > default_parameters[p]['bounds'][1]] = default_parameters[p]['bounds'][1]
                 parameters_formatted[p] = tmp
-        elif kind is 'individual':
+        elif kind == 'individual':
             parameters_formatted = parameters
+        else:
+            raise ValueError("'kind' must be 'individual' or 'hierarchical' (is '{}')".format(kind))
 
         # Save generating parameters
         self.parameters[label] = parameters_formatted
