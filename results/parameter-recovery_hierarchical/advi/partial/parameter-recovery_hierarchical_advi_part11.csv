@@ -1,2 +1,0 @@
-index,v_level,gamma_level,s_level,tau_level,v_gen,gamma_gen,s_gen,tau_gen,v_rec,v_rec_hpd_lower,v_rec_hpd_upper,gamma_rec,gamma_rec_hpd_lower,gamma_rec_hpd_upper,s_rec,s_rec_hpd_lower,s_rec_hpd_upper,tau_rec,tau_rec_hpd_lower,tau_rec_hpd_upper,converged
-11,low,medium,low,high,2.85e-05,5.551115123125783e-17,0.0047,1.135,4.0315012182335506e-05,2.2636618297930234e-05,5.869203833675528e-05,0.03311290575101347,-0.12113167662872015,0.1939216783735247,0.003984333419896493,0.0034412828096098895,0.004510767939126654,0.9370482329715223,0.8260825778012632,1.057157583074272,
