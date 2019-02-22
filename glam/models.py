@@ -306,7 +306,7 @@ def make_subject_model(rts, gaze, values, error_ll,
                        tau_val=None,
                        t0_val=None,
                        zerotol=1e-6, error_weight=0.05, boundary=1.,
-                       gamma_bounds=(-1, 1),
+                       gamma_bounds=(-10, 1),
                        design=dict(v=dict(), gamma=dict(), s=dict(), tau=dict(), t0=dict())):
     with pm.Model() as glam_individual:
 
@@ -399,9 +399,9 @@ def generate_hierarchical_model_parameters(parameter,
                                            val, testval,
                                            within_dependent=False):
 
-    if (design['conditions'] is not None):
-        if val is None:
-            if not within_dependent:
+    if (design['conditions'] is not None):  # Parameter has dependence
+        if val is None:  # Parameter is not set deterministically to some value
+            if not within_dependent:  # The parameter's conditions have distributions from which subject parameters are drawn (e.g., a subject's fast v is drawn from the distribution of all subjects' fast vs)
                 mu = tt.stack([pm.Uniform('{}_{}_mu'.format(parameter, condition),
                                           mu_lower,
                                           mu_upper,
@@ -410,22 +410,23 @@ def generate_hierarchical_model_parameters(parameter,
                                           sd_lower,
                                           sd_upper,
                                           testval=testval) for condition in design['conditions']])
-                bounded = pm.Bound(pm.Normal, bound_lower, bound_upper)
                 parms = []
                 n_subjects_per_condition = []
                 for c, condition in enumerate(design['conditions']):
                     n_subjects_in_condition = np.unique(design['subject_index'][design['condition_index'] == c]).size
                     n_subjects_per_condition.append(n_subjects_in_condition)
-                    parms_tmp = bounded('{}_{}'.format(parameter, condition),
-                                        mu=mu[c],
-                                        sd=sd[c],
-                                        shape=(n_subjects_in_condition))
+                    # Escape the Funnel of Hell (cf. https://twiecki.io/blog/2017/02/08/bayesian-hierchical-non-centered/)
+                    parms_tmp_offset = pm.Normal('{}_{}_offset'.format(parameter, condition),
+                                                 mu=0, sd=1, shape=(n_subjects_in_condition))
+                    parms_tmp = pm.Deterministic('{}_{}'.format(parameter, condition),
+                                                 tt.clip(mu[c] + parms_tmp_offset * sd[c],
+                                                         bound_lower, bound_upper))
                     parms_tmp = tt.concatenate([tt.zeros(1), parms_tmp])
                     parms.append(parms_tmp[design['D'][:, c]][:, None])
                 parms = tt.concatenate(parms, axis=1)
-            
-            else:  # within dependent
-                # population distribution (not dependent on condition)
+
+            else:  # within dependent: The parameter's values per condition are drawn from individual subject distributions (e.g., a subject's fast and slow v are both drawn from a subject's base v)
+                #   population distribution (not dependent on condition)
                 #   this is a distribution per parameter, from which single subject's mean parameters are drawn
                 mu = pm.Uniform('{}_mu'.format(parameter), mu_lower, mu_upper, testval=testval)
                 sd = pm.Uniform('{}_sd'.format(parameter), sd_lower, sd_upper, testval=testval)
@@ -443,7 +444,7 @@ def generate_hierarchical_model_parameters(parameter,
                 #   for every subject, draw a parameter for from this subject's parameter distribution
                 #   for every condition this subject is in.
                 parameters = []
-                
+
                 bounded_subject = pm.Bound(pm.Normal, lower=bound_lower, upper=bound_upper)
 
                 for s, subject in enumerate(np.arange(n_subjects)):
@@ -453,8 +454,7 @@ def generate_hierarchical_model_parameters(parameter,
                             bounded_subject('{}_{}__{}'.format(parameter, condition, subject),
                                             mu=mu_subject[s],
                                             sd=sd_subject[s],
-                                            shape=(1, 1))
-                                                 )
+                                            shape=(1, 1)))
                     subject_parameters = tt.concatenate(subject_parameters)
                     parameters.append(subject_parameters[None, :])
                 parms = tt.concatenate(parameters, axis=0)
@@ -476,12 +476,13 @@ def generate_hierarchical_model_parameters(parameter,
                                                   axis=0)
             parms = tt.concatenate(parms, axis=1)
 
-    else:
+    else:  # Parameter has no dependence
         if val is None:
             mu = pm.Uniform('{}_mu'.format(parameter), mu_lower, mu_upper, testval=testval)
             sd = pm.Uniform('{}_sd'.format(parameter), sd_lower, sd_upper, testval=testval)
-            bounded = pm.Bound(pm.Normal, bound_lower, bound_upper)
-            parms = bounded(parameter, mu=mu, sd=sd, shape=(n_subjects, 1))
+            # Escape the Funnel of Hell (cf. https://twiecki.io/blog/2017/02/08/bayesian-hierchical-non-centered/)
+            parms_offset = pm.Normal(parameter + '_offset', mu=0, sd=1, shape=(n_subjects, 1))
+            parms = pm.Deterministic(parameter, tt.clip(mu + parms_offset * sd, bound_lower, bound_upper))
         else:
             parms = pm.Deterministic(parameter, tt.ones((n_subjects, 1)) * val)
 
@@ -496,7 +497,7 @@ def make_hierarchical_model(rts, gaze, values, error_lls,
                             tau_val=None,
                             t0_val=None,
                             zerotol=1e-6, error_weight=0.05, boundary=1.,
-                            gamma_bounds=(-1, 1),
+                            gamma_bounds=(-10, 1),
                             design=dict(v=dict(), gamma=dict(), s=dict(), tau=dict(), t0=dict())):
 
     n_subjects = np.unique(subject_idx).size
