@@ -3,4 +3,4 @@ from . import components
 from . import simulation
 from .models import make_models, GLAM
 from .fit import fit_models
-from .plots import plot_fit
+from .plots import absolute_fit_aggregate
