@@ -3,6 +3,7 @@ import pandas as pd
 from pymc3 import plot_posterior
 from pymc3.stats import hpd
 import statsmodels.api as sm
+from statsmodels.stats.outliers_influence import summary_table
 
 import matplotlib.pyplot as plt
 from seaborn import despine
@@ -129,10 +130,9 @@ def plot_rt_by_difficulty(bar_data,
         # Compute summary statistics
         subject_means = df.groupby(['subject', 'difficulty']).rt.mean()
         means = subject_means.groupby(
-            'difficulty').mean()  # [xlims[0]:xlims[1]]
-        sems = subject_means.groupby('difficulty').sem()  # [xlims[0]:xlims[1]]
+            'difficulty').mean()
+        sems = subject_means.groupby('difficulty').sem()
 
-        # x = np.arange(len(means))
         x = means.index.values
         if xlims is None:
             xlims = [x.min(), x.max()]
@@ -285,7 +285,6 @@ def plot_pchoose_by_value_minus_mean_others(bar_data,
         means = subject_means.groupby('value_minus_mean_others').mean()
         sems = subject_means.groupby('value_minus_mean_others').sem()
 
-        # x = np.arange(len(means))
         x = means.index
         if xlims is None:
             xlims = [x.min(), x.max()]
@@ -344,7 +343,6 @@ def add_gaze_advantage(df, bins=7):
                 np.mean(gaze[t, np.arange(n_items) != i])
 
     if isinstance(bins, (int, float)):
-        # np.array([-1, -0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75, 1])
         bins = np.round(np.linspace(-1, 1, bins), 2)
     for i in range(n_items):
         df['gaze_advantage_{}'.format(i)] = gaze_advantage[:, i]
@@ -433,7 +431,6 @@ def plot_pchoose_by_gaze_minus_mean_others(bar_data,
         means = subject_means.groupby('gaze_advantage').mean()
         sems = subject_means.groupby('gaze_advantage').sem()
 
-        # x = np.arange(len(means))
         x = means.index
         if xlims is None:
             xlims = [x.min(), x.max()]
@@ -970,7 +967,7 @@ def individual_differences(subject_summary,
                            figsize=cm2inch(18, 9)):
 
     if (regression == False) & (annotate == True):
-        print('/!\ annotate only possible, if regression = True.')
+        print('annotate only possible, if regression = True.')
 
     fig = plt.figure(figsize=figsize)
 
@@ -983,7 +980,7 @@ def individual_differences(subject_summary,
     ax02 = plt.subplot2grid((7, 3), (0, 2), rowspan=2)
     ax12 = plt.subplot2grid((7, 3), (2, 2), rowspan=5)
 
-    # define plotting ranges
+    # extract plotting ranges
     rt_range = extract_range(subject_summary['rt']['mean'])
     rt_range[0] = np.min([np.abs(rt_range[0]), 0])
     rt_tickstep = np.int((rt_range[1] - rt_range[0]) / 4)
@@ -1094,10 +1091,7 @@ def individual_differences(subject_summary,
         ax.set_ylim([0, hist_lim])
         ax.set_yticks([0, hist_lim])
         ax.set_yticklabels([0, hist_lim], fontsize=fontsize)
-
-    ax00.set_ylabel('Frequency', fontsize=fontsize)
-    ax01.set_ylabel('Frequency', fontsize=fontsize)
-    ax02.set_ylabel('Frequency', fontsize=fontsize)
+        ax.set_ylabel('Frequency', fontsize=fontsize)
 
     ax00.set_xticks(rt_ticks)
     ax00.set_xticklabels([])
