@@ -43,7 +43,7 @@ def plot_fit(bar_data, line_data=None, line_labels=None, fontsize=7, value_bins=
 
     # Labels
     for label, ax in zip(list('abcd'), axs.ravel()):
-        ax.text(-0.15, 1.175, label, transform=ax.transAxes,
+        ax.text(-0.35, 1.05, label, transform=ax.transAxes,
                 fontsize=fontsize, fontweight='bold', va='top')
         ax.tick_params(axis='both', which='major', labelsize=fontsize)
 
