@@ -64,8 +64,7 @@ def add_difficulty(df, bins=7):
     difficulty = values_sorted[:, -1] - np.mean(values_sorted[:, :-1], axis=1)
 
     if isinstance(bins, (int, float)):
-        n_bins = np.min([np.unique(difficulty).size, bins])
-        bins = np.linspace(np.min(difficulty), np.max(difficulty), n_bins)
+        bins = np.linspace(np.min(difficulty), np.max(difficulty), bins)
         bins = np.round(bins, 2)
     difficulty_binned = pd.cut(difficulty, bins)
     df['difficulty'] = bins[difficulty_binned.codes]
@@ -132,6 +131,7 @@ def plot_rt_by_difficulty(bar_data,
         means = subject_means.groupby(
             'difficulty').mean()
         sems = subject_means.groupby('difficulty').sem()
+        # make sure all 
 
         x = means.index.values
         if xlims is None:
@@ -191,10 +191,10 @@ def add_value_minus_mean_others(df, bins=7):
                 np.mean(values[t, np.arange(n_items) != i])
 
     if isinstance(bins, (int, float)):
-        n_bins = np.min(
-            [np.unique(values_minus_mean_others.ravel()).size, bins])
+        # n_bins = np.min(
+        #     [np.unique(values_minus_mean_others.ravel()).size, bins])
         bins = np.linspace(np.min(values_minus_mean_others.ravel()), np.max(
-            values_minus_mean_others.ravel()), n_bins)
+            values_minus_mean_others.ravel()), bins)
         bins = np.round(bins, 2)
     values_minus_mean_others_binned = pd.cut(
         values_minus_mean_others.ravel(), bins)
@@ -344,13 +344,13 @@ def add_gaze_advantage(df, bins=7):
 
     if isinstance(bins, (int, float)):
         bins = np.round(np.linspace(-1, 1, bins), 2)
+
     for i in range(n_items):
         df['gaze_advantage_{}'.format(i)] = gaze_advantage[:, i]
         df['gaze_advantage_binned_{}'.format(i)] = pd.cut(df['gaze_advantage_{}'.format(i)],
                                                           bins=bins,
                                                           include_lowest=True,
                                                           labels=bins[:-1])
-
     return df.copy()
 
 
@@ -439,10 +439,10 @@ def plot_pchoose_by_gaze_minus_mean_others(bar_data,
         if x.max() > xlims[1]:
             xlims[1] = x.max()
 
-        # subset
-        means = means[x <= np.max(xlims)]
-        sems = sems[x <= np.max(xlims)]
-        x = x[x <= np.max(xlims)]
+        # # subset
+        # means = means[x <= np.max(xlims)]
+        # sems = sems[x <= np.max(xlims)]
+        # x = x[x <= np.max(xlims)]
 
         predicted = False if i == 0 else True
 
