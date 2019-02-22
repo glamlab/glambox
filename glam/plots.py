@@ -1225,3 +1225,151 @@ def add_regression_line(ax, intercept, slope, color='darkgray', **kwargs):
     ax.plot(xs, intercept + slope * xs, color=color, **kwargs)
 
     return ax
+
+
+def absolute_fit_individual(observed,
+                            predictions,
+                            prediction_labels=None,
+                            colors=None,
+                            fontsize=7,
+                            alpha=1.0,
+                            figsize=None):
+
+    # count number of predictions
+    n_predictions = len(predictions)
+    # define prediction labels
+    if prediction_labels is None:
+        prediction_labels = ['Prediction {}'.format(
+            i+1) for i in range(n_predictions)]
+
+    # define figre
+    if figsize is None:
+        figsize = cm2inch(18, 6*n_predictions)
+    fig, axs = plt.subplots(n_predictions, 3, figsize=figsize)
+    if axs.ndim == 1:
+        axs = axs.reshape([1, axs.size])
+
+    # extract oberved value ranges
+    rt_range = extract_range(observed['rt']['mean'])
+    best_chosen_range = extract_range(observed['best_chosen']['mean'])
+    gaze_influence_range = extract_range(observed['gaze_influence'])
+
+    # plot observed vs predicted
+    for m, prediction in enumerate(predictions):
+
+        # a) Mean RT
+        axs[m, 0].scatter(observed['rt']['mean'],
+                          prediction['rt']['mean'],
+                          marker='o',
+                          color='none',
+                          edgecolor='C0',
+                          linewidth=0.5,
+                          s=30)
+        axs[m, 0].scatter(observed['rt']['mean'],
+                          prediction['rt']['mean'],
+                          marker='o',
+                          color='C0',
+                          alpha=0.5,
+                          linewidth=0,
+                          s=30)
+
+        # b) P(choose best)
+        axs[m, 1].scatter(observed['best_chosen']['mean'],
+                          prediction['best_chosen']['mean'],
+                          marker='o',
+                          color='none',
+                          edgecolor='C0',
+                          linewidth=0.5,
+                          s=30)
+        axs[m, 1].scatter(observed['best_chosen']['mean'],
+                          prediction['best_chosen']['mean'],
+                          marker='o',
+                          color='C0',
+                          alpha=0.5,
+                          linewidth=0,
+                          s=30)
+
+        # c) Gaze Influence
+        axs[m, 2].scatter(observed['gaze_influence'],
+                          prediction['gaze_influence'],
+                          marker='o',
+                          color='none',
+                          edgecolor='C0',
+                          linewidth=0.5,
+                          s=30)
+        axs[m, 2].scatter(observed['gaze_influence'],
+                          prediction['gaze_influence'],
+                          marker='o',
+                          color='C0',
+                          alpha=0.5,
+                          linewidth=0,
+                          s=30)
+
+        # update parameter ranges
+        rt_range_prediction = extract_range(prediction['rt']['mean'])
+        if rt_range[0] > rt_range_prediction[0]:
+            rt_range[0] = rt_range_prediction[0]
+        if rt_range[1] < rt_range_prediction[1]:
+            rt_range[1] = rt_range_prediction[1]
+
+        best_chosen_range_prediction = extract_range(
+            prediction['best_chosen']['mean'])
+        if best_chosen_range[0] > best_chosen_range_prediction[0]:
+            best_chosen_range[0] = best_chosen_range_prediction[0]
+        if best_chosen_range[1] < best_chosen_range_prediction[1]:
+            best_chosen_range[1] = best_chosen_range_prediction[1]
+
+        gaze_influence_range_prediction = extract_range(
+            prediction['gaze_influence'])
+        if gaze_influence_range[0] > gaze_influence_range_prediction[0]:
+            gaze_influence_range[0] = gaze_influence_range_prediction[0]
+        if gaze_influence_range[1] < gaze_influence_range_prediction[1]:
+            gaze_influence_range[1] = gaze_influence_range_prediction[1]
+
+        # label axes
+        axs[m, 0].set_ylabel('{}\n\nPredicted Mean RT (ms)'.format(
+            prediction_labels[m]), fontsize=fontsize)
+        axs[m, 0].set_xlabel('Observed Mean RT (ms)', fontsize=fontsize)
+        axs[m, 1].set_ylabel('Predicted P(choose best)', fontsize=fontsize)
+        axs[m, 1].set_xlabel('Observed P(choose best)', fontsize=fontsize)
+        axs[m, 2].set_ylabel(
+            'Predicted Gaze Influence\non P(choice | value)', fontsize=fontsize)
+        axs[m, 2].set_xlabel(
+            'Observed Gaze Influence\non P(choice | value)', fontsize=fontsize)
+
+    # update axes limits and ticks
+    rt_ticks = np.linspace(rt_range[0], rt_range[1], 4).astype(np.int)
+    for ax in axs[:, 0]:
+        ax.set_xlim(rt_range)
+        ax.set_ylim(rt_range)
+        ax.set_yticks(rt_ticks)
+        ax.set_xticks(rt_ticks)
+    best_chosen_ticks = np.round(np.linspace(
+        best_chosen_range[0], best_chosen_range[1], 4), 2)
+    for ax in axs[:, 1]:
+        ax.set_xlim(best_chosen_range)
+        ax.set_ylim(best_chosen_range)
+        ax.set_yticks(best_chosen_ticks)
+        ax.set_xticks(best_chosen_ticks)
+    gaze_influence_ticks = np.round(np.linspace(
+        gaze_influence_range[0], gaze_influence_range[1], 4), 2)
+    for ax in axs[:, 2]:
+        ax.set_xlim(gaze_influence_range)
+        ax.set_ylim(gaze_influence_range)
+        ax.set_yticks(gaze_influence_ticks)
+        ax.set_xticks(gaze_influence_ticks)
+
+    # label panels
+    for label, ax in zip(list('abcdef'), axs.ravel()):
+        ax.text(-0.4, 1.1, label, transform=ax.transAxes,
+                fontsize=fontsize, fontweight='bold', va='top')
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.tick_params(axis='both', labelsize=fontsize)
+        # plot diagonal
+        ax.plot(ax.get_xlim(), ax.get_xlim(), linewidth=1,
+                color='black', alpha=1.0, zorder=-1)
+
+    fig.tight_layout(pad=2)
+
+    return fig
