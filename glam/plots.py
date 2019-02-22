@@ -951,12 +951,20 @@ def plot_individual_node_comparison(model, parameter, comparisons, fontsize=12, 
     return fig, axs
 
 
-def extract_range(x, extra=0.25):
+def extract_range(x, extra=0.25, bound=(None, None)):
     xmean = np.mean(x)
-    xmin = np.min(x)
-    xmax = np.max(x)
+    xmin = np.min(x) - extra*xmean
+    xmax = np.max(x) + extra*xmean
 
-    return [xmin-extra*xmean, xmax+extra*xmean]
+    if bound[0] != None:
+        if xmin < bound[0]:
+            xmin = bound[0]
+
+    if bound[1] != None:
+        if xmax > bound[1]:
+            xmax = bound[1]
+
+    return [xmin, xmax]
 
 
 def individual_differences(subject_summary,
@@ -981,18 +989,17 @@ def individual_differences(subject_summary,
     ax12 = plt.subplot2grid((7, 3), (2, 2), rowspan=5)
 
     # extract plotting ranges
-    rt_range = extract_range(subject_summary['rt']['mean'])
-    rt_range[0] = np.min([np.abs(rt_range[0]), 0])
+    rt_range = extract_range(subject_summary['rt']['mean'], bound=(0,None))
     rt_tickstep = np.int((rt_range[1] - rt_range[0]) / 4)
     rt_ticks = np.arange(rt_range[0], rt_range[1], rt_tickstep).astype(np.int)
 
-    best_chosen_range = extract_range(subject_summary['best_chosen']['mean'])
+    best_chosen_range = extract_range(subject_summary['best_chosen']['mean'], bound=(0,1))
     best_chosen_tickstep = (best_chosen_range[1] - best_chosen_range[0]) / 4
     best_chosen_ticks = np.arange(
         best_chosen_range[0], best_chosen_range[1], best_chosen_tickstep)
     best_chosen_ticks = np.round(best_chosen_ticks, 2)
 
-    gaze_influence_range = extract_range(subject_summary['gaze_influence'])
+    gaze_influence_range = extract_range(subject_summary['gaze_influence'], bound=(-1,1))
     gaze_influence_tickstep = (
         gaze_influence_range[1] - gaze_influence_range[0]) / 4
     gaze_influence_ticks = np.arange(
@@ -1250,9 +1257,9 @@ def absolute_fit_individual(observed,
         axs = axs.reshape([1, axs.size])
 
     # extract oberved value ranges
-    rt_range = extract_range(observed['rt']['mean'])
-    best_chosen_range = extract_range(observed['best_chosen']['mean'])
-    gaze_influence_range = extract_range(observed['gaze_influence'])
+    rt_range = extract_range(observed['rt']['mean'], bound=(0,None))
+    best_chosen_range = extract_range(observed['best_chosen']['mean'], bound=(0,1))
+    gaze_influence_range = extract_range(observed['gaze_influence'], bond=(-1,1))
 
     # plot observed vs predicted
     for m, prediction in enumerate(predictions):
@@ -1306,21 +1313,21 @@ def absolute_fit_individual(observed,
                           s=30)
 
         # update parameter ranges
-        rt_range_prediction = extract_range(prediction['rt']['mean'])
+        rt_range_prediction = extract_range(prediction['rt']['mean'], bound=(0,None))
         if rt_range[0] > rt_range_prediction[0]:
             rt_range[0] = rt_range_prediction[0]
         if rt_range[1] < rt_range_prediction[1]:
             rt_range[1] = rt_range_prediction[1]
 
         best_chosen_range_prediction = extract_range(
-            prediction['best_chosen']['mean'])
+            prediction['best_chosen']['mean'], bound=(0,1))
         if best_chosen_range[0] > best_chosen_range_prediction[0]:
             best_chosen_range[0] = best_chosen_range_prediction[0]
         if best_chosen_range[1] < best_chosen_range_prediction[1]:
             best_chosen_range[1] = best_chosen_range_prediction[1]
 
         gaze_influence_range_prediction = extract_range(
-            prediction['gaze_influence'])
+            prediction['gaze_influence'], bound=(-1,1))
         if gaze_influence_range[0] > gaze_influence_range_prediction[0]:
             gaze_influence_range[0] = gaze_influence_range_prediction[0]
         if gaze_influence_range[1] < gaze_influence_range_prediction[1]:
