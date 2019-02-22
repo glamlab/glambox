@@ -9,14 +9,13 @@ from seaborn import despine
 plt.rc("axes.spines", top=False, right=False)
 
 
-
 def cm2inch(*tupl):
     inch = 2.54
     if isinstance(tupl[0], tuple):
         return tuple(i / inch for i in tupl[0])
     else:
         return tuple(i / inch for i in tupl)
-        
+
 
 def plot_fit(bar_data, line_data=None, line_labels=None, fontsize=7, value_bins=7, gaze_bins=7):
     fig, axs = plt.subplots(1, 4, figsize=(12, 3))
@@ -47,8 +46,6 @@ def plot_fit(bar_data, line_data=None, line_labels=None, fontsize=7, value_bins=
         ax.text(-0.15, 1.175, label, transform=ax.transAxes,
                 fontsize=fontsize, fontweight='bold', va='top')
         ax.tick_params(axis='both', which='major', labelsize=fontsize)
-
-
 
     fig.tight_layout()
 
@@ -194,7 +191,8 @@ def add_value_minus_mean_others(df, bins=7):
                 np.mean(values[t, np.arange(n_items) != i])
 
     if isinstance(bins, (int, float)):
-        n_bins = np.min([np.unique(values_minus_mean_others.ravel()).size, bins])
+        n_bins = np.min(
+            [np.unique(values_minus_mean_others.ravel()).size, bins])
         bins = np.linspace(np.min(values_minus_mean_others.ravel()), np.max(
             values_minus_mean_others.ravel()), n_bins)
         bins = np.round(bins, 2)
@@ -205,7 +203,8 @@ def add_value_minus_mean_others(df, bins=7):
         values_minus_mean_others.shape)
 
     for i in np.arange(n_items):
-        df['value_minus_mean_others_{}'.format(i)] = values_minus_mean_others_binned[:, i]
+        df['value_minus_mean_others_{}'.format(
+            i)] = values_minus_mean_others_binned[:, i]
 
     return df.copy()
 
@@ -345,7 +344,8 @@ def add_gaze_advantage(df, bins=7):
                 np.mean(gaze[t, np.arange(n_items) != i])
 
     if isinstance(bins, (int, float)):
-        bins = np.round(np.linspace(-1,1,bins),2) #np.array([-1, -0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75, 1])
+        # np.array([-1, -0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75, 1])
+        bins = np.round(np.linspace(-1, 1, bins), 2)
     for i in range(n_items):
         df['gaze_advantage_{}'.format(i)] = gaze_advantage[:, i]
         df['gaze_advantage_binned_{}'.format(i)] = pd.cut(df['gaze_advantage_{}'.format(i)],
@@ -354,7 +354,6 @@ def add_gaze_advantage(df, bins=7):
                                                           labels=bins[:-1])
 
     return df.copy()
-
 
 
 def plot_pchoose_by_gaze_minus_mean_others(bar_data,
@@ -418,7 +417,7 @@ def plot_pchoose_by_gaze_minus_mean_others(bar_data,
         # create temporary dataframe
         subjects = df['subject'].values
         gaze_minus_mean_others = df[['gaze_advantage_binned_{}'.format(ii)
-                                      for ii in range(n_items)]].values.astype(np.float)
+                                     for ii in range(n_items)]].values.astype(np.float)
 
         is_choice = np.zeros_like(gaze_minus_mean_others)
         is_choice[np.arange(is_choice.shape[0]),
@@ -429,7 +428,8 @@ def plot_pchoose_by_gaze_minus_mean_others(bar_data,
                                'is_choice': is_choice.ravel()})
 
         # Compute summary statistics
-        subject_means = df_tmp.groupby(['subject', 'gaze_advantage']).is_choice.mean()
+        subject_means = df_tmp.groupby(
+            ['subject', 'gaze_advantage']).is_choice.mean()
         means = subject_means.groupby('gaze_advantage').mean()
         sems = subject_means.groupby('gaze_advantage').sem()
 
@@ -476,7 +476,6 @@ def plot_pchoose_by_gaze_minus_mean_others(bar_data,
         ax.set_xlim(xlims)
     if add_labels:
         ax.legend(loc='upper left', fontsize=fontsize, frameon=False)
-
 
 
 def compute_corrected_choice(df):
@@ -534,7 +533,7 @@ def compute_corrected_choice(df):
     return data_out.copy()
 
 
-def plot_corp_by_gaze_advantage(bar_data, 
+def plot_corp_by_gaze_advantage(bar_data,
                                 line_data=None,
                                 ax=None,
                                 bins=7,
@@ -638,7 +637,6 @@ def plot_corp_by_gaze_advantage(bar_data,
         ax.set_xlim(xlims)
     if add_labels:
         ax.legend(loc='upper left', fontsize=fontsize, frameon=False)
-
 
 
 def plot_node(model, parameter, comparisons=None, fontsize=12, alpha=0.5, hpd_alpha=0.05, plot_histogram=True):
@@ -960,7 +958,7 @@ def extract_range(x, extra=0.25):
     xmean = np.mean(x)
     xmin = np.min(x)
     xmax = np.max(x)
-    
+
     return [xmin-extra*xmean, xmax+extra*xmean]
 
 
@@ -970,10 +968,10 @@ def individual_differences(subject_summary,
                            regression=False,
                            annotate=False,
                            figsize=cm2inch(18, 9)):
-    
+
     if (regression == False) & (annotate == True):
         print('/!\ annotate only possible, if regression = True.')
-    
+
     fig = plt.figure(figsize=figsize)
 
     ax00 = plt.subplot2grid((7, 3), (0, 0), rowspan=2)
@@ -990,17 +988,20 @@ def individual_differences(subject_summary,
     rt_range[0] = np.min([np.abs(rt_range[0]), 0])
     rt_tickstep = np.int((rt_range[1] - rt_range[0]) / 4)
     rt_ticks = np.arange(rt_range[0], rt_range[1], rt_tickstep).astype(np.int)
-    
+
     best_chosen_range = extract_range(subject_summary['best_chosen']['mean'])
     best_chosen_tickstep = (best_chosen_range[1] - best_chosen_range[0]) / 4
-    best_chosen_ticks = np.arange(best_chosen_range[0], best_chosen_range[1], best_chosen_tickstep)
+    best_chosen_ticks = np.arange(
+        best_chosen_range[0], best_chosen_range[1], best_chosen_tickstep)
     best_chosen_ticks = np.round(best_chosen_ticks, 2)
-    
+
     gaze_influence_range = extract_range(subject_summary['gaze_influence'])
-    gaze_influence_tickstep = (gaze_influence_range[1] - gaze_influence_range[0]) / 4
-    gaze_influence_ticks = np.arange(gaze_influence_range[0], gaze_influence_range[1], gaze_influence_tickstep)
+    gaze_influence_tickstep = (
+        gaze_influence_range[1] - gaze_influence_range[0]) / 4
+    gaze_influence_ticks = np.arange(
+        gaze_influence_range[0], gaze_influence_range[1], gaze_influence_tickstep)
     gaze_influence_ticks = np.round(gaze_influence_ticks, 2)
-        
+
     # Scatter plots
     plot_correlation(subject_summary['rt']['mean'],
                      subject_summary['best_chosen']['mean'],
@@ -1062,13 +1063,15 @@ def individual_differences(subject_summary,
               color='C0')
 
     ax01.hist(subject_summary['gaze_influence'],
-              bins=np.linspace(gaze_influence_range[0], gaze_influence_range[1], nbins + 1),
+              bins=np.linspace(
+                  gaze_influence_range[0], gaze_influence_range[1], nbins + 1),
               color='C0')
 
     ax02.hist(subject_summary['best_chosen']['mean'],
-              bins=np.linspace(best_chosen_range[0], best_chosen_range[1], nbins + 1),
+              bins=np.linspace(
+                  best_chosen_range[0], best_chosen_range[1], nbins + 1),
               color='C0')
-    
+
     hist_lim = np.max([ax00.get_ylim()[1],
                        ax01.get_ylim()[1],
                        ax02.get_ylim()[1]]).astype(np.int) + 1
@@ -1083,30 +1086,29 @@ def individual_differences(subject_summary,
                 fontsize=fontsize, fontweight='bold', va='top')
     for label, ax in zip(list('def'), [ax10, ax11, ax12]):
         ax.text(-0.45, 1.025, label, transform=ax.transAxes,
-                fontsize=fontsize, fontweight='bold', va='top') 
-        
+                fontsize=fontsize, fontweight='bold', va='top')
+
     # Fine-tune marginal histograms
     for ax in np.array([ax00, ax01, ax02]):
         ax.set_xticks([])
-        ax.set_ylim([0,hist_lim])
-        ax.set_yticks([0,hist_lim])
-        ax.set_yticklabels([0,hist_lim], fontsize=fontsize)
-        
+        ax.set_ylim([0, hist_lim])
+        ax.set_yticks([0, hist_lim])
+        ax.set_yticklabels([0, hist_lim], fontsize=fontsize)
+
     ax00.set_ylabel('Frequency', fontsize=fontsize)
     ax01.set_ylabel('Frequency', fontsize=fontsize)
     ax02.set_ylabel('Frequency', fontsize=fontsize)
-    
+
     ax00.set_xticks(rt_ticks)
     ax00.set_xticklabels([])
     ax01.set_xticks(gaze_influence_ticks)
     ax01.set_xticklabels([])
     ax02.set_xticks(best_chosen_ticks)
     ax02.set_xticklabels([])
-    
-    fig.subplots_adjust(wspace=0.5, hspace=1.5)
-    
-    return fig
 
+    fig.subplots_adjust(wspace=0.5, hspace=1.5)
+
+    return fig
 
 
 def plot_correlation(x, y,
@@ -1229,4 +1231,3 @@ def add_regression_line(ax, intercept, slope, color='darkgray', **kwargs):
     ax.plot(xs, intercept + slope * xs, color=color, **kwargs)
 
     return ax
-
