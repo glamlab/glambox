@@ -18,7 +18,7 @@ def cm2inch(*tupl):
         return tuple(i / inch for i in tupl)
         
 
-def plot_fit(bar_data, line_data, line_labels=None, fontsize=7, value_bins=7, gaze_bins=7):
+def plot_fit(bar_data, line_data=None, line_labels=None, fontsize=7, value_bins=7, gaze_bins=7):
     fig, axs = plt.subplots(1, 4, figsize=(12, 3))
 
     plot_rt_by_difficulty(bar_data, line_data,
@@ -954,4 +954,279 @@ def plot_individual_node_comparison(model, parameter, comparisons, fontsize=12, 
     despine()
 
     return fig, axs
+
+
+def extract_range(x, extra=0.25):
+    xmean = np.mean(x)
+    xmin = np.min(x)
+    xmax = np.max(x)
+    
+    return [xmin-extra*xmean, xmax+extra*xmean]
+
+
+def individual_differences(subject_summary,
+                           nbins=20,
+                           fontsize=7,
+                           regression=False,
+                           annotate=False,
+                           figsize=cm2inch(18, 9)):
+    
+    if (regression == False) & (annotate == True):
+        print('/!\ annotate only possible, if regression = True.')
+    
+    fig = plt.figure(figsize=figsize)
+
+    ax00 = plt.subplot2grid((7, 3), (0, 0), rowspan=2)
+    ax10 = plt.subplot2grid((7, 3), (2, 0), rowspan=5)
+
+    ax01 = plt.subplot2grid((7, 3), (0, 1), rowspan=2)
+    ax11 = plt.subplot2grid((7, 3), (2, 1), rowspan=5)
+
+    ax02 = plt.subplot2grid((7, 3), (0, 2), rowspan=2)
+    ax12 = plt.subplot2grid((7, 3), (2, 2), rowspan=5)
+
+    # define plotting ranges
+    rt_range = extract_range(subject_summary['rt']['mean'])
+    rt_range[0] = np.min([np.abs(rt_range[0]), 0])
+    rt_tickstep = np.int((rt_range[1] - rt_range[0]) / 4)
+    rt_ticks = np.arange(rt_range[0], rt_range[1], rt_tickstep).astype(np.int)
+    
+    best_chosen_range = extract_range(subject_summary['best_chosen']['mean'])
+    best_chosen_tickstep = (best_chosen_range[1] - best_chosen_range[0]) / 4
+    best_chosen_ticks = np.arange(best_chosen_range[0], best_chosen_range[1], best_chosen_tickstep)
+    best_chosen_ticks = np.round(best_chosen_ticks, 2)
+    
+    gaze_influence_range = extract_range(subject_summary['gaze_influence'])
+    gaze_influence_tickstep = (gaze_influence_range[1] - gaze_influence_range[0]) / 4
+    gaze_influence_ticks = np.arange(gaze_influence_range[0], gaze_influence_range[1], gaze_influence_tickstep)
+    gaze_influence_ticks = np.round(gaze_influence_ticks, 2)
+        
+    # Scatter plots
+    plot_correlation(subject_summary['rt']['mean'],
+                     subject_summary['best_chosen']['mean'],
+                     marker='o',
+                     markercolor='C0',
+                     regression=regression,
+                     annotate=annotate,
+                     xlabel='Mean RT (ms)',
+                     ylabel='P(choose best)',
+                     xlim=rt_range,
+                     xticks=rt_ticks,
+                     ylim=best_chosen_range,
+                     yticks=best_chosen_ticks,
+                     fontsize_title=fontsize,
+                     fontsize_axeslabel=fontsize,
+                     fontsize_ticklabels=fontsize,
+                     fontsize_annotation=fontsize,
+                     ax=ax10)
+
+    plot_correlation(subject_summary['gaze_influence'],
+                     subject_summary['rt']['mean'],
+                     marker='o',
+                     markercolor='C0',
+                     regression=regression,
+                     annotate=annotate,
+                     ylabel='Mean RT (ms)',
+                     xlabel='Gaze influence\non P(choice | value)',
+                     ylim=rt_range,
+                     yticks=rt_ticks,
+                     xlim=gaze_influence_range,
+                     xticks=gaze_influence_ticks,
+                     fontsize_title=fontsize,
+                     fontsize_axeslabel=fontsize,
+                     fontsize_ticklabels=fontsize,
+                     fontsize_annotation=fontsize,
+                     ax=ax11)
+
+    plot_correlation(subject_summary['best_chosen']['mean'],
+                     subject_summary['gaze_influence'],
+                     marker='o',
+                     markercolor='C0',
+                     regression=regression,
+                     annotate=annotate,
+                     ylabel='Gaze influence\non P(choice | value)',
+                     xlabel='P(choose best)',
+                     ylim=gaze_influence_range,
+                     yticks=gaze_influence_ticks,
+                     xlim=best_chosen_range,
+                     xticks=best_chosen_ticks,
+                     fontsize_title=fontsize,
+                     fontsize_axeslabel=fontsize,
+                     fontsize_ticklabels=fontsize,
+                     fontsize_annotation=fontsize,
+                     ax=ax12)
+
+    # Marginal histograms
+    ax00.hist(subject_summary['rt']['mean'],
+              bins=np.linspace(rt_range[0], rt_range[1], nbins + 1),
+              color='C0')
+
+    ax01.hist(subject_summary['gaze_influence'],
+              bins=np.linspace(gaze_influence_range[0], gaze_influence_range[1], nbins + 1),
+              color='C0')
+
+    ax02.hist(subject_summary['best_chosen']['mean'],
+              bins=np.linspace(best_chosen_range[0], best_chosen_range[1], nbins + 1),
+              color='C0')
+    
+    hist_lim = np.max([ax00.get_ylim()[1],
+                       ax01.get_ylim()[1],
+                       ax02.get_ylim()[1]]).astype(np.int) + 1
+
+    ax00.set_xlim(rt_range)
+    ax01.set_xlim(gaze_influence_range)
+    ax02.set_xlim(best_chosen_range)
+
+    # Labels
+    for label, ax in zip(list('abc'), [ax00, ax01, ax02]):
+        ax.text(-0.45, 1.1, label, transform=ax.transAxes,
+                fontsize=fontsize, fontweight='bold', va='top')
+    for label, ax in zip(list('def'), [ax10, ax11, ax12]):
+        ax.text(-0.45, 1.025, label, transform=ax.transAxes,
+                fontsize=fontsize, fontweight='bold', va='top') 
+        
+    # Fine-tune marginal histograms
+    for ax in np.array([ax00, ax01, ax02]):
+        ax.set_xticks([])
+        ax.set_ylim([0,hist_lim])
+        ax.set_yticks([0,hist_lim])
+        ax.set_yticklabels([0,hist_lim], fontsize=fontsize)
+        
+    ax00.set_ylabel('Frequency', fontsize=fontsize)
+    ax01.set_ylabel('Frequency', fontsize=fontsize)
+    ax02.set_ylabel('Frequency', fontsize=fontsize)
+    
+    ax00.set_xticks(rt_ticks)
+    ax00.set_xticklabels([])
+    ax01.set_xticks(gaze_influence_ticks)
+    ax01.set_xticklabels([])
+    ax02.set_xticks(best_chosen_ticks)
+    ax02.set_xticklabels([])
+    
+    fig.subplots_adjust(wspace=0.5, hspace=1.5)
+    
+    return fig
+
+
+
+def plot_correlation(x, y,
+                     xlabel='',
+                     ylabel='',
+                     title='',
+                     ci=0.95,
+                     alpha=0.5,
+                     size=30,
+                     color='red',
+                     markercolor='black',
+                     marker='o',
+                     xticks=None,
+                     yticks=None,
+                     xticklabels=None,
+                     yticklabels=None,
+                     xlim=None,
+                     ylim=None,
+                     annotate=True,
+                     annotation_pos=(0.1, 0.1),
+                     annotation_halign='left',
+                     fontsize_title=7,
+                     fontsize_axeslabel=7,
+                     fontsize_ticklabels=7,
+                     fontsize_annotation=7,
+                     regression=True,
+                     plot_diagonal=False,
+                     return_correlation=False,
+                     ax=None):
+
+    # Defaults
+    if ax is None:
+        fig, ax = plt.subplots()
+
+    # Axes, ticks, ...
+    if xticks is not None:
+        ax.set_xticks(xticks)
+    if yticks is not None:
+        ax.set_yticks(yticks)
+
+    if xticklabels is not None:
+        ax.set_xticklabels(xticklabels, fontsize=fontsize_ticklabels)
+    if yticklabels is not None:
+        ax.set_yticklabels(yticklabels, fontsize=fontsize_ticklabels)
+
+    ax.tick_params(axis='both', which='major', labelsize=fontsize_ticklabels)
+
+    if xlim is not None:
+        ax.set_xlim(xlim)
+    if ylim is not None:
+        ax.set_ylim(ylim)
+
+    # Scatter (translucent dots with solid outlines)
+    ax.scatter(x, y,
+               marker='o',
+               color='none',
+               edgecolor=markercolor,
+               linewidth=0.5,
+               s=size)
+    ax.scatter(x, y,
+               marker='o',
+               color=markercolor,
+               alpha=alpha,
+               linewidth=0,
+               s=size)
+
+    if regression:
+        # LM fit
+        X = sm.add_constant(x)
+        lm = sm.OLS(y, X).fit()
+        intercept, slope = lm.params
+        table, data, columns = summary_table(lm, alpha=1. - ci)
+        predicted, mean_ci_lower, mean_ci_upper = data[:, np.array([
+                                                                   2, 4, 5])].T
+
+        xs = np.linspace(*ax.get_xlim(), 100)
+        line = ax.plot(xs, intercept + slope * xs,
+                       color=color)
+        sort_idx = np.argsort(x)
+        ax.fill_between(x[sort_idx], mean_ci_lower[sort_idx], mean_ci_upper[sort_idx],
+                        color=color, alpha=0.1)
+
+        # Annotation
+        tval = lm.tvalues[-1]
+        pval = lm.pvalues[-1]
+        if pval < 0.0001:
+            p_string = r'$P < 0.0001$'
+        else:
+            p_string = r'$P = {}$'.format(np.round(pval, 4))
+        r = np.sign(tval) * np.sqrt(lm.rsquared)
+        annotation = (r'$r = {:.2f}$, '.format(r)) + p_string
+        if annotate:
+            ax.text(*annotation_pos,
+                    annotation,
+                    verticalalignment='bottom',
+                    horizontalalignment=annotation_halign,
+                    transform=ax.transAxes,
+                    fontsize=fontsize_annotation)
+
+    # Diagonal
+    if plot_diagonal:
+        ax.plot([0, 1], [0, 1], transform=ax.transAxes,
+                color='black', alpha=0.5, zorder=-10, lw=1)
+
+    # Labels
+    ax.set_xlabel(xlabel, fontsize=fontsize_axeslabel)
+    ax.set_ylabel(ylabel, fontsize=fontsize_axeslabel)
+    ax.set_title(title, fontsize=fontsize_title)
+
+    if return_correlation:
+        return ax, line, annotation
+    else:
+        return ax
+
+
+def add_regression_line(ax, intercept, slope, color='darkgray', **kwargs):
+
+    xs = np.linspace(*ax.get_xlim(), 100)
+
+    ax.plot(xs, intercept + slope * xs, color=color, **kwargs)
+
+    return ax
 
