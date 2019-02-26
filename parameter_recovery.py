@@ -3,7 +3,8 @@
 import glam
 import numpy as np
 import pandas as pd
-from pymc3 import summary
+import matplotlib.pyplot as plt
+from pymc3 import summary, traceplot, trace_to_dataframe
 from itertools import product
 from os.path import join, isfile
 
@@ -78,7 +79,7 @@ def generate_parameter_sets(parameter_info, levels=['low', 'medium', 'high'], pa
 def generate_hierarchical_parameter_sets(parameter_info, levels=['low', 'medium', 'high'], parameters=['v', 'gamma', 's', 'tau']):
     """
     Generates parameter sets for hierarchical simulation.
-    
+
     Args:
         parameter_info (dict): dict containing information about parameter levels
         levels (list, optional): list of level labels
@@ -87,7 +88,7 @@ def generate_hierarchical_parameter_sets(parameter_info, levels=['low', 'medium'
         tuple: int index, dict of parameter levels, dict of population parameters
     """
     all_parameter_levels = list(product(levels, levels, levels, levels))
-    
+
     for index, parameter_levels in enumerate(all_parameter_levels):
         parameter_set = dict()
         level_set = dict()
@@ -95,7 +96,7 @@ def generate_hierarchical_parameter_sets(parameter_info, levels=['low', 'medium'
             level_set[parameter] = parameter_levels[p]
             parameter_set[parameter] = dict(mu=parameter_info[parameter]['mu'][level_set[parameter]],
                                             sd=parameter_info[parameter]['sd'],
-                                            bounds=parameter_info[parameter]['bounds'])          
+                                            bounds=parameter_info[parameter]['bounds'])
         yield index, level_set, parameter_set
 
 
@@ -151,7 +152,8 @@ def recover_and_save(generated_input, output_folder=None, label=None,
 
 
 def recover_and_save_hierarchical(generated_input, output_folder=None, label=None,
-                                  simulate_group_args=None, make_model_args=None, fit_args=None):
+                                  simulate_group_args=None, make_model_args=None, fit_args=None,
+                                  save_trace_to=None, save_traceplot_to=None):
     """
     Recovers a single GLAM using `recover_glam`
     using input from `generate_hierarchical_parameter_sets`
@@ -171,6 +173,13 @@ def recover_and_save_hierarchical(generated_input, output_folder=None, label=Non
                               simulate_group_args=simulate_group_args,
                               make_model_args=make_model_args,
                               fit_args=fit_args)
+        # save trace
+        if save_trace_to is not None:
+            trace_to_dataframe(result.trace[0]).to_csv(join(save_trace_to, 'parameter-recovery_hierarchical_{}_trace_{}.csv'.format(label, index)))
+        if save_traceplot_to is not None:
+            traceplot(result.trace[0])
+            plt.savefig(join(save_traceplot_to, 'parameter-recovery_hierarchical_{}_traceplot_{}.png'.format(label, index)))
+            plt.close()
 
         # check for convergence:
         if fit_args['method'] == 'VI':
