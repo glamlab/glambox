@@ -9,7 +9,7 @@ from itertools import product
 from os.path import join, isfile
 
 
-def recover_glam(parameters, simulate_group_args=None, make_model_args=None, fit_args=None):
+def recover_glam(parameters, simulate_group_args=None, make_model_args=None, fit_args=None, seed=None):
     """
     Recover a single GLAM. This function
     1) Initializes the model
@@ -26,7 +26,7 @@ def recover_glam(parameters, simulate_group_args=None, make_model_args=None, fit
     Returns:
         glam.model: Fitted model instance.
     """
-    simulate_group_args.update(parameters=parameters)
+    simulate_group_args.update(parameters=parameters, seed=seed)
 
     G = glam.GLAM()
 
@@ -153,13 +153,15 @@ def recover_and_save(generated_input, output_folder=None, label=None,
 
 def recover_and_save_hierarchical(generated_input, output_folder=None, label=None,
                                   simulate_group_args=None, make_model_args=None, fit_args=None,
-                                  save_trace_to=None, save_traceplot_to=None):
+                                  save_trace_to=None, save_traceplot_to=None, seed=None):
     """
     Recovers a single GLAM using `recover_glam`
     using input from `generate_hierarchical_parameter_sets`
     and saves the output.
     """
     index, level_set, parameter_set = generated_input
+    if seed is None:
+        seed = index
 
     # check if already done:
     filename = join(
@@ -172,7 +174,8 @@ def recover_and_save_hierarchical(generated_input, output_folder=None, label=Non
         result = recover_glam(parameter_set,
                               simulate_group_args=simulate_group_args,
                               make_model_args=make_model_args,
-                              fit_args=fit_args)
+                              fit_args=fit_args,
+                              seed=seed)
         # save trace
         if save_trace_to is not None:
             trace_to_dataframe(result.trace[0]).to_csv(join(save_trace_to, 'parameter-recovery_hierarchical_{}_trace_{}.csv'.format(label, index)))
