@@ -798,6 +798,7 @@ def plot_node(model, parameter, comparisons=None, fontsize=12, alpha=0.5, hpd_al
                                alpha=alpha,
                                alpha_level=hpd_alpha,
                                bins=50,
+                               ref_val=0,
                                ax=axs[c+1][-1])
 
             # set title
@@ -809,18 +810,22 @@ def plot_node(model, parameter, comparisons=None, fontsize=12, alpha=0.5, hpd_al
     if parameter in ['sigma', 'gamma', 'tau']:
         for i in range(1+n_comparisons):
             if model_type == 'hierarchical':
-                axs[i][-1].set_xlabel(r'$\{}$'.format(parameter) +
+                axs[i][-1].set_xlabel(r'$\delta$'+
+                                      r'$\{}$'.format(parameter) +
                                       r'$_{mu}$', fontsize=fontsize*1.2)
             else:
-                axs[i][-1].set_xlabel(r'$\{}$'.format(parameter),
+                axs[i][-1].set_xlabel(r'$\delta$'+
+                                      r'$\{}$'.format(parameter),
                                       fontsize=fontsize*1.2)
     else:
         for i in range(1+n_comparisons):
             if model_type == 'hierarchical':
-                axs[i][-1].set_xlabel(r'${}$'.format(parameter) +
+                axs[i][-1].set_xlabel(r'$\delta$'+
+                                      r'${}$'.format(parameter) +
                                       r'$_{mu}$', fontsize=fontsize)
             else:
-                axs[i][-1].set_xlabel(r'${}$'.format(parameter),
+                axs[i][-1].set_xlabel(r'$\delta$'+
+                                      r'${}$'.format(parameter),
                                       fontsize=fontsize)
 
     # set x-lims
