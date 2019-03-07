@@ -53,7 +53,7 @@ def sort_according_to_choice(x, choices):
     return x_sorted
 
 
-def extract_modes(traces, parameters=None, precision=None, f_burn=0):
+def extract_modes(traces, parameters=None, precision=None, f_burn=0, verbose=True):
 
     if not isinstance(traces, list):
         traces = [traces]
@@ -66,7 +66,8 @@ def extract_modes(traces, parameters=None, precision=None, f_burn=0):
             parameters = [var for var in trace.varnames
                           if not var.endswith('__')]
 
-            print('/!\ Automatically setting parameter precision...')
+            if verbose:
+                print('/!\ Automatically setting parameter precision...')
             precision_defaults = dict(v=6, gamma=2, s=6, SNR=2, tau=2, t0=-1)
             precision = [precision_defaults.get(parameter.split('_')[0], 6)
                          for parameter in parameters]
