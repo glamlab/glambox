@@ -31,7 +31,7 @@ def simulate_subject(parameters, values, gaze, n_repeats=1, subject=0, boundary=
 
             running_idx += 1
 
-    df = pd.DataFrame(dict(subject=np.ones(n_trials*n_repeats) * subject,
+    df = pd.DataFrame(dict(subject=np.ones(n_trials * n_repeats) * subject,
                            trial=trial_idx,
                            repeat=repeat_idx,
                            choice=choices,
@@ -60,10 +60,15 @@ def simulate_trial(parameters, values, gaze, boundary=1, error_weight=0.05, erro
         for i in range(n_items):
             mu = boundary / drifts[i]
             lam = (boundary / s)**2
-            FPTs[i] = invgauss.rvs(mu=mu/lam, scale=lam)
+            FPTs[i] = invgauss.rvs(mu=mu / lam, scale=lam)
 
-        choice = np.argmin(FPTs)
-        rt = int(np.round(np.min(FPTs) + t0))
+        rt = np.min(FPTs)
+        if rt < 1 or not np.isfinite(rt):
+            rt = np.nan
+            choice = np.nan
+        else:
+            choice = np.argmin(FPTs)
+            rt = int(rt + t0)
 
     return choice, rt
 
