@@ -45,6 +45,21 @@ def simulate_subject(parameters, values, gaze, n_repeats=1, subject=0, boundary=
 
 
 def simulate_trial(parameters, values, gaze, boundary=1, error_weight=0.05, error_range=(0, 5000)):
+    """
+    Simulate GLAM for a single trial.
+
+    Args:
+        parameters (tuple): v, gamma, s, tau and t0 parameters
+        values (np.ndarray): array of item values
+        gaze (np.ndarray): array of gaze towards items (should sum to 1)
+        boundary (float, optional): decision boundary, defaults to 1.0
+        error_weight (float, optional): probability of simulating random choice from error model
+        error_range (tuple, optional): range of response times used by error model
+
+    Returns:
+        int, int: choice, response time
+
+    """
     v, gamma, s, tau, t0 = parameters
     n_items = len(values)
 
@@ -53,22 +68,23 @@ def simulate_trial(parameters, values, gaze, boundary=1, error_weight=0.05, erro
         choice = np.random.choice(n_items)
 
     else:
-        drifts = expdrift(v, tau, gamma, values, gaze)
+        rt = np.nan
+        while np.isnan(rt):
+            drifts = expdrift(v, tau, gamma, values, gaze)
+            FPTs = np.zeros(n_items) * np.nan
 
-        FPTs = np.zeros(n_items) * np.nan
+            for i in range(n_items):
+                mu = boundary / drifts[i]
+                lam = (boundary / s)**2
+                FPTs[i] = invgauss.rvs(mu=mu / lam, scale=lam)
+            rt = np.min(FPTs)
 
-        for i in range(n_items):
-            mu = boundary / drifts[i]
-            lam = (boundary / s)**2
-            FPTs[i] = invgauss.rvs(mu=mu / lam, scale=lam)
-
-        rt = np.min(FPTs)
-        if rt < 1 or not np.isfinite(rt):
-            rt = np.nan
-            choice = np.nan
-        else:
-            choice = np.argmin(FPTs)
-            rt = int(rt + t0)
+            if rt < 1 or not np.isfinite(rt):
+                rt = np.nan
+                choice = np.nan
+            else:
+                choice = np.argmin(FPTs)
+                rt = int(rt + t0)
 
     return choice, rt
 
