@@ -160,7 +160,7 @@ def se(series):
     se = series.std() / np.sqrt(n)
     return se
 
-def aggregate_subject_level(data, n_items):
+def aggregate_subject_level_data(data, n_items):
     """
     Aggregates a single dataset to subject level
     """
@@ -180,7 +180,7 @@ def aggregate_subject_level(data, n_items):
     return subject_summary
 
 
-def aggregate_group_level(subject_summary):
+def aggregate_group_level_data(subject_summary):
     """
     Aggregates a subject summary to group level
     """
