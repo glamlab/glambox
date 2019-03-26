@@ -996,19 +996,19 @@ def individual_differences(subject_summary,
     # extract plotting ranges
     rt_range = extract_range(subject_summary['rt']['mean'], bound=(0,None))
     rt_tickstep = np.int((rt_range[1] - rt_range[0]) / 4)
-    rt_ticks = np.arange(rt_range[0], rt_range[1], rt_tickstep).astype(np.int)
+    rt_ticks = np.arange(rt_range[0], rt_range[1]+rt_tickstep, rt_tickstep).astype(np.int)
 
     best_chosen_range = extract_range(subject_summary['best_chosen']['mean'], bound=(0,1))
     best_chosen_tickstep = (best_chosen_range[1] - best_chosen_range[0]) / 4
     best_chosen_ticks = np.arange(
-        best_chosen_range[0], best_chosen_range[1], best_chosen_tickstep)
+        best_chosen_range[0], best_chosen_range[1]+best_chosen_tickstep, best_chosen_tickstep)
     best_chosen_ticks = np.round(best_chosen_ticks, 2)
 
     gaze_influence_range = extract_range(subject_summary['gaze_influence'], bound=(-1,1))
     gaze_influence_tickstep = (
         gaze_influence_range[1] - gaze_influence_range[0]) / 4
     gaze_influence_ticks = np.arange(
-        gaze_influence_range[0], gaze_influence_range[1], gaze_influence_tickstep)
+        gaze_influence_range[0], gaze_influence_range[1]+gaze_influence_tickstep, gaze_influence_tickstep)
     gaze_influence_ticks = np.round(gaze_influence_ticks, 2)
 
     # Scatter plots
