@@ -18,7 +18,7 @@ def cm2inch(*tupl):
         return tuple(i / inch for i in tupl)
 
 
-def absolute_fit_aggregate(bar_data, line_data=None, line_labels=None, fontsize=7, value_bins=7, gaze_bins=7):
+def plot_aggregate(bar_data, line_data=None, line_labels=None, fontsize=7, value_bins=7, gaze_bins=7):
     fig, axs = plt.subplots(1, 4, figsize=(12, 3))
 
     plot_rt_by_difficulty(bar_data, line_data,
