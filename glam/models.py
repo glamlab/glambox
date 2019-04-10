@@ -416,11 +416,16 @@ def generate_hierarchical_model_parameters(parameter,
                     n_subjects_in_condition = np.unique(design['subject_index'][design['condition_index'] == c]).size
                     n_subjects_per_condition.append(n_subjects_in_condition)
                     # Escape the Funnel of Hell (cf. https://twiecki.io/blog/2017/02/08/bayesian-hierchical-non-centered/)
-                    parms_tmp_offset = pm.Normal('{}_{}_offset'.format(parameter, condition),
-                                                 mu=0, sd=1, shape=(n_subjects_in_condition))
-                    parms_tmp = pm.Deterministic('{}_{}'.format(parameter, condition),
-                                                 tt.clip(mu[c] + parms_tmp_offset * sd[c],
-                                                         bound_lower, bound_upper))
+                    # parms_tmp_offset = pm.Normal('{}_{}_offset'.format(parameter, condition),
+                    #                              mu=0, sd=1, shape=(n_subjects_in_condition))
+                    # parms_tmp = pm.Deterministic('{}_{}'.format(parameter, condition),
+                    #                              tt.clip(mu[c] + parms_tmp_offset * sd[c],
+                    #                                      bound_lower, bound_upper))
+                    # Reenter the Funnel of Hell, because somehow this did not help convergence too much
+                    bounded = pm.Bound(pm.Normal, lower=bound_lower, upper=bound_upper)
+                    parms_tmp = bounded('{}_{}'.format(parameter, condition),
+                                        mu=mu[c], sd=sd[c],
+                                        shape=(n_subjects_in_condition))
                     parms_tmp = tt.concatenate([tt.zeros(1), parms_tmp])
                     parms.append(parms_tmp[design['D'][:, c]][:, None])
                 parms = tt.concatenate(parms, axis=1)
@@ -481,8 +486,11 @@ def generate_hierarchical_model_parameters(parameter,
             mu = pm.Uniform('{}_mu'.format(parameter), mu_lower, mu_upper, testval=testval)
             sd = pm.Uniform('{}_sd'.format(parameter), sd_lower, sd_upper, testval=testval)
             # Escape the Funnel of Hell (cf. https://twiecki.io/blog/2017/02/08/bayesian-hierchical-non-centered/)
-            parms_offset = pm.Normal(parameter + '_offset', mu=0, sd=1, shape=(n_subjects, 1))
-            parms = pm.Deterministic(parameter, tt.clip(mu + parms_offset * sd, bound_lower, bound_upper))
+            # parms_offset = pm.Normal(parameter + '_offset', mu=0, sd=1, shape=(n_subjects, 1))
+            # parms = pm.Deterministic(parameter, tt.clip(mu + parms_offset * sd, bound_lower, bound_upper))
+            # Reenter the Funnel of Hell, as it did not help too much
+            bounded = pm.Bound(pm.Normal, lower=bound_lower, upper=bound_upper)
+            parms = bounded(parameter, mu=mu, sd=sd, shape=(n_subjects, 1))
         else:
             parms = pm.Deterministic(parameter, tt.ones((n_subjects, 1)) * val)
 
