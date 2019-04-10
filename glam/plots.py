@@ -975,8 +975,8 @@ def extract_range(x, extra=0.25, bound=(None, None)):
 def individual_differences(subject_summary,
                            nbins=20,
                            fontsize=7,
-                           regression=False,
-                           annotate=False,
+                           regression=True,
+                           annotate=True,
                            figsize=cm2inch(18, 9)):
 
     if (regression == False) & (annotate == True):
