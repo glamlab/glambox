@@ -1242,13 +1242,13 @@ def add_regression_line(ax, intercept, slope, color='darkgray', **kwargs):
     return ax
 
 
-def absolute_fit_individual(observed,
-                            predictions,
-                            prediction_labels=None,
-                            colors=None,
-                            fontsize=7,
-                            alpha=1.0,
-                            figsize=None):
+def plot_indvidual(observed,
+                   predictions,
+                   prediction_labels=None,
+                   colors=None,
+                   fontsize=7,
+                   alpha=1.0,
+                   figsize=None):
 
     # count number of predictions
     n_predictions = len(predictions)
