@@ -1,2 +1,0 @@
-index,v_level,gamma_level,s_level,tau_level,v_gen,gamma_gen,s_gen,tau_gen,v_rec,gamma_rec,s_rec,tau_rec,converged
-1053,high,high,low,variable,0.0001365,0.8000000000000004,0.0047,0.3555555555555555,0.000128,0.71,0.005321,0.45,True
