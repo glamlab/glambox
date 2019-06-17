@@ -1,6 +1,7 @@
+from arviz import plot_posterior
 import numpy as np
 import pandas as pd
-from pymc3 import plot_posterior
+# from pymc3 import plot_posterior
 from pymc3.stats import hpd
 import statsmodels.api as sm
 from statsmodels.stats.outliers_influence import summary_table
