@@ -5,7 +5,6 @@ from tqdm import tqdm
 
 
 def simulate_subject(parameters, values, gaze, n_repeats=1, subject=0, boundary=1, error_weight=0.05, error_range=(0, 5000)):
-
     n_trials, n_items = values.shape
 
     rts = np.zeros(n_trials * n_repeats) * np.nan
@@ -16,7 +15,6 @@ def simulate_subject(parameters, values, gaze, n_repeats=1, subject=0, boundary=
     running_idx = 0
 
     for trial in range(n_trials):
-
         for repeat in range(n_repeats):
 
             choice, rt = simulate_trial(parameters, values[trial], gaze[trial],
