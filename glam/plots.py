@@ -1269,7 +1269,7 @@ def add_regression_line(ax, intercept, slope, color='darkgray', **kwargs):
     return ax
 
 
-def plot_indvidual(observed,
+def plot_individual(observed,
                    predictions,
                    prediction_labels=None,
                    colors=None,
