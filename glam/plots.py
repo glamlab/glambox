@@ -54,7 +54,7 @@ def plot_aggregate(bar_data, line_data=None, line_labels=None, fontsize=7, value
     return fig, axs
 
 
-def add_difficulty(df, bins=7):
+def add_difficulty(df, bins=7, return_bins=False):
 
     # infer number of items
     value_cols = ([col for col in df.columns
@@ -70,7 +70,10 @@ def add_difficulty(df, bins=7):
     difficulty_binned = pd.cut(difficulty, bins)
     df['difficulty'] = bins[difficulty_binned.codes]
 
-    return df.copy()
+    if not return_bins:
+        return df.copy()
+    else:
+        return df.copy(), bins
 
 
 def plot_rt_by_difficulty(bar_data,
@@ -125,7 +128,10 @@ def plot_rt_by_difficulty(bar_data,
         df = dataframe.copy()
 
         # Compute relevant variables
-        df = add_difficulty(df, bins=bins)
+        if i == 0:
+            df, bins = add_difficulty(df, bins=bins, return_bins=True)
+        else:
+            df = add_difficulty(df, bins=bins)
 
         # Compute summary statistics
         subject_means = df.groupby(['subject', 'difficulty']).rt.mean()
@@ -176,7 +182,7 @@ def plot_rt_by_difficulty(bar_data,
         ax.legend(loc='upper left', fontsize=fontsize, frameon=False)
 
 
-def add_value_minus_mean_others(df, bins=7):
+def add_value_minus_mean_others(df, bins=7, return_bins=False):
 
     # infer number of items
     value_cols = ([col for col in df.columns
@@ -207,7 +213,10 @@ def add_value_minus_mean_others(df, bins=7):
         df['value_minus_mean_others_{}'.format(
             i)] = values_minus_mean_others_binned[:, i]
 
-    return df.copy()
+    if not return_bins:
+        return df.copy()
+    else:
+        return df.copy(), bins
 
 
 def plot_pchoose_by_value_minus_mean_others(bar_data,
@@ -266,7 +275,10 @@ def plot_pchoose_by_value_minus_mean_others(bar_data,
         df = dataframe.copy()
 
         # Compute relevant variables
-        df = add_value_minus_mean_others(df, bins=bins)
+        if i == 0:
+            df, bins = add_value_minus_mean_others(df, bins=bins, return_bins=True)
+        else:
+            df = add_value_minus_mean_others(df, bins=bins)
 
         # create temporary dataframe
         subjects = df['subject'].values
@@ -329,7 +341,7 @@ def plot_pchoose_by_value_minus_mean_others(bar_data,
         ax.legend(loc='upper left', fontsize=fontsize, frameon=False)
 
 
-def add_gaze_advantage(df, bins=7):
+def add_gaze_advantage(df, bins=7, return_bins=False):
 
     # infer number of items
     gaze_cols = ([col for col in df.columns
@@ -352,7 +364,10 @@ def add_gaze_advantage(df, bins=7):
                                                           bins=bins,
                                                           include_lowest=True,
                                                           labels=bins[:-1])
-    return df.copy()
+    if not return_bins:
+        return df.copy()
+    else:
+        return df.copy(), bins
 
 
 def plot_pchoose_by_gaze_minus_mean_others(bar_data,
@@ -411,7 +426,10 @@ def plot_pchoose_by_gaze_minus_mean_others(bar_data,
         df = dataframe.copy()
 
         # Compute relevant variables
-        df = add_gaze_advantage(df, bins=bins)
+        if i == 0:
+            df, bins = add_gaze_advantage(df, bins=bins, return_bins=True)
+        else:
+            df = add_gaze_advantage(df, bins=bins)
 
         # create temporary dataframe
         subjects = df['subject'].values
@@ -585,7 +603,10 @@ def plot_corp_by_gaze_advantage(bar_data,
 
         # Compute relevant variables
         # gaze advantage
-        df = add_gaze_advantage(df, bins=bins)
+        if i == 0:
+            df, bins = add_gaze_advantage(df, bins=bins, return_bins=True)
+        else:
+            df = add_gaze_advantage(df, bins=bins)
         gaze_advantages = df[['gaze_advantage_binned_{}'.format(
             i) for i in range(n_items)]].values
         # corrected choice
