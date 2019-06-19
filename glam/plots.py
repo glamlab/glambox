@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 from seaborn import despine
 plt.rc("axes.spines", top=False, right=False)
 
+from .analysis import aggregate_subject_level_data
 
 def cm2inch(*tupl):
     inch = 2.54
@@ -994,7 +995,7 @@ def extract_range(x, extra=0.25, bound=(None, None)):
     return [xmin, xmax]
 
 
-def individual_differences(subject_summary,
+def individual_differences(data,
                            nbins=20,
                            fontsize=7,
                            regression=True,
@@ -1014,6 +1015,10 @@ def individual_differences(subject_summary,
 
     ax02 = plt.subplot2grid((7, 3), (0, 2), rowspan=2)
     ax12 = plt.subplot2grid((7, 3), (2, 2), rowspan=5)
+
+    # create subject_summary
+    n_items = np.int(len([c for c in data.columns if 'item_value_' in c]))
+    subject_summary = aggregate_subject_level_data(data, n_items=n_items)
 
     # extract plotting ranges
     rt_range = extract_range(subject_summary['rt']['mean'], bound=(0,None))
