@@ -1291,24 +1291,35 @@ def plot_indvidual(observed,
     if axs.ndim == 1:
         axs = axs.reshape([1, axs.size])
 
+    # create subject summary for observed
+    n_items = np.int(len([c for c in observed.columns if 'item_value_' in c]))
+    for i, prediction in enumerate(predictions):
+        n_items_pred = np.int(len([c for c in prediction.columns if 'item_value_' in c]))
+        if n_items != n_items_pred:
+            raise ValueError('observed and prediction {} contain unequal number of items'.format(i))
+    observed_subject_summary = aggregate_subject_level_data(observed, n_items=n_items)
+
     # extract oberved value ranges
-    rt_range = extract_range(observed['rt']['mean'], bound=(0,None))
-    best_chosen_range = extract_range(observed['best_chosen']['mean'], bound=(0,1))
-    gaze_influence_range = extract_range(observed['gaze_influence'], bound=(-1,1))
+    rt_range = extract_range(observed_subject_summary['rt']['mean'], bound=(0,None))
+    best_chosen_range = extract_range(observed_subject_summary['best_chosen']['mean'], bound=(0,1))
+    gaze_influence_range = extract_range(observed_subject_summary['gaze_influence'], bound=(-1,1))
 
     # plot observed vs predicted
     for m, prediction in enumerate(predictions):
 
+        # create subject summary for prediction
+        prediction_subject_summary = aggregate_subject_level_data(prediction, n_items=n_items)
+
         # a) Mean RT
-        axs[m, 0].scatter(observed['rt']['mean'],
-                          prediction['rt']['mean'],
+        axs[m, 0].scatter(observed_subject_summary['rt']['mean'],
+                          prediction_subject_summary['rt']['mean'],
                           marker='o',
                           color='none',
                           edgecolor='C0',
                           linewidth=0.5,
                           s=30)
-        axs[m, 0].scatter(observed['rt']['mean'],
-                          prediction['rt']['mean'],
+        axs[m, 0].scatter(observed_subject_summary['rt']['mean'],
+                          prediction_subject_summary['rt']['mean'],
                           marker='o',
                           color='C0',
                           alpha=0.5,
@@ -1316,15 +1327,15 @@ def plot_indvidual(observed,
                           s=30)
 
         # b) P(choose best)
-        axs[m, 1].scatter(observed['best_chosen']['mean'],
-                          prediction['best_chosen']['mean'],
+        axs[m, 1].scatter(observed_subject_summary['best_chosen']['mean'],
+                          prediction_subject_summary['best_chosen']['mean'],
                           marker='o',
                           color='none',
                           edgecolor='C0',
                           linewidth=0.5,
                           s=30)
-        axs[m, 1].scatter(observed['best_chosen']['mean'],
-                          prediction['best_chosen']['mean'],
+        axs[m, 1].scatter(observed_subject_summary['best_chosen']['mean'],
+                          prediction_subject_summary['best_chosen']['mean'],
                           marker='o',
                           color='C0',
                           alpha=0.5,
@@ -1332,15 +1343,15 @@ def plot_indvidual(observed,
                           s=30)
 
         # c) Gaze Influence
-        axs[m, 2].scatter(observed['gaze_influence'],
-                          prediction['gaze_influence'],
+        axs[m, 2].scatter(observed_subject_summary['gaze_influence'],
+                          prediction_subject_summary['gaze_influence'],
                           marker='o',
                           color='none',
                           edgecolor='C0',
                           linewidth=0.5,
                           s=30)
-        axs[m, 2].scatter(observed['gaze_influence'],
-                          prediction['gaze_influence'],
+        axs[m, 2].scatter(observed_subject_summary['gaze_influence'],
+                          prediction_subject_summary['gaze_influence'],
                           marker='o',
                           color='C0',
                           alpha=0.5,
@@ -1348,21 +1359,21 @@ def plot_indvidual(observed,
                           s=30)
 
         # update parameter ranges
-        rt_range_prediction = extract_range(prediction['rt']['mean'], bound=(0,None))
+        rt_range_prediction = extract_range(prediction_subject_summary['rt']['mean'], bound=(0,None))
         if rt_range[0] > rt_range_prediction[0]:
             rt_range[0] = rt_range_prediction[0]
         if rt_range[1] < rt_range_prediction[1]:
             rt_range[1] = rt_range_prediction[1]
 
         best_chosen_range_prediction = extract_range(
-            prediction['best_chosen']['mean'], bound=(0,1))
+            prediction_subject_summary['best_chosen']['mean'], bound=(0,1))
         if best_chosen_range[0] > best_chosen_range_prediction[0]:
             best_chosen_range[0] = best_chosen_range_prediction[0]
         if best_chosen_range[1] < best_chosen_range_prediction[1]:
             best_chosen_range[1] = best_chosen_range_prediction[1]
 
         gaze_influence_range_prediction = extract_range(
-            prediction['gaze_influence'], bound=(-1,1))
+            prediction_subject_summary['gaze_influence'], bound=(-1,1))
         if gaze_influence_range[0] > gaze_influence_range_prediction[0]:
             gaze_influence_range[0] = gaze_influence_range_prediction[0]
         if gaze_influence_range[1] < gaze_influence_range_prediction[1]:
