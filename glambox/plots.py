@@ -52,7 +52,7 @@ def plot_aggregate(bar_data,
                                          fontsize=fontsize)
 
     # Labels
-    for label, ax in zip(list('abcd'), axs.ravel()):
+    for label, ax in zip(list('ABCD'), axs.ravel()):
         ax.text(-0.35,
                 1.05,
                 label,
