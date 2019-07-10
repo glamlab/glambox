@@ -11,7 +11,8 @@ def fit_models(models, method='MCMC', verbose=True, draws=2000, n_vi=200000, ste
                                                            for model in models])):
         pass
     else:
-        raise ValueError("Models must be list of <pymc3.model.Model> instances.")
+        raise ValueError(
+            "Models must be list of <pymc3.model.Model> instances.")
     if verbose:
         print('Fitting {} model(s) using {}...'.format(len(models), method))
     traces = []

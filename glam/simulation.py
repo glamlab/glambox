@@ -141,13 +141,16 @@ def predict(model, n_repeats=1, boundary=1., error_weight=0.05, verbose=True):
             dependence = model.depends_on.get(parameter)
             if dependence is not None:
                 condition = row[model.depends_on[parameter]]
-                parameters[p] = subject_estimates.loc[subject_estimates[dependence] == condition, parameter].head(1)
+                parameters[p] = subject_estimates.loc[subject_estimates[dependence]
+                                                      == condition, parameter].head(1)
             else:
                 parameters[p] = subject_estimates[parameter].head(1).values
 
         # Compute error RT range
-        rt_min = model.data['rt'][model.data['subject'] == subject].values.min()
-        rt_max = model.data['rt'][model.data['subject'] == subject].values.max()
+        rt_min = model.data['rt'][model.data['subject']
+                                  == subject].values.min()
+        rt_max = model.data['rt'][model.data['subject']
+                                  == subject].values.max()
         error_range = (rt_min, rt_max)
 
         values = row[value_cols].values

@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+from .analysis import aggregate_subject_level_data
 import numpy as np
 import pandas as pd
 from pymc3.stats import hpd
@@ -11,8 +12,6 @@ from arviz import plot_posterior
 import matplotlib.pyplot as plt
 from seaborn import despine
 plt.rc("axes.spines", top=False, right=False)
-
-from .analysis import aggregate_subject_level_data
 
 
 def cm2inch(*tupl):
@@ -142,7 +141,7 @@ def plot_rt_by_difficulty(bar_data,
         means = subject_means.groupby(
             'difficulty').mean()
         sems = subject_means.groupby('difficulty').sem()
-        # make sure all 
+        # make sure all
 
         x = means.index.values
         if xlims is None:
@@ -280,7 +279,8 @@ def plot_pchoose_by_value_minus_mean_others(bar_data,
 
         # Compute relevant variables
         if i == 0:
-            df, bins = add_value_minus_mean_others(df, bins=bins, return_bins=True)
+            df, bins = add_value_minus_mean_others(
+                df, bins=bins, return_bins=True)
         else:
             df = add_value_minus_mean_others(df, bins=bins)
 
@@ -836,21 +836,21 @@ def plot_node(model, parameter, comparisons=None, fontsize=12, alpha=0.5, hpd_al
     if parameter in ['sigma', 'gamma', 'tau']:
         for i in range(1+n_comparisons):
             if model_type == 'hierarchical':
-                axs[i][-1].set_xlabel(r'$\delta$'+
+                axs[i][-1].set_xlabel(r'$\delta$' +
                                       r'$\{}$'.format(parameter) +
                                       r'$_{mu}$', fontsize=fontsize*1.2)
             else:
-                axs[i][-1].set_xlabel(r'$\delta$'+
+                axs[i][-1].set_xlabel(r'$\delta$' +
                                       r'$\{}$'.format(parameter),
                                       fontsize=fontsize*1.2)
     else:
         for i in range(1+n_comparisons):
             if model_type == 'hierarchical':
-                axs[i][-1].set_xlabel(r'$\delta$'+
+                axs[i][-1].set_xlabel(r'$\delta$' +
                                       r'${}$'.format(parameter) +
                                       r'$_{mu}$', fontsize=fontsize)
             else:
-                axs[i][-1].set_xlabel(r'$\delta$'+
+                axs[i][-1].set_xlabel(r'$\delta$' +
                                       r'${}$'.format(parameter),
                                       fontsize=fontsize)
 
@@ -983,7 +983,7 @@ def plot_individual_node_comparison(model, parameter, comparisons, fontsize=12, 
 
 
 def extract_range(x, extra=0.25, bound=(None, None)):
-    
+
     if bound[0] != None:
         xmin = bound[0]
     else:
@@ -1005,7 +1005,7 @@ def individual_differences(data,
                            regression=True,
                            annotate=True,
                            figsize=cm2inch(18, 7),
-                           limits={'p_choose_best': (0,1),
+                           limits={'p_choose_best': (0, 1),
                                    'rt': (0, None),
                                    'gaze_influence': (None, None)}):
 
@@ -1033,13 +1033,16 @@ def individual_differences(data,
         rt_tickstep = 1500
     else:
         rt_tickstep = 750
-    rt_ticks = np.arange(rt_range[0], rt_range[1]+rt_tickstep, rt_tickstep).astype(np.int)
+    rt_ticks = np.arange(rt_range[0], rt_range[1] +
+                         rt_tickstep, rt_tickstep).astype(np.int)
 
-    best_chosen_range = extract_range(subject_summary['best_chosen']['mean'], bound=limits['p_choose_best'])
-    best_chosen_ticks = np.arange(0,1.1,0.2)
+    best_chosen_range = extract_range(
+        subject_summary['best_chosen']['mean'], bound=limits['p_choose_best'])
+    best_chosen_ticks = np.arange(0, 1.1, 0.2)
 
-    gaze_influence_range = extract_range(subject_summary['gaze_influence'], bound=limits['gaze_influence'])
-    gaze_influence_ticks = np.arange(-1,1.1,0.2)
+    gaze_influence_range = extract_range(
+        subject_summary['gaze_influence'], bound=limits['gaze_influence'])
+    gaze_influence_ticks = np.arange(-1, 1.1, 0.2)
 
     # Scatter plots
     plot_correlation(subject_summary['rt']['mean'],
@@ -1274,12 +1277,12 @@ def add_regression_line(ax, intercept, slope, color='darkgray', **kwargs):
 
 
 def plot_individual(observed,
-                   predictions,
-                   prediction_labels=None,
-                   colors=None,
-                   fontsize=7,
-                   alpha=1.0,
-                   figsize=None):
+                    predictions,
+                    prediction_labels=None,
+                    colors=None,
+                    fontsize=7,
+                    alpha=1.0,
+                    figsize=None):
 
     # count number of predictions
     n_predictions = len(predictions)
@@ -1298,21 +1301,28 @@ def plot_individual(observed,
     # create subject summary for observed
     n_items = np.int(len([c for c in observed.columns if 'item_value_' in c]))
     for i, prediction in enumerate(predictions):
-        n_items_pred = np.int(len([c for c in prediction.columns if 'item_value_' in c]))
+        n_items_pred = np.int(
+            len([c for c in prediction.columns if 'item_value_' in c]))
         if n_items != n_items_pred:
-            raise ValueError('observed and prediction {} contain unequal number of items'.format(i))
-    observed_subject_summary = aggregate_subject_level_data(observed, n_items=n_items)
+            raise ValueError(
+                'observed and prediction {} contain unequal number of items'.format(i))
+    observed_subject_summary = aggregate_subject_level_data(
+        observed, n_items=n_items)
 
     # extract oberved value ranges
-    rt_range = extract_range(observed_subject_summary['rt']['mean'], bound=(0,None))
-    best_chosen_range = extract_range(observed_subject_summary['best_chosen']['mean'], bound=(0,1))
-    gaze_influence_range = extract_range(observed_subject_summary['gaze_influence'], bound=(-1,1))
+    rt_range = extract_range(
+        observed_subject_summary['rt']['mean'], bound=(0, None))
+    best_chosen_range = extract_range(
+        observed_subject_summary['best_chosen']['mean'], bound=(0, 1))
+    gaze_influence_range = extract_range(
+        observed_subject_summary['gaze_influence'], bound=(-1, 1))
 
     # plot observed vs predicted
     for m, prediction in enumerate(predictions):
 
         # create subject summary for prediction
-        prediction_subject_summary = aggregate_subject_level_data(prediction, n_items=n_items)
+        prediction_subject_summary = aggregate_subject_level_data(
+            prediction, n_items=n_items)
 
         # a) Mean RT
         axs[m, 0].scatter(observed_subject_summary['rt']['mean'],
@@ -1363,21 +1373,22 @@ def plot_individual(observed,
                           s=30)
 
         # update parameter ranges
-        rt_range_prediction = extract_range(prediction_subject_summary['rt']['mean'], bound=(0,None))
+        rt_range_prediction = extract_range(
+            prediction_subject_summary['rt']['mean'], bound=(0, None))
         if rt_range[0] > rt_range_prediction[0]:
             rt_range[0] = rt_range_prediction[0]
         if rt_range[1] < rt_range_prediction[1]:
             rt_range[1] = rt_range_prediction[1]
 
         best_chosen_range_prediction = extract_range(
-            prediction_subject_summary['best_chosen']['mean'], bound=(0,1))
+            prediction_subject_summary['best_chosen']['mean'], bound=(0, 1))
         if best_chosen_range[0] > best_chosen_range_prediction[0]:
             best_chosen_range[0] = best_chosen_range_prediction[0]
         if best_chosen_range[1] < best_chosen_range_prediction[1]:
             best_chosen_range[1] = best_chosen_range_prediction[1]
 
         gaze_influence_range_prediction = extract_range(
-            prediction_subject_summary['gaze_influence'], bound=(-1,1))
+            prediction_subject_summary['gaze_influence'], bound=(-1, 1))
         if gaze_influence_range[0] > gaze_influence_range_prediction[0]:
             gaze_influence_range[0] = gaze_influence_range_prediction[0]
         if gaze_influence_range[1] < gaze_influence_range_prediction[1]:
@@ -1433,10 +1444,10 @@ def plot_individual(observed,
 
 
 def behaviour_parameter_correlation(estimates, subject_summary, figsize=cm2inch(18., 6), alpha=0.5, fontsize=7):
-    
+
     # create figure
     fig, axs = plt.subplots(1, 3, figsize=figsize)
-    
+
     # plot v vs Mean RT
     v_range = extract_range(estimates['v'])
     plot_correlation(estimates['v'],
@@ -1449,7 +1460,7 @@ def behaviour_parameter_correlation(estimates, subject_summary, figsize=cm2inch(
                      ylabel='Mean RT (ms)',
                      xlim=v_range,
                      ax=axs[0])
-    
+
     # plot gamma vs gaze influence
     gamma_range = extract_range(estimates['gamma'])
     plot_correlation(estimates['gamma'],
@@ -1463,7 +1474,7 @@ def behaviour_parameter_correlation(estimates, subject_summary, figsize=cm2inch(
                      ax=axs[1],
                      annotation_pos=(0.1, 0.9),
                      color='gray')
-    
+
     # plot gamma vs best chosen
     plot_correlation(estimates['gamma'],
                      subject_summary['best_chosen']['mean'],
@@ -1481,10 +1492,10 @@ def behaviour_parameter_correlation(estimates, subject_summary, figsize=cm2inch(
                 fontsize=fontsize, fontweight='bold', va='top')
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
-        
+
         # Font sizes
         ax.tick_params(axis='both', labelsize=fontsize)
-        
+
     fig.tight_layout(pad=1)
-    
+
     return fig

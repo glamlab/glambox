@@ -162,23 +162,25 @@ def se(series):
     se = series.std() / np.sqrt(n)
     return se
 
+
 def aggregate_subject_level_data(data, n_items):
     """
     Aggregates a single dataset to subject level
     """
     data = data.copy()
-    
+
     # add best chosen variable
     data = add_best_chosen(data)
-    
+
     # Summarize variables
     subject_summary = data.groupby('subject').agg({'rt': ['mean', std, 'min', 'max', se, q1, q3, iqr],
                                                    'best_chosen': 'mean'})
     # Influence of gaze on P(choose left)
-    subject_summary['gaze_influence'] = compute_gaze_influence_score(data, n_items=n_items)
-    
+    subject_summary['gaze_influence'] = compute_gaze_influence_score(
+        data, n_items=n_items)
+
     # subject_summary['dataset'] = data.groupby('subject')['dataset'].head(1).values
-    
+
     return subject_summary
 
 
@@ -189,6 +191,7 @@ def aggregate_group_level_data(subject_summary):
     group_summary = subject_summary.agg({('rt', 'mean'): ['mean', std, 'min', 'max', se, iqr],
                                          ('best_chosen', 'mean'): ['mean', std, 'min', 'max', se, iqr],
                                          'gaze_influence': ['mean', std, 'min', 'max', se, iqr]})
-    group_summary = group_summary[[('rt', 'mean'), ('best_chosen', 'mean'), ('gaze_influence')]].copy()
+    group_summary = group_summary[[
+        ('rt', 'mean'), ('best_chosen', 'mean'), ('gaze_influence')]].copy()
     group_summary.columns = ['Mean RT', 'P(choose best)', 'Gaze Influence']
     return group_summary.T
