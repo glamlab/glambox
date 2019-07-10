@@ -1120,10 +1120,10 @@ def individual_differences(data,
     ax02.set_xlim(best_chosen_range)
 
     # Labels
-    for label, ax in zip(list('abc'), [ax00, ax01, ax02]):
+    for label, ax in zip(list('ABC'), [ax00, ax01, ax02]):
         ax.text(-0.45, 1.1, label, transform=ax.transAxes,
                 fontsize=fontsize, fontweight='bold', va='top')
-    for label, ax in zip(list('def'), [ax10, ax11, ax12]):
+    for label, ax in zip(list('DEF'), [ax10, ax11, ax12]):
         ax.text(-0.45, 1.025, label, transform=ax.transAxes,
                 fontsize=fontsize, fontweight='bold', va='top')
 
