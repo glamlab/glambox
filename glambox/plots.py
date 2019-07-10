@@ -1586,7 +1586,7 @@ def plot_individual(observed,
         ax.set_xticks(gaze_influence_ticks)
 
     # label panels
-    for label, ax in zip(list('abcdef'), axs.ravel()):
+    for label, ax in zip(list('ABCDEF'), axs.ravel()):
         ax.text(-0.4,
                 1.1,
                 label,
@@ -1658,7 +1658,7 @@ def behaviour_parameter_correlation(estimates,
                      xlim=gamma_range,
                      ax=axs[2])
     # Labels
-    for label, ax in zip(list('abc'), axs.ravel()):
+    for label, ax in zip(list('ABC'), axs.ravel()):
         ax.text(-0.25,
                 1.1,
                 label,
