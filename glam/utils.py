@@ -12,8 +12,7 @@ def format_data(df):
     """
     subjects = df['subject'].unique()
     n_subjects = len(subjects)
-    n_items = len([col for col in df.columns
-                   if col.startswith('item_value_')])
+    n_items = len([col for col in df.columns if col.startswith('item_value_')])
     subject_idx = np.array(df.subject.values.astype(int))
     gaze = df[['gaze_{}'.format(i) for i in range(n_items)]].values
     values = df[['item_value_{}'.format(i) for i in range(n_items)]].values
@@ -47,13 +46,19 @@ def sort_according_to_choice(x, choices):
     # Get values of chosen entries, and put them into first column
     x_sorted[:, 0] = x[np.arange(x.shape[0]), choices.astype(int)]
     # and everything else into the next columns
-    others = np.vstack([x[i, np.where(np.arange(x.shape[1]) != c)]
-                        for i, c in enumerate(choices)])
+    others = np.vstack([
+        x[i, np.where(np.arange(x.shape[1]) != c)]
+        for i, c in enumerate(choices)
+    ])
     x_sorted[:, 1:] = others
     return x_sorted
 
 
-def extract_modes(traces, parameters=None, precision=None, f_burn=0, verbose=True):
+def extract_modes(traces,
+                  parameters=None,
+                  precision=None,
+                  f_burn=0,
+                  verbose=True):
 
     if not isinstance(traces, list):
         traces = [traces]
@@ -63,21 +68,26 @@ def extract_modes(traces, parameters=None, precision=None, f_burn=0, verbose=Tru
     for trace in traces:
 
         if parameters is None:
-            parameters = [var for var in trace.varnames
-                          if not var.endswith('__')]
+            parameters = [
+                var for var in trace.varnames if not var.endswith('__')
+            ]
 
             if verbose:
                 print('/!\ Automatically setting parameter precision...')
             precision_defaults = dict(v=6, gamma=2, s=6, SNR=2, tau=2, t0=-1)
-            precision = [precision_defaults.get(parameter.split('_')[0], 6)
-                         for parameter in parameters]
+            precision = [
+                precision_defaults.get(parameter.split('_')[0], 6)
+                for parameter in parameters
+            ]
 
         n_samples = len(trace)
         trace_modes = {}
 
         for parameter, prec in zip(parameters, precision):
-            trace_modes[parameter] = mode(np.round(trace.get_values(
-                parameter, burn=int(f_burn * n_samples)), prec))[0][0]
+            trace_modes[parameter] = mode(
+                np.round(
+                    trace.get_values(parameter, burn=int(f_burn * n_samples)),
+                    prec))[0][0]
         modes.append(trace_modes)
 
     return modes
@@ -102,10 +112,14 @@ def get_design(model):
     subjects = subject_idx.unique()
 
     design = dict()
-    design['factors'] = list({value for key, value in model.depends_on.items()
-                              if value is not None})
-    design['factor_conditions'] = {factor: model.data[factor].unique()
-                                   for factor in design['factors']}
+    design['factors'] = list({
+        value
+        for key, value in model.depends_on.items() if value is not None
+    })
+    design['factor_conditions'] = {
+        factor: model.data[factor].unique()
+        for factor in design['factors']
+    }
 
     for parameter in parameters:
         design[parameter] = dict()
@@ -124,31 +138,33 @@ def get_design(model):
             # Initialize empty design matrix D for this parameter
             D = np.zeros((subjects.size, conditions.size), dtype=np.int)
             # create parameter mapping containing condition names and indices (i.e., columns of design matrix)
-            design[parameter]['condition_mapping'] = {condition: c
-                                                      for c, condition in enumerate(conditions)}
+            design[parameter]['condition_mapping'] = {
+                condition: c
+                for c, condition in enumerate(conditions)
+            }
             # create an array to index which condition each trial-entry in the data belongs to
-            design[parameter]['condition_index'] = np.zeros_like(
-                subject_idx, dtype=np.int)
+            design[parameter]['condition_index'] = np.zeros_like(subject_idx,
+                                                                 dtype=np.int)
 
             # For each condition level
             for c, condition in enumerate(conditions):
                 design[parameter][condition] = dict()
 
                 # mark which trial-entries belong to this condition
-                design[parameter]['condition_index'][model.data[dependence]
-                                                     == condition] = c
+                design[parameter]['condition_index'][model.data[dependence] == condition] = c
 
                 # Subset data to condition-specific data
-                data_subset = model.data[model.data[dependence]
-                                         == condition].copy()
+                data_subset = model.data[model.data[dependence] == condition].copy()
 
                 # find all subject_IDs in this condition
                 subject_subset = data_subset['subject'].unique()
 
                 # within this level, generate mapping between subject_ids and indices
                 # e.g., gamma_high[5] corresponds to subject_id 10
-                design[parameter][condition]['subject_mapping'] = {int(subject): s
-                                                                   for s, subject in enumerate(subject_subset)}
+                design[parameter][condition]['subject_mapping'] = {
+                    int(subject): s
+                    for s, subject in enumerate(subject_subset)
+                }
                 # attach a list of all subjects in this condition
                 design[parameter][condition]['subjects'] = subject_subset
 
@@ -158,8 +174,8 @@ def get_design(model):
         else:
             D = (np.arange(subjects.size)[:, None] + 1).astype(np.int)
             design[parameter]['conditions'] = None
-            design[parameter]['condition_index'] = np.zeros_like(
-                subject_idx, dtype=np.int)
+            design[parameter]['condition_index'] = np.zeros_like(subject_idx,
+                                                                 dtype=np.int)
 
         # Save design matrix D
         design[parameter]['D'] = D
@@ -203,15 +219,17 @@ def get_estimates(model):
     parameters = ['v', 'gamma', 's', 'tau', 't0']
     estimates = pd.DataFrame()
     MAP = extract_modes(model.trace)
-    combinations = list(product(*[model.design['factor_conditions'][factor]
-                                  for factor in model.design['factors']]))
-    subject_template = pd.DataFrame({factor: [combination[f]
-                                              for combination in combinations]
-                                     for f, factor
-                                     in enumerate(model.design['factors'])})
+    combinations = list(
+        product(*[
+            model.design['factor_conditions'][factor]
+            for factor in model.design['factors']
+        ]))
+    subject_template = pd.DataFrame({
+        factor: [combination[f] for combination in combinations]
+        for f, factor in enumerate(model.design['factors'])
+    })
 
-    summary_tables = [summary(trace)
-                      for trace in model.trace]
+    summary_tables = [summary(trace) for trace in model.trace]
 
     for subject in subjects:
         subject_estimates = subject_template.copy()
@@ -227,88 +245,122 @@ def get_estimates(model):
                 # Parameter is fixed
                 if model.type == 'hierarchical':
                     # add participant paramaters
-                    subject_estimates[parameter] = MAP[0][parameter][subject][0]
-                    subject_estimates[parameter + '_hpd_2.5'] = summary_tables[0].loc[parameter +
-                                                                                      '__{}_0'.format(subject), 'hpd_2.5']
-                    subject_estimates[parameter + '_hpd_97.5'] = summary_tables[0].loc[parameter +
-                                                                                       '__{}_0'.format(subject), 'hpd_97.5']
+                    subject_estimates[parameter] = MAP[0][parameter][subject][
+                        0]
+                    subject_estimates[parameter + '_hpd_2.5'] = summary_tables[
+                        0].loc[parameter + '__{}_0'.format(subject), 'hpd_2.5']
+                    subject_estimates[parameter +
+                                      '_hpd_97.5'] = summary_tables[0].loc[
+                                          parameter +
+                                          '__{}_0'.format(subject), 'hpd_97.5']
                     # add population parameters
                     if (parameter + '_mu') in summary_tables[0].index:
+                        subject_estimates[
+                            parameter +
+                            '_mu'] = summary_tables[0].loc[parameter +
+                                                           '_mu', 'mean']
                         subject_estimates[parameter +
-                                          '_mu'] = summary_tables[0].loc[parameter + '_mu', 'mean']
+                                          '_mu_hpd_2.5'] = summary_tables[
+                                              0].loc[parameter +
+                                                     '_mu', 'hpd_2.5']
                         subject_estimates[parameter +
-                                          '_mu_hpd_2.5'] = summary_tables[0].loc[parameter + '_mu', 'hpd_2.5']
-                        subject_estimates[parameter +
-                                          '_mu_hpd_97.5'] = summary_tables[0].loc[parameter + '_mu', 'hpd_97.5']
+                                          '_mu_hpd_97.5'] = summary_tables[
+                                              0].loc[parameter +
+                                                     '_mu', 'hpd_97.5']
 
                 elif model.type == 'individual':
                     # add participant paramaters
-                    subject_estimates[parameter] = MAP[subject][parameter][0][0]
+                    subject_estimates[parameter] = MAP[subject][parameter][0][
+                        0]
+                    subject_estimates[parameter + '_hpd_2.5'] = summary_tables[
+                        subject].loc[parameter + '__0_0', 'hpd_2.5']
                     subject_estimates[parameter +
-                                      '_hpd_2.5'] = summary_tables[subject].loc[parameter + '__0_0', 'hpd_2.5']
-                    subject_estimates[parameter +
-                                      '_hpd_97.5'] = summary_tables[subject].loc[parameter + '__0_0', 'hpd_97.5']
+                                      '_hpd_97.5'] = summary_tables[
+                                          subject].loc[parameter +
+                                                       '__0_0', 'hpd_97.5']
             else:
                 # Parameter has dependence
                 conditions = model.design[parameter]['conditions']
                 for condition in conditions:
-                    if condition not in model.data.loc[model.data['subject'] == subject, dependence].values:
-                        subject_estimates = subject_estimates.drop(subject_estimates[subject_estimates[dependence] == condition].index,
-                                                                   axis=0)
+                    if condition not in model.data.loc[model.data['subject'] ==
+                                                       subject,
+                                                       dependence].values:
+                        subject_estimates = subject_estimates.drop(
+                            subject_estimates[subject_estimates[dependence] ==
+                                              condition].index,
+                            axis=0)
                     else:
                         # Check if subject is in condition
-                        if subject in model.design[parameter][condition]['subjects']:
+                        if subject in model.design[parameter][condition][
+                                'subjects']:
                             parameter_condition = parameter + '_' + condition
                             if model.type == 'hierarchical':
-                                index = model.design[parameter][condition]['subject_mapping'][subject]
+                                index = model.design[parameter][condition][
+                                    'subject_mapping'][subject]
                                 # extract participant parameters
                                 estimate = MAP[0][parameter_condition][index]
-                                hpd25 = summary_tables[0].loc[parameter_condition +
-                                                              '__{}'.format(index), 'hpd_2.5']
-                                hpd975 = summary_tables[0].loc[parameter_condition +
-                                                               '__{}'.format(index), 'hpd_97.5']
+                                hpd25 = summary_tables[
+                                    0].loc[parameter_condition +
+                                           '__{}'.format(index), 'hpd_2.5']
+                                hpd975 = summary_tables[
+                                    0].loc[parameter_condition +
+                                           '__{}'.format(index), 'hpd_97.5']
                                 # extract population parameters
-                                if (parameter_condition + '_mu') in summary_tables[0].index:
-                                    pop_estimate = summary_tables[0].loc[parameter_condition + '_mu', 'mean']
-                                    pop_hpd25 = summary_tables[0].loc[parameter_condition +
-                                                                      '_mu', 'hpd_2.5']
-                                    pop_hpd975 = summary_tables[0].loc[parameter_condition +
-                                                                       '_mu', 'hpd_97.5']
+                                if (parameter_condition +
+                                        '_mu') in summary_tables[0].index:
+                                    pop_estimate = summary_tables[0].loc[
+                                        parameter_condition + '_mu', 'mean']
+                                    pop_hpd25 = summary_tables[0].loc[
+                                        parameter_condition + '_mu', 'hpd_2.5']
+                                    pop_hpd975 = summary_tables[
+                                        0].loc[parameter_condition +
+                                               '_mu', 'hpd_97.5']
 
                             elif model.type == 'individual':
-                                if model.design[parameter]['type'] == 'between':
+                                if model.design[parameter][
+                                        'type'] == 'between':
                                     estimate = MAP[subject][parameter]
-                                    hpd25 = summary_tables[subject].loc[parameter +
-                                                                        '__0_0', 'hpd_2.5']
-                                    hpd975 = summary_tables[subject].loc[parameter +
-                                                                         '__0_0', 'hpd_97.5']
-                                elif model.design[parameter]['type'] == 'within':
-                                    estimate = MAP[subject][parameter_condition]
-                                    hpd25 = summary_tables[subject].loc[parameter_condition +
-                                                                        '__0_0', 'hpd_2.5']
-                                    hpd975 = summary_tables[subject].loc[parameter_condition +
-                                                                         '__0_0', 'hpd_97.5']
+                                    hpd25 = summary_tables[subject].loc[
+                                        parameter + '__0_0', 'hpd_2.5']
+                                    hpd975 = summary_tables[subject].loc[
+                                        parameter + '__0_0', 'hpd_97.5']
+                                elif model.design[parameter][
+                                        'type'] == 'within':
+                                    estimate = MAP[subject][
+                                        parameter_condition]
+                                    hpd25 = summary_tables[
+                                        subject].loc[parameter_condition +
+                                                     '__0_0', 'hpd_2.5']
+                                    hpd975 = summary_tables[
+                                        subject].loc[parameter_condition +
+                                                     '__0_0', 'hpd_97.5']
                                 else:
-                                    raise ValueError('Parameter dependence not understood for {}: {} ({}).'.format(
-                                        parameter, dependence, condition))
+                                    raise ValueError(
+                                        'Parameter dependence not understood for {}: {} ({}).'
+                                        .format(parameter, dependence,
+                                                condition))
                             else:
                                 raise ValueError(
-                                    'Model type not understood. Make sure "make_model" has already been called.')
+                                    'Model type not understood. Make sure "make_model" has already been called.'
+                                )
                             # add participant parameters
-                            subject_estimates.loc[subject_estimates[dependence]
-                                                  == condition, parameter] = estimate
-                            subject_estimates.loc[subject_estimates[dependence]
-                                                  == condition, parameter + '_hpd_2.5'] = hpd25
-                            subject_estimates.loc[subject_estimates[dependence]
-                                                  == condition, parameter + '_hpd_97.5'] = hpd975
+                            subject_estimates.loc[subject_estimates[dependence] == condition,
+                                                  parameter] = estimate
+                            subject_estimates.loc[subject_estimates[dependence] == condition, parameter +
+                                                  '_hpd_2.5'] = hpd25
+                            subject_estimates.loc[subject_estimates[dependence] == condition, parameter +
+                                                  '_hpd_97.5'] = hpd975
                             # add population parameters
                             if model.type == 'hierarchical':
-                                subject_estimates.loc[subject_estimates[dependence]
-                                                      == condition, parameter + '_mu'] = pop_estimate
-                                subject_estimates.loc[subject_estimates[dependence]
-                                                      == condition, parameter + '_mu_hpd_2.5'] = pop_hpd25
-                                subject_estimates.loc[subject_estimates[dependence] ==
-                                                      condition, parameter + '_mu_hpd_97.5'] = pop_hpd975
+                                subject_estimates.loc[
+                                    subject_estimates[dependence] == condition, parameter +
+                                    '_mu'] = pop_estimate
+                                subject_estimates.loc[
+                                    subject_estimates[dependence] == condition, parameter +
+                                    '_mu_hpd_2.5'] = pop_hpd25
+                                subject_estimates.loc[
+                                    subject_estimates[dependence] == condition, parameter +
+                                    '_mu_hpd_97.5'] = pop_hpd975
 
         estimates = pd.concat([estimates, subject_estimates], sort=True)
 

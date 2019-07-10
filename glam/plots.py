@@ -22,34 +22,48 @@ def cm2inch(*tupl):
         return tuple(i / inch for i in tupl)
 
 
-def plot_aggregate(bar_data, line_data=None, line_labels=None, fontsize=7, value_bins=7, gaze_bins=7):
+def plot_aggregate(bar_data,
+                   line_data=None,
+                   line_labels=None,
+                   fontsize=7,
+                   value_bins=7,
+                   gaze_bins=7):
     fig, axs = plt.subplots(1, 4, figsize=(12, 3))
 
-    plot_rt_by_difficulty(bar_data, line_data,
+    plot_rt_by_difficulty(bar_data,
+                          line_data,
                           xlabel_skip=2,
                           ax=axs[0],
                           line_labels=line_labels,
                           bins=value_bins,
                           fontsize=fontsize)
-    plot_pchoose_by_value_minus_mean_others(bar_data, line_data,
+    plot_pchoose_by_value_minus_mean_others(bar_data,
+                                            line_data,
                                             xlabel_skip=4,
                                             xlabel_start=0,
                                             ax=axs[1],
                                             bins=value_bins,
                                             fontsize=fontsize)
-    plot_pchoose_by_gaze_minus_mean_others(bar_data, line_data,
+    plot_pchoose_by_gaze_minus_mean_others(bar_data,
+                                           line_data,
                                            ax=axs[2],
                                            bins=gaze_bins,
                                            fontsize=fontsize)
-    plot_corp_by_gaze_advantage(bar_data, line_data,
+    plot_corp_by_gaze_advantage(bar_data,
+                                line_data,
                                 ax=axs[3],
                                 bins=gaze_bins,
                                 fontsize=fontsize)
 
     # Labels
     for label, ax in zip(list('abcd'), axs.ravel()):
-        ax.text(-0.35, 1.05, label, transform=ax.transAxes,
-                fontsize=fontsize, fontweight='bold', va='top')
+        ax.text(-0.35,
+                1.05,
+                label,
+                transform=ax.transAxes,
+                fontsize=fontsize,
+                fontweight='bold',
+                va='top')
         ax.tick_params(axis='both', which='major', labelsize=fontsize)
 
     fig.tight_layout()
@@ -60,8 +74,7 @@ def plot_aggregate(bar_data, line_data=None, line_labels=None, fontsize=7, value
 def add_difficulty(df, bins=7, return_bins=False):
 
     # infer number of items
-    value_cols = ([col for col in df.columns
-                   if col.startswith('item_value_')])
+    value_cols = ([col for col in df.columns if col.startswith('item_value_')])
 
     values = df[value_cols].values
     values_sorted = np.sort(values, axis=1)
@@ -104,19 +117,19 @@ def plot_rt_by_difficulty(bar_data,
         dataframes = [bar_data] + [line_data]
 
     if line_lws is None:
-        line_lws = [1 for i in range(len(dataframes)-1)]
+        line_lws = [1 for i in range(len(dataframes) - 1)]
 
     if line_colors is None:
-        line_colors = ['C{}'.format(i) for i in range(len(dataframes)-1)]
+        line_colors = ['C{}'.format(i) for i in range(len(dataframes) - 1)]
 
     if line_ls is None:
-        line_ls = ['-' for i in range(len(dataframes)-1)]
+        line_ls = ['-' for i in range(len(dataframes) - 1)]
 
     if line_markers is None:
-        line_markers = ['o' for i in range(len(dataframes)-1)]
+        line_markers = ['o' for i in range(len(dataframes) - 1)]
 
     if line_alphas is None:
-        line_alphas = [0.75 for i in range(len(dataframes)-1)]
+        line_alphas = [0.75 for i in range(len(dataframes) - 1)]
 
     add_labels = False
     if (line_labels is not None):
@@ -124,7 +137,8 @@ def plot_rt_by_difficulty(bar_data,
             add_labels = True
         else:
             raise ValueError(
-                'Number of prediction labels does not match number of prediction datasets.')
+                'Number of prediction labels does not match number of prediction datasets.'
+            )
 
     for i, dataframe in enumerate(dataframes):
 
@@ -138,8 +152,7 @@ def plot_rt_by_difficulty(bar_data,
 
         # Compute summary statistics
         subject_means = df.groupby(['subject', 'difficulty']).rt.mean()
-        means = subject_means.groupby(
-            'difficulty').mean()
+        means = subject_means.groupby('difficulty').mean()
         sems = subject_means.groupby('difficulty').sem()
         # make sure all
 
@@ -154,28 +167,42 @@ def plot_rt_by_difficulty(bar_data,
         predicted = False if i == 0 else True
 
         if not predicted:  # plot underlying data
-            barwidth = (xlims[1]-xlims[0]) / x.size * 0.6
-            ax.bar(x, means,
-                   linewidth=1, edgecolor='k', facecolor='w',
+            barwidth = (xlims[1] - xlims[0]) / x.size * 0.6
+            ax.bar(x,
+                   means,
+                   linewidth=1,
+                   edgecolor='k',
+                   facecolor='w',
                    width=barwidth)
-            ax.vlines(x, means - sems, means + sems,
-                      linewidth=1, color='k')
+            ax.vlines(x, means - sems, means + sems, linewidth=1, color='k')
 
             # adapt bardwidth
-            xlims[0] -= (1.5*barwidth)
-            xlims[1] += (1.5*barwidth)
+            xlims[0] -= (1.5 * barwidth)
+            xlims[1] += (1.5 * barwidth)
 
         else:  # plot predictions
             if add_labels:
-                ax.plot(x, means, marker=line_markers[i-1], markerfacecolor=line_colors[i-1], color=line_colors[i-1],
-                        ls=line_ls[i-1], label=line_labels[i-1], alpha=line_alphas[i-1], lw=line_lws[i-1])
+                ax.plot(x,
+                        means,
+                        marker=line_markers[i - 1],
+                        markerfacecolor=line_colors[i - 1],
+                        color=line_colors[i - 1],
+                        ls=line_ls[i - 1],
+                        label=line_labels[i - 1],
+                        alpha=line_alphas[i - 1],
+                        lw=line_lws[i - 1])
             else:
-                ax.plot(x, means, marker=line_markers[i-1], markerfacecolor=line_colors[i-1],
-                        color=line_colors[i-1], ls=line_ls[i-1], alpha=line_alphas[i-1], lw=line_lws[i-1])
+                ax.plot(x,
+                        means,
+                        marker=line_markers[i - 1],
+                        markerfacecolor=line_colors[i - 1],
+                        color=line_colors[i - 1],
+                        ls=line_ls[i - 1],
+                        alpha=line_alphas[i - 1],
+                        lw=line_lws[i - 1])
 
-    ylim = np.mean(np.concatenate([a['rt'].ravel()
-                                   for a in dataframes]))
-    ax.set_ylim(0, ylim*2)
+    ylim = np.mean(np.concatenate([a['rt'].ravel() for a in dataframes]))
+    ax.set_ylim(0, ylim * 2)
     ax.set_xlabel('Max. value –\nmean value others', fontsize=fontsize)
     ax.set_ylabel('Response time (ms)', fontsize=fontsize)
     ax.set_xlim(xlims)
@@ -188,8 +215,7 @@ def plot_rt_by_difficulty(bar_data,
 def add_value_minus_mean_others(df, bins=7, return_bins=False):
 
     # infer number of items
-    value_cols = ([col for col in df.columns
-                   if col.startswith('item_value_')])
+    value_cols = ([col for col in df.columns if col.startswith('item_value_')])
     n_items = len(value_cols)
 
     values = df[value_cols].values
@@ -203,12 +229,13 @@ def add_value_minus_mean_others(df, bins=7, return_bins=False):
     if isinstance(bins, (int, float)):
         # n_bins = np.min(
         #     [np.unique(values_minus_mean_others.ravel()).size, bins])
-        bins = np.linspace(np.min(values_minus_mean_others.ravel()), np.max(
-            values_minus_mean_others.ravel()), bins)
+        bins = np.linspace(np.min(values_minus_mean_others.ravel()),
+                           np.max(values_minus_mean_others.ravel()), bins)
         bins = np.round(bins, 2)
-    values_minus_mean_others_binned = pd.cut(
-        values_minus_mean_others.ravel(), bins)
-    values_minus_mean_others_binned = bins[values_minus_mean_others_binned.codes]
+    values_minus_mean_others_binned = pd.cut(values_minus_mean_others.ravel(),
+                                             bins)
+    values_minus_mean_others_binned = bins[
+        values_minus_mean_others_binned.codes]
     values_minus_mean_others_binned = values_minus_mean_others_binned.reshape(
         values_minus_mean_others.shape)
 
@@ -247,23 +274,23 @@ def plot_pchoose_by_value_minus_mean_others(bar_data,
     else:
         dataframes = [bar_data] + [line_data]
 
-    n_items = len([col for col in bar_data.columns
-                   if col.startswith('item_value_')])
+    n_items = len(
+        [col for col in bar_data.columns if col.startswith('item_value_')])
 
     if line_lws is None:
-        line_lws = [1 for i in range(len(dataframes)-1)]
+        line_lws = [1 for i in range(len(dataframes) - 1)]
 
     if line_colors is None:
-        line_colors = ['C{}'.format(i) for i in range(len(dataframes)-1)]
+        line_colors = ['C{}'.format(i) for i in range(len(dataframes) - 1)]
 
     if line_ls is None:
-        line_ls = ['-' for i in range(len(dataframes)-1)]
+        line_ls = ['-' for i in range(len(dataframes) - 1)]
 
     if line_markers is None:
-        line_markers = ['o' for i in range(len(dataframes)-1)]
+        line_markers = ['o' for i in range(len(dataframes) - 1)]
 
     if line_alphas is None:
-        line_alphas = [0.75 for i in range(len(dataframes)-1)]
+        line_alphas = [0.75 for i in range(len(dataframes) - 1)]
 
     add_labels = False
     if (line_labels is not None):
@@ -271,7 +298,8 @@ def plot_pchoose_by_value_minus_mean_others(bar_data,
             add_labels = True
         else:
             raise ValueError(
-                'Number of prediction labels does not match number of prediction datasets.')
+                'Number of prediction labels does not match number of prediction datasets.'
+            )
 
     for i, dataframe in enumerate(dataframes):
 
@@ -279,26 +307,33 @@ def plot_pchoose_by_value_minus_mean_others(bar_data,
 
         # Compute relevant variables
         if i == 0:
-            df, bins = add_value_minus_mean_others(
-                df, bins=bins, return_bins=True)
+            df, bins = add_value_minus_mean_others(df,
+                                                   bins=bins,
+                                                   return_bins=True)
         else:
             df = add_value_minus_mean_others(df, bins=bins)
 
         # create temporary dataframe
         subjects = df['subject'].values
-        value_minus_mean_others = df[['value_minus_mean_others_{}'.format(ii)
-                                      for ii in range(n_items)]].values
+        value_minus_mean_others = df[[
+            'value_minus_mean_others_{}'.format(ii) for ii in range(n_items)
+        ]].values
         is_choice = np.zeros_like(value_minus_mean_others)
-        is_choice[np.arange(is_choice.shape[0]),
-                  df['choice'].values.astype(np.int)] = 1
+        is_choice[np.arange(is_choice.shape[0]), df['choice'].values.
+                  astype(np.int)] = 1
 
-        df_tmp = pd.DataFrame({'subject': np.repeat(subjects, n_items),
-                               'value_minus_mean_others': value_minus_mean_others.ravel(),
-                               'is_choice': is_choice.ravel()})
+        df_tmp = pd.DataFrame({
+            'subject':
+            np.repeat(subjects, n_items),
+            'value_minus_mean_others':
+            value_minus_mean_others.ravel(),
+            'is_choice':
+            is_choice.ravel()
+        })
 
         # Compute summary statistics
-        subject_means = df_tmp.groupby(
-            ['subject', 'value_minus_mean_others']).is_choice.mean()
+        subject_means = df_tmp.groupby(['subject', 'value_minus_mean_others'
+                                        ]).is_choice.mean()
         means = subject_means.groupby('value_minus_mean_others').mean()
         sems = subject_means.groupby('value_minus_mean_others').sem()
 
@@ -318,22 +353,36 @@ def plot_pchoose_by_value_minus_mean_others(bar_data,
         predicted = False if i == 0 else True
 
         if not predicted:  # plot underlying data
-            barwidth = (xlims[1]-xlims[0]) / x.size * 0.6
-            ax.bar(x, means,
-                   linewidth=1, edgecolor='k', facecolor='w',
+            barwidth = (xlims[1] - xlims[0]) / x.size * 0.6
+            ax.bar(x,
+                   means,
+                   linewidth=1,
+                   edgecolor='k',
+                   facecolor='w',
                    width=barwidth)
-            ax.vlines(x, means - sems, means + sems,
-                      linewidth=1, color='k')
+            ax.vlines(x, means - sems, means + sems, linewidth=1, color='k')
             xlims[0] -= (1.5 * barwidth)
             xlims[1] += (1.5 * barwidth)
 
         else:  # plot predictions
             if add_labels:
-                ax.plot(x, means, marker=line_markers[i-1], markerfacecolor=line_colors[i-1],
-                        alpha=line_alphas[i-1], lw=line_lws[i-1], ls=line_ls[i-1], color=line_colors[i-1])
+                ax.plot(x,
+                        means,
+                        marker=line_markers[i - 1],
+                        markerfacecolor=line_colors[i - 1],
+                        alpha=line_alphas[i - 1],
+                        lw=line_lws[i - 1],
+                        ls=line_ls[i - 1],
+                        color=line_colors[i - 1])
             else:
-                ax.plot(x, means, marker=line_markers[i-1], markerfacecolor=line_colors[i-1],
-                        alpha=line_alphas[i-1], lw=line_lws[i-1], ls=line_ls[i-1], color=line_colors[i-1])
+                ax.plot(x,
+                        means,
+                        marker=line_markers[i - 1],
+                        markerfacecolor=line_colors[i - 1],
+                        alpha=line_alphas[i - 1],
+                        lw=line_lws[i - 1],
+                        ls=line_ls[i - 1],
+                        color=line_colors[i - 1])
 
     ax.axhline(1 / n_items, linestyle='--', color='k', linewidth=1, alpha=0.75)
 
@@ -348,8 +397,7 @@ def plot_pchoose_by_value_minus_mean_others(bar_data,
 def add_gaze_advantage(df, bins=7, return_bins=False):
 
     # infer number of items
-    gaze_cols = ([col for col in df.columns
-                  if col.startswith('gaze_')])
+    gaze_cols = ([col for col in df.columns if col.startswith('gaze_')])
     n_items = len(gaze_cols)
 
     gaze = df[gaze_cols].values
@@ -364,10 +412,11 @@ def add_gaze_advantage(df, bins=7, return_bins=False):
 
     for i in range(n_items):
         df['gaze_advantage_{}'.format(i)] = gaze_advantage[:, i]
-        df['gaze_advantage_binned_{}'.format(i)] = pd.cut(df['gaze_advantage_{}'.format(i)],
-                                                          bins=bins,
-                                                          include_lowest=True,
-                                                          labels=bins[:-1])
+        df['gaze_advantage_binned_{}'.format(i)] = pd.cut(
+            df['gaze_advantage_{}'.format(i)],
+            bins=bins,
+            include_lowest=True,
+            labels=bins[:-1])
     if not return_bins:
         return df.copy()
     else:
@@ -399,23 +448,23 @@ def plot_pchoose_by_gaze_minus_mean_others(bar_data,
     else:
         dataframes = [bar_data] + [line_data]
 
-    n_items = len([col for col in bar_data.columns
-                   if col.startswith('item_value_')])
+    n_items = len(
+        [col for col in bar_data.columns if col.startswith('item_value_')])
 
     if line_lws is None:
-        line_lws = [1 for i in range(len(dataframes)-1)]
+        line_lws = [1 for i in range(len(dataframes) - 1)]
 
     if line_colors is None:
-        line_colors = ['C{}'.format(i) for i in range(len(dataframes)-1)]
+        line_colors = ['C{}'.format(i) for i in range(len(dataframes) - 1)]
 
     if line_ls is None:
-        line_ls = ['-' for i in range(len(dataframes)-1)]
+        line_ls = ['-' for i in range(len(dataframes) - 1)]
 
     if line_markers is None:
-        line_markers = ['o' for i in range(len(dataframes)-1)]
+        line_markers = ['o' for i in range(len(dataframes) - 1)]
 
     if line_alphas is None:
-        line_alphas = [0.75 for i in range(len(dataframes)-1)]
+        line_alphas = [0.75 for i in range(len(dataframes) - 1)]
 
     add_labels = False
     if (line_labels is not None):
@@ -423,7 +472,8 @@ def plot_pchoose_by_gaze_minus_mean_others(bar_data,
             add_labels = True
         else:
             raise ValueError(
-                'Number of prediction labels does not match number of prediction datasets.')
+                'Number of prediction labels does not match number of prediction datasets.'
+            )
 
     for i, dataframe in enumerate(dataframes):
 
@@ -437,20 +487,23 @@ def plot_pchoose_by_gaze_minus_mean_others(bar_data,
 
         # create temporary dataframe
         subjects = df['subject'].values
-        gaze_minus_mean_others = df[['gaze_advantage_binned_{}'.format(ii)
-                                     for ii in range(n_items)]].values.astype(np.float)
+        gaze_minus_mean_others = df[[
+            'gaze_advantage_binned_{}'.format(ii) for ii in range(n_items)
+        ]].values.astype(np.float)
 
         is_choice = np.zeros_like(gaze_minus_mean_others)
-        is_choice[np.arange(is_choice.shape[0]),
-                  df['choice'].values.astype(np.int)] = 1
+        is_choice[np.arange(is_choice.shape[0]), df['choice'].values.
+                  astype(np.int)] = 1
 
-        df_tmp = pd.DataFrame({'subject': np.repeat(subjects, n_items),
-                               'gaze_advantage': gaze_minus_mean_others.ravel(),
-                               'is_choice': is_choice.ravel()})
+        df_tmp = pd.DataFrame({
+            'subject': np.repeat(subjects, n_items),
+            'gaze_advantage': gaze_minus_mean_others.ravel(),
+            'is_choice': is_choice.ravel()
+        })
 
         # Compute summary statistics
-        subject_means = df_tmp.groupby(
-            ['subject', 'gaze_advantage']).is_choice.mean()
+        subject_means = df_tmp.groupby(['subject',
+                                        'gaze_advantage']).is_choice.mean()
         means = subject_means.groupby('gaze_advantage').mean()
         sems = subject_means.groupby('gaze_advantage').sem()
 
@@ -470,22 +523,36 @@ def plot_pchoose_by_gaze_minus_mean_others(bar_data,
         predicted = False if i == 0 else True
 
         if not predicted:  # plot underlying data
-            barwidth = (xlims[1]-xlims[0]) / x.size * 0.4
-            ax.bar(x, means,
-                   linewidth=1, edgecolor='k', facecolor='w',
+            barwidth = (xlims[1] - xlims[0]) / x.size * 0.4
+            ax.bar(x,
+                   means,
+                   linewidth=1,
+                   edgecolor='k',
+                   facecolor='w',
                    width=barwidth)
-            ax.vlines(x, means - sems, means + sems,
-                      linewidth=1, color='k')
+            ax.vlines(x, means - sems, means + sems, linewidth=1, color='k')
             xlims[0] -= (1.5 * barwidth)
             xlims[1] += (1.5 * barwidth)
 
         else:  # plot predictions
             if add_labels:
-                ax.plot(x, means, marker=line_markers[i-1], markerfacecolor=line_colors[i-1],
-                        alpha=line_alphas[i-1], lw=line_lws[i-1], ls=line_ls[i-1], color=line_colors[i-1])
+                ax.plot(x,
+                        means,
+                        marker=line_markers[i - 1],
+                        markerfacecolor=line_colors[i - 1],
+                        alpha=line_alphas[i - 1],
+                        lw=line_lws[i - 1],
+                        ls=line_ls[i - 1],
+                        color=line_colors[i - 1])
             else:
-                ax.plot(x, means, marker=line_markers[i-1], markerfacecolor=line_colors[i-1],
-                        alpha=line_alphas[i-1], lw=line_lws[i-1], ls=line_ls[i-1], color=line_colors[i-1])
+                ax.plot(x,
+                        means,
+                        marker=line_markers[i - 1],
+                        markerfacecolor=line_colors[i - 1],
+                        alpha=line_alphas[i - 1],
+                        lw=line_lws[i - 1],
+                        ls=line_ls[i - 1],
+                        color=line_colors[i - 1])
 
     ax.axhline(1 / n_items, linestyle='--', color='k', linewidth=1, alpha=0.75)
 
@@ -501,28 +568,34 @@ def plot_pchoose_by_gaze_minus_mean_others(bar_data,
 def compute_corrected_choice(df):
 
     # recode choice
-    n_items = len([c for c in df.columns if c.startswith(
-        'gaze_') and not ('advantage' in c)])
+    n_items = len([
+        c for c in df.columns
+        if c.startswith('gaze_') and not ('advantage' in c)
+    ])
     is_choice = np.zeros((df.shape[0], n_items))
-    is_choice[np.arange(is_choice.shape[0]),
-              df['choice'].values.astype(np.int)] = 1
+    is_choice[np.arange(is_choice.shape[0]), df['choice'].values.astype(np.int
+                                                                        )] = 1
 
     if n_items > 2:
         values = df[['item_value_{}'.format(i) for i in range(n_items)]].values
         value_range_others = np.zeros_like(is_choice)
         for t in range(value_range_others.shape[0]):
             for i in range(n_items):
-                value_range_others[t, i] = values[t, np.arange(
-                    n_items) != i].max() - values[t, np.arange(n_items) != i].min()
+                value_range_others[
+                    t, i] = values[t, np.arange(n_items) != i].max(
+                    ) - values[t, np.arange(n_items) != i].min()
 
     # relative value
     df = add_value_minus_mean_others(df)
-    relative_values = df[['value_minus_mean_others_{}'.format(i)
-                          for i in range(n_items)]].values
+    relative_values = df[[
+        'value_minus_mean_others_{}'.format(i) for i in range(n_items)
+    ]].values
 
-    df_tmp = pd.DataFrame({"subject": np.repeat(df['subject'].values, n_items),
-                           "relative_value": relative_values.ravel(),
-                           "is_choice": is_choice.ravel()})
+    df_tmp = pd.DataFrame({
+        "subject": np.repeat(df['subject'].values, n_items),
+        "relative_value": relative_values.ravel(),
+        "is_choice": is_choice.ravel()
+    })
     if n_items > 2:
         df_tmp['value_range_others'] = value_range_others.ravel()
 
@@ -544,8 +617,8 @@ def compute_corrected_choice(df):
         result = logit.fit(disp=0)
         predicted_pchoice = result.predict(X)
 
-        subject_data_tmp['corrected_choice'] = (
-            subject_data_tmp['is_choice'] - predicted_pchoice)
+        subject_data_tmp['corrected_choice'] = (subject_data_tmp['is_choice'] -
+                                                predicted_pchoice)
         data_out.append(subject_data_tmp)
 
     data_out = pd.concat(data_out)
@@ -578,19 +651,19 @@ def plot_corp_by_gaze_advantage(bar_data,
         dataframes = [bar_data] + [line_data]
 
     if line_lws is None:
-        line_lws = [1 for i in range(len(dataframes)-1)]
+        line_lws = [1 for i in range(len(dataframes) - 1)]
 
     if line_colors is None:
-        line_colors = ['C{}'.format(i) for i in range(len(dataframes)-1)]
+        line_colors = ['C{}'.format(i) for i in range(len(dataframes) - 1)]
 
     if line_ls is None:
-        line_ls = ['-' for i in range(len(dataframes)-1)]
+        line_ls = ['-' for i in range(len(dataframes) - 1)]
 
     if line_markers is None:
-        line_markers = ['o' for i in range(len(dataframes)-1)]
+        line_markers = ['o' for i in range(len(dataframes) - 1)]
 
     if line_alphas is None:
-        line_alphas = [0.75 for i in range(len(dataframes)-1)]
+        line_alphas = [0.75 for i in range(len(dataframes) - 1)]
 
     add_labels = False
     if (line_labels is not None):
@@ -598,7 +671,8 @@ def plot_corp_by_gaze_advantage(bar_data,
             add_labels = True
         else:
             raise ValueError(
-                'Number of prediction labels does not match number of prediction datasets.')
+                'Number of prediction labels does not match number of prediction datasets.'
+            )
 
     n_items = len([c for c in bar_data.columns if c.startswith('gaze_')])
     for i, dataframe in enumerate(dataframes):
@@ -611,8 +685,9 @@ def plot_corp_by_gaze_advantage(bar_data,
             df, bins = add_gaze_advantage(df, bins=bins, return_bins=True)
         else:
             df = add_gaze_advantage(df, bins=bins)
-        gaze_advantages = df[['gaze_advantage_binned_{}'.format(
-            i) for i in range(n_items)]].values
+        gaze_advantages = df[[
+            'gaze_advantage_binned_{}'.format(i) for i in range(n_items)
+        ]].values
         # corrected choice
         corrected_choice_data = compute_corrected_choice(df)
         corrected_choice_data['gaze_advantage_binned'] = gaze_advantages.ravel(
@@ -634,22 +709,36 @@ def plot_corp_by_gaze_advantage(bar_data,
         predicted = False if i == 0 else True
 
         if not predicted:  # plot underlying data
-            barwidth = (xlims[1]-xlims[0]) / x.size * 0.4
-            ax.bar(x, means,
-                   linewidth=1, edgecolor='k', facecolor='w',
+            barwidth = (xlims[1] - xlims[0]) / x.size * 0.4
+            ax.bar(x,
+                   means,
+                   linewidth=1,
+                   edgecolor='k',
+                   facecolor='w',
                    width=barwidth)
-            ax.vlines(x, means - sems, means + sems,
-                      linewidth=1, color='k')
+            ax.vlines(x, means - sems, means + sems, linewidth=1, color='k')
             xlims[0] -= (1.5 * barwidth)
             xlims[1] += (1.5 * barwidth)
 
         else:  # plot predictions
             if add_labels:
-                ax.plot(x, means, marker=line_markers[i-1], markerfacecolor=line_colors[i-1],
-                        alpha=line_alphas[i-1], lw=line_lws[i-1], ls=line_ls[i-1], color=line_colors[i-1])
+                ax.plot(x,
+                        means,
+                        marker=line_markers[i - 1],
+                        markerfacecolor=line_colors[i - 1],
+                        alpha=line_alphas[i - 1],
+                        lw=line_lws[i - 1],
+                        ls=line_ls[i - 1],
+                        color=line_colors[i - 1])
             else:
-                ax.plot(x, means, marker=line_markers[i-1], markerfacecolor=line_colors[i-1],
-                        alpha=line_alphas[i-1], lw=line_lws[i-1], ls=line_ls[i-1], color=line_colors[i-1])
+                ax.plot(x,
+                        means,
+                        marker=line_markers[i - 1],
+                        markerfacecolor=line_colors[i - 1],
+                        alpha=line_alphas[i - 1],
+                        lw=line_lws[i - 1],
+                        ls=line_ls[i - 1],
+                        color=line_colors[i - 1])
 
     ax.set_xlabel('Item gaze –\nmean gaze others', fontsize=fontsize)
     ax.set_ylabel('Corrected\nP(choose item)', fontsize=fontsize)
@@ -662,7 +751,13 @@ def plot_corp_by_gaze_advantage(bar_data,
         ax.legend(loc='upper left', fontsize=fontsize, frameon=False)
 
 
-def plot_node(model, parameter, comparisons=None, fontsize=12, alpha=0.5, hpd_alpha=0.05, plot_histogram=True):
+def plot_node(model,
+              parameter,
+              comparisons=None,
+              fontsize=12,
+              alpha=0.5,
+              hpd_alpha=0.05,
+              plot_histogram=True):
 
     # determine model type
     model_type = model.type
@@ -681,7 +776,8 @@ def plot_node(model, parameter, comparisons=None, fontsize=12, alpha=0.5, hpd_al
 
     # extract design for parameter
     if parameter not in model.design.keys():
-        error_msg = '"'"{}"'" not part of model parameters.'.format(parameter)
+        error_msg = '"' "{}" '" not part of model parameters.'.format(
+            parameter)
         raise ValueError(error_msg)
     parameter_design = model.design[parameter]
     conditions = parameter_design['conditions']
@@ -709,15 +805,15 @@ def plot_node(model, parameter, comparisons=None, fontsize=12, alpha=0.5, hpd_al
             raise ValueError(error_msg)
 
     # set up figure
-    fig = plt.figure(figsize=(4*(1+n_comparisons), 2*n_traces), dpi=300)
+    fig = plt.figure(figsize=(4 * (1 + n_comparisons), 2 * n_traces), dpi=300)
 
     # set up dict for figure axes
     axs = dict()
-    for c in range(1+n_comparisons):
+    for c in range(1 + n_comparisons):
         axs[c] = np.array([])
 
     # set up array to store [min, max] x-lims per figure column
-    xlims = np.zeros((1+n_comparisons, 2)) * np.nan
+    xlims = np.zeros((1 + n_comparisons, 2)) * np.nan
 
     # plot
     for r in range(n_traces):
@@ -726,13 +822,13 @@ def plot_node(model, parameter, comparisons=None, fontsize=12, alpha=0.5, hpd_al
         trace = model_traces[r]
 
         # create & collect axis
-        ax = plt.subplot2grid((n_traces, n_comparisons+2), (r, 0), colspan=2)
+        ax = plt.subplot2grid((n_traces, n_comparisons + 2), (r, 0), colspan=2)
         axs[0] = np.append(axs[0], ax)
 
         # add y-label
         if model_type == 'individual':
-            axs[0][-1].set_ylabel(
-                'Subject {}'.format(subjects[r], parameter), fontsize=fontsize)
+            axs[0][-1].set_ylabel('Subject {}'.format(subjects[r], parameter),
+                                  fontsize=fontsize)
 
         # plot condition traces
         for ci, condition in enumerate(conditions):
@@ -742,8 +838,8 @@ def plot_node(model, parameter, comparisons=None, fontsize=12, alpha=0.5, hpd_al
                 condition_trace = trace['{}_{}_mu'.format(
                     parameter, condition)].ravel()
             else:
-                condition_trace = trace['{}_{}'.format(
-                    parameter, condition)].ravel()
+                condition_trace = trace['{}_{}'.format(parameter,
+                                                       condition)].ravel()
 
             # update x-lims
             if np.isnan(xlims[0, 0]):
@@ -759,17 +855,23 @@ def plot_node(model, parameter, comparisons=None, fontsize=12, alpha=0.5, hpd_al
             if not plot_histogram:
                 trace_hpd = hpd(condition_trace, alpha=hpd_alpha)
                 trace_mean = np.mean(condition_trace)
-                axs[0][-1].plot(trace_hpd, [ci, ci], lw=3,
+                axs[0][-1].plot(trace_hpd, [ci, ci],
+                                lw=3,
                                 color='C{}'.format(ci))
-                axs[0][-1].scatter(x=trace_mean, y=ci,
-                                   color='C{}'.format(ci), s=100)
+                axs[0][-1].scatter(x=trace_mean,
+                                   y=ci,
+                                   color='C{}'.format(ci),
+                                   s=100)
             else:
                 if r == 0:
                     contition_label = condition
                 else:
                     contition_label = ''
-                axs[0][-1].hist(condition_trace, histtype='stepfilled',
-                                bins=50, alpha=alpha, label=contition_label)
+                axs[0][-1].hist(condition_trace,
+                                histtype='stepfilled',
+                                bins=50,
+                                alpha=alpha,
+                                label=contition_label)
 
         # set y-lim
         if not plot_histogram:
@@ -781,42 +883,50 @@ def plot_node(model, parameter, comparisons=None, fontsize=12, alpha=0.5, hpd_al
         for c, comparison in enumerate(comparisons):
 
             # create & collect axis
-            ax = plt.subplot2grid((n_traces, n_comparisons+2), (r, 2+c))
-            axs[c+1] = np.append(axs[c+1], ax)
+            ax = plt.subplot2grid((n_traces, n_comparisons + 2), (r, 2 + c))
+            axs[c + 1] = np.append(axs[c + 1], ax)
 
             # compute trace difference
             if model_type == 'hierarchical':
-                trace_diff = (trace['{}_{}_mu'.format(parameter, comparison[0])].ravel() -
-                              trace['{}_{}_mu'.format(parameter, comparison[1])].ravel())
+                trace_diff = (
+                    trace['{}_{}_mu'.format(parameter,
+                                            comparison[0])].ravel() -
+                    trace['{}_{}_mu'.format(parameter, comparison[1])].ravel())
             else:
-                trace_diff = (trace['{}_{}'.format(parameter, comparison[0])].ravel() -
-                              trace['{}_{}'.format(parameter, comparison[1])].ravel())
+                trace_diff = (
+                    trace['{}_{}'.format(parameter, comparison[0])].ravel() -
+                    trace['{}_{}'.format(parameter, comparison[1])].ravel())
 
             # update x-lims
-            if np.isnan(xlims[c+1, 0]):
-                xlims[c+1, 0] = np.min(trace_diff)
-                xlims[c+1, 1] = np.max(trace_diff)
+            if np.isnan(xlims[c + 1, 0]):
+                xlims[c + 1, 0] = np.min(trace_diff)
+                xlims[c + 1, 1] = np.max(trace_diff)
             else:
-                if np.min(trace_diff) < xlims[c+1, 0]:
-                    xlims[c+1, 0] = np.min(trace_diff)
-                if np.max(trace_diff) > xlims[c+1, 1]:
-                    xlims[c+1, 1] = np.max(trace_diff)
+                if np.min(trace_diff) < xlims[c + 1, 0]:
+                    xlims[c + 1, 0] = np.min(trace_diff)
+                if np.max(trace_diff) > xlims[c + 1, 1]:
+                    xlims[c + 1, 1] = np.max(trace_diff)
 
             # plot trace difference
             if not plot_histogram:
                 trace_diff_hpd = hpd(trace_diff, alpha=hpd_alpha)
                 trace_diff_mean = np.mean(trace_diff)
-                axs[c+1][-1].plot(trace_diff_hpd, [0, 0], lw=3, color='gray')
-                axs[c+1][-1].scatter(x=trace_diff_mean,
-                                     y=0, color='gray', s=100)
+                axs[c + 1][-1].plot(trace_diff_hpd, [0, 0], lw=3, color='gray')
+                axs[c + 1][-1].scatter(x=trace_diff_mean,
+                                       y=0,
+                                       color='gray',
+                                       s=100)
                 hpd_string = '95% HPD:\n[{}, {}]'.format(
-                    np.round(trace_diff_hpd[0], 2), np.round(trace_diff_hpd[1], 2))
-                axs[c+1][-1].text(0.5, 0.7, hpd_string,
-                                  horizontalalignment='center',
-                                  verticalalignment='center',
-                                  transform=axs[c+1][-1].transAxes,
-                                  fontsize=fontsize)
-                axs[c+1][-1].set_ylim(-1, n_conditions)
+                    np.round(trace_diff_hpd[0], 2),
+                    np.round(trace_diff_hpd[1], 2))
+                axs[c + 1][-1].text(0.5,
+                                    0.7,
+                                    hpd_string,
+                                    horizontalalignment='center',
+                                    verticalalignment='center',
+                                    transform=axs[c + 1][-1].transAxes,
+                                    fontsize=fontsize)
+                axs[c + 1][-1].set_ylim(-1, n_conditions)
             else:
                 plot_posterior(trace_diff,
                                color='gray',
@@ -825,37 +935,35 @@ def plot_node(model, parameter, comparisons=None, fontsize=12, alpha=0.5, hpd_al
                                alpha_level=hpd_alpha,
                                bins=50,
                                ref_val=0,
-                               ax=axs[c+1][-1])
+                               ax=axs[c + 1][-1])
 
             # set title
             if r == 0:
-                axs[c+1][-1].set_title('{} - {}'.format(*
-                                                        comparison), fontsize=fontsize)
+                axs[c + 1][-1].set_title('{} - {}'.format(*comparison),
+                                         fontsize=fontsize)
 
     # label x-axis
     if parameter in ['sigma', 'gamma', 'tau']:
-        for i in range(1+n_comparisons):
+        for i in range(1 + n_comparisons):
             if model_type == 'hierarchical':
                 axs[i][-1].set_xlabel(r'$\delta$' +
-                                      r'$\{}$'.format(parameter) +
-                                      r'$_{mu}$', fontsize=fontsize*1.2)
+                                      r'$\{}$'.format(parameter) + r'$_{mu}$',
+                                      fontsize=fontsize * 1.2)
             else:
-                axs[i][-1].set_xlabel(r'$\delta$' +
-                                      r'$\{}$'.format(parameter),
-                                      fontsize=fontsize*1.2)
+                axs[i][-1].set_xlabel(r'$\delta$' + r'$\{}$'.format(parameter),
+                                      fontsize=fontsize * 1.2)
     else:
-        for i in range(1+n_comparisons):
+        for i in range(1 + n_comparisons):
             if model_type == 'hierarchical':
-                axs[i][-1].set_xlabel(r'$\delta$' +
-                                      r'${}$'.format(parameter) +
-                                      r'$_{mu}$', fontsize=fontsize)
+                axs[i][-1].set_xlabel(r'$\delta$' + r'${}$'.format(parameter) +
+                                      r'$_{mu}$',
+                                      fontsize=fontsize)
             else:
-                axs[i][-1].set_xlabel(r'$\delta$' +
-                                      r'${}$'.format(parameter),
+                axs[i][-1].set_xlabel(r'$\delta$' + r'${}$'.format(parameter),
                                       fontsize=fontsize)
 
     # set x-lims
-    for i in range(1+n_comparisons):
+    for i in range(1 + n_comparisons):
         for ax in axs[i]:
             ax.set_xlim(xlims[i, 0], xlims[i, 1])
             ax.tick_params(axis='both', which='major', labelsize=fontsize)
@@ -864,12 +972,14 @@ def plot_node(model, parameter, comparisons=None, fontsize=12, alpha=0.5, hpd_al
                 ax.set_yticklabels([])
 
     # add legend
-    axs[0][0].legend(loc='upper center', frameon=False,
-                     fontsize=fontsize, ncol=len(conditions))
+    axs[0][0].legend(loc='upper center',
+                     frameon=False,
+                     fontsize=fontsize,
+                     ncol=len(conditions))
 
     # re-shape axs
-    axs = np.concatenate([axs[i][None]
-                          for i in range(1+n_comparisons)], axis=1)
+    axs = np.concatenate([axs[i][None] for i in range(1 + n_comparisons)],
+                         axis=1)
 
     # autmomatic cleaning
     fig.tight_layout()
@@ -878,12 +988,16 @@ def plot_node(model, parameter, comparisons=None, fontsize=12, alpha=0.5, hpd_al
     return fig, axs
 
 
-def plot_individual_node_comparison(model, parameter, comparisons, fontsize=12, hpd_alpha=0.05):
+def plot_individual_node_comparison(model,
+                                    parameter,
+                                    comparisons,
+                                    fontsize=12,
+                                    hpd_alpha=0.05):
 
     # determine model type
     model_type = model.type
     if model_type != 'individual':
-        error_msg = 'plot_individual_node_comparison requires model of "'"individual"'" type.'
+        error_msg = 'plot_individual_node_comparison requires model of "' "individual" '" type.'
         raise
 
     # make sure comparisons specified correctly
@@ -900,7 +1014,8 @@ def plot_individual_node_comparison(model, parameter, comparisons, fontsize=12, 
 
     # extract design for parameter
     if parameter not in model.design.keys():
-        error_msg = '"'"{}"'" not part of model parameters.'.format(parameter)
+        error_msg = '"' "{}" '" not part of model parameters.'.format(
+            parameter)
         raise ValueError(error_msg)
     parameter_design = model.design[parameter]
     conditions = parameter_design['conditions']
@@ -924,8 +1039,13 @@ def plot_individual_node_comparison(model, parameter, comparisons, fontsize=12, 
         raise ValueError(error_msg)
 
     # set up figure
-    fig, axs = plt.subplots(1, n_comparisons, figsize=(4*n_comparisons, np.max([np.int(n_subjects * 1/2), 2])),
-                            dpi=300, sharey=True, sharex=True)
+    fig, axs = plt.subplots(1,
+                            n_comparisons,
+                            figsize=(4 * n_comparisons,
+                                     np.max([np.int(n_subjects * 1 / 2), 2])),
+                            dpi=300,
+                            sharey=True,
+                            sharex=True)
 
     # plot
     for r in range(n_subjects):
@@ -942,8 +1062,9 @@ def plot_individual_node_comparison(model, parameter, comparisons, fontsize=12, 
                 ax = axs
 
             # compute trace difference
-            trace_diff = (trace['{}_{}'.format(parameter, comparison[0])].ravel() -
-                          trace['{}_{}'.format(parameter, comparison[1])].ravel())
+            trace_diff = (
+                trace['{}_{}'.format(parameter, comparison[0])].ravel() -
+                trace['{}_{}'.format(parameter, comparison[1])].ravel())
 
             # plot trace difference
             trace_diff_hpd = hpd(trace_diff, alpha=hpd_alpha)
@@ -971,7 +1092,7 @@ def plot_individual_node_comparison(model, parameter, comparisons, fontsize=12, 
             # set x-label
             if parameter in ['sigma', 'gamma', 'tau']:
                 ax.set_xlabel(r'$\{}$'.format(parameter),
-                              fontsize=fontsize*1.2)
+                              fontsize=fontsize * 1.2)
             else:
                 ax.set_xlabel(r'${}$'.format(parameter), fontsize=fontsize)
 
@@ -988,13 +1109,13 @@ def extract_range(x, extra=0.25, bound=(None, None)):
         xmin = bound[0]
     else:
         xmean = np.mean(x)
-        xmin = np.min(x) - extra*xmean
+        xmin = np.min(x) - extra * xmean
 
     if bound[1] != None:
         xmax = bound[1]
     else:
         xmean = np.mean(x)
-        xmax = np.max(x) + extra*xmean
+        xmax = np.max(x) + extra * xmean
 
     return [xmin, xmax]
 
@@ -1005,9 +1126,11 @@ def individual_differences(data,
                            regression=True,
                            annotate=True,
                            figsize=cm2inch(18, 7),
-                           limits={'p_choose_best': (0, 1),
-                                   'rt': (0, None),
-                                   'gaze_influence': (None, None)}):
+                           limits={
+                               'p_choose_best': (0, 1),
+                               'rt': (0, None),
+                               'gaze_influence': (None, None)
+                           }):
 
     if (regression == False) & (annotate == True):
         print('annotate only possible, if regression = True.')
@@ -1033,15 +1156,15 @@ def individual_differences(data,
         rt_tickstep = 1500
     else:
         rt_tickstep = 750
-    rt_ticks = np.arange(rt_range[0], rt_range[1] +
-                         rt_tickstep, rt_tickstep).astype(np.int)
+    rt_ticks = np.arange(rt_range[0], rt_range[1] + rt_tickstep,
+                         rt_tickstep).astype(np.int)
 
-    best_chosen_range = extract_range(
-        subject_summary['best_chosen']['mean'], bound=limits['p_choose_best'])
+    best_chosen_range = extract_range(subject_summary['best_chosen']['mean'],
+                                      bound=limits['p_choose_best'])
     best_chosen_ticks = np.arange(0, 1.1, 0.2)
 
-    gaze_influence_range = extract_range(
-        subject_summary['gaze_influence'], bound=limits['gaze_influence'])
+    gaze_influence_range = extract_range(subject_summary['gaze_influence'],
+                                         bound=limits['gaze_influence'])
     gaze_influence_ticks = np.arange(-1, 1.1, 0.2)
 
     # Scatter plots
@@ -1108,26 +1231,37 @@ def individual_differences(data,
               color='C0')
 
     ax01.hist(subject_summary['gaze_influence'],
-              bins=np.linspace(
-                  gaze_influence_range[0], gaze_influence_range[1], nbins + 1),
+              bins=np.linspace(gaze_influence_range[0],
+                               gaze_influence_range[1], nbins + 1),
               color='C0')
 
     ax02.hist(subject_summary['best_chosen']['mean'],
-              bins=np.linspace(
-                  best_chosen_range[0], best_chosen_range[1], nbins + 1),
+              bins=np.linspace(best_chosen_range[0], best_chosen_range[1],
+                               nbins + 1),
               color='C0')
 
-    hist_lim = np.max([ax00.get_ylim()[1],
-                       ax01.get_ylim()[1],
-                       ax02.get_ylim()[1]]).astype(np.int) + 1
+    hist_lim = np.max(
+        [ax00.get_ylim()[1],
+         ax01.get_ylim()[1],
+         ax02.get_ylim()[1]]).astype(np.int) + 1
 
     # Labels
     for label, ax in zip(list('ABC'), [ax00, ax01, ax02]):
-        ax.text(-0.45, 1.1, label, transform=ax.transAxes,
-                fontsize=fontsize, fontweight='bold', va='top')
+        ax.text(-0.45,
+                1.1,
+                label,
+                transform=ax.transAxes,
+                fontsize=fontsize,
+                fontweight='bold',
+                va='top')
     for label, ax in zip(list('DEF'), [ax10, ax11, ax12]):
-        ax.text(-0.45, 1.025, label, transform=ax.transAxes,
-                fontsize=fontsize, fontweight='bold', va='top')
+        ax.text(-0.45,
+                1.025,
+                label,
+                transform=ax.transAxes,
+                fontsize=fontsize,
+                fontweight='bold',
+                va='top')
 
     # Fine-tune marginal histograms
     for ax in np.array([ax00, ax01, ax02]):
@@ -1154,7 +1288,8 @@ def individual_differences(data,
     return fig
 
 
-def plot_correlation(x, y,
+def plot_correlation(x,
+                     y,
                      xlabel='',
                      ylabel='',
                      title='',
@@ -1205,13 +1340,15 @@ def plot_correlation(x, y,
         ax.set_ylim(ylim)
 
     # Scatter (translucent dots with solid outlines)
-    ax.scatter(x, y,
+    ax.scatter(x,
+               y,
                marker='o',
                color='none',
                edgecolor=markercolor,
                linewidth=0.5,
                s=size)
-    ax.scatter(x, y,
+    ax.scatter(x,
+               y,
                marker='o',
                color=markercolor,
                alpha=alpha,
@@ -1224,15 +1361,17 @@ def plot_correlation(x, y,
         lm = sm.OLS(y, X).fit()
         intercept, slope = lm.params
         table, data, columns = summary_table(lm, alpha=1. - ci)
-        predicted, mean_ci_lower, mean_ci_upper = data[:, np.array([
-                                                                   2, 4, 5])].T
+        predicted, mean_ci_lower, mean_ci_upper = data[:,
+                                                       np.array([2, 4, 5])].T
 
         xs = np.linspace(*ax.get_xlim(), 100)
-        line = ax.plot(xs, intercept + slope * xs,
-                       color=color)
+        line = ax.plot(xs, intercept + slope * xs, color=color)
         sort_idx = np.argsort(x)
-        ax.fill_between(x[sort_idx], mean_ci_lower[sort_idx], mean_ci_upper[sort_idx],
-                        color=color, alpha=0.1)
+        ax.fill_between(x[sort_idx],
+                        mean_ci_lower[sort_idx],
+                        mean_ci_upper[sort_idx],
+                        color=color,
+                        alpha=0.1)
 
         # Annotation
         tval = lm.tvalues[-1]
@@ -1253,8 +1392,12 @@ def plot_correlation(x, y,
 
     # Diagonal
     if plot_diagonal:
-        ax.plot([0, 1], [0, 1], transform=ax.transAxes,
-                color='black', alpha=0.5, zorder=-10, lw=1)
+        ax.plot([0, 1], [0, 1],
+                transform=ax.transAxes,
+                color='black',
+                alpha=0.5,
+                zorder=-10,
+                lw=1)
 
     # Labels
     ax.set_xlabel(xlabel, fontsize=fontsize_axeslabel)
@@ -1288,12 +1431,13 @@ def plot_individual(observed,
     n_predictions = len(predictions)
     # define prediction labels
     if prediction_labels is None:
-        prediction_labels = ['Prediction {}'.format(
-            i+1) for i in range(n_predictions)]
+        prediction_labels = [
+            'Prediction {}'.format(i + 1) for i in range(n_predictions)
+        ]
 
     # define figre
     if figsize is None:
-        figsize = cm2inch(18, 6*n_predictions)
+        figsize = cm2inch(18, 6 * n_predictions)
     fig, axs = plt.subplots(n_predictions, 3, figsize=figsize)
     if axs.ndim == 1:
         axs = axs.reshape([1, axs.size])
@@ -1305,13 +1449,14 @@ def plot_individual(observed,
             len([c for c in prediction.columns if 'item_value_' in c]))
         if n_items != n_items_pred:
             raise ValueError(
-                'observed and prediction {} contain unequal number of items'.format(i))
-    observed_subject_summary = aggregate_subject_level_data(
-        observed, n_items=n_items)
+                'observed and prediction {} contain unequal number of items'.
+                format(i))
+    observed_subject_summary = aggregate_subject_level_data(observed,
+                                                            n_items=n_items)
 
     # extract oberved value ranges
-    rt_range = extract_range(
-        observed_subject_summary['rt']['mean'], bound=(0, None))
+    rt_range = extract_range(observed_subject_summary['rt']['mean'],
+                             bound=(0, None))
     best_chosen_range = extract_range(
         observed_subject_summary['best_chosen']['mean'], bound=(0, 1))
     gaze_influence_range = extract_range(
@@ -1396,14 +1541,15 @@ def plot_individual(observed,
 
         # label axes
         axs[m, 0].set_ylabel('{}\n\nPredicted Mean RT (ms)'.format(
-            prediction_labels[m]), fontsize=fontsize)
+            prediction_labels[m]),
+                             fontsize=fontsize)
         axs[m, 0].set_xlabel('Observed Mean RT (ms)', fontsize=fontsize)
         axs[m, 1].set_ylabel('Predicted P(choose best)', fontsize=fontsize)
         axs[m, 1].set_xlabel('Observed P(choose best)', fontsize=fontsize)
-        axs[m, 2].set_ylabel(
-            'Predicted Gaze Influence\non P(choice | value)', fontsize=fontsize)
-        axs[m, 2].set_xlabel(
-            'Observed Gaze Influence\non P(choice | value)', fontsize=fontsize)
+        axs[m, 2].set_ylabel('Predicted Gaze Influence\non P(choice | value)',
+                             fontsize=fontsize)
+        axs[m, 2].set_xlabel('Observed Gaze Influence\non P(choice | value)',
+                             fontsize=fontsize)
 
     # update axes limits and ticks
     rt_ticks = np.linspace(rt_range[0], rt_range[1], 4).astype(np.int)
@@ -1412,15 +1558,15 @@ def plot_individual(observed,
         ax.set_ylim(rt_range)
         ax.set_yticks(rt_ticks)
         ax.set_xticks(rt_ticks)
-    best_chosen_ticks = np.round(np.linspace(
-        best_chosen_range[0], best_chosen_range[1], 4), 2)
+    best_chosen_ticks = np.round(
+        np.linspace(best_chosen_range[0], best_chosen_range[1], 4), 2)
     for ax in axs[:, 1]:
         ax.set_xlim(best_chosen_range)
         ax.set_ylim(best_chosen_range)
         ax.set_yticks(best_chosen_ticks)
         ax.set_xticks(best_chosen_ticks)
-    gaze_influence_ticks = np.round(np.linspace(
-        gaze_influence_range[0], gaze_influence_range[1], 4), 2)
+    gaze_influence_ticks = np.round(
+        np.linspace(gaze_influence_range[0], gaze_influence_range[1], 4), 2)
     for ax in axs[:, 2]:
         ax.set_xlim(gaze_influence_range)
         ax.set_ylim(gaze_influence_range)
@@ -1429,21 +1575,34 @@ def plot_individual(observed,
 
     # label panels
     for label, ax in zip(list('abcdef'), axs.ravel()):
-        ax.text(-0.4, 1.1, label, transform=ax.transAxes,
-                fontsize=fontsize, fontweight='bold', va='top')
+        ax.text(-0.4,
+                1.1,
+                label,
+                transform=ax.transAxes,
+                fontsize=fontsize,
+                fontweight='bold',
+                va='top')
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
         ax.tick_params(axis='both', labelsize=fontsize)
         # plot diagonal
-        ax.plot(ax.get_xlim(), ax.get_xlim(), linewidth=1,
-                color='black', alpha=1.0, zorder=-1)
+        ax.plot(ax.get_xlim(),
+                ax.get_xlim(),
+                linewidth=1,
+                color='black',
+                alpha=1.0,
+                zorder=-1)
 
     fig.tight_layout(pad=2)
 
     return fig
 
 
-def behaviour_parameter_correlation(estimates, subject_summary, figsize=cm2inch(18., 6), alpha=0.5, fontsize=7):
+def behaviour_parameter_correlation(estimates,
+                                    subject_summary,
+                                    figsize=cm2inch(18., 6),
+                                    alpha=0.5,
+                                    fontsize=7):
 
     # create figure
     fig, axs = plt.subplots(1, 3, figsize=figsize)
@@ -1488,8 +1647,13 @@ def behaviour_parameter_correlation(estimates, subject_summary, figsize=cm2inch(
                      ax=axs[2])
     # Labels
     for label, ax in zip(list('abc'), axs.ravel()):
-        ax.text(-0.25, 1.1, label, transform=ax.transAxes,
-                fontsize=fontsize, fontweight='bold', va='top')
+        ax.text(-0.25,
+                1.1,
+                label,
+                transform=ax.transAxes,
+                fontsize=fontsize,
+                fontweight='bold',
+                va='top')
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
 

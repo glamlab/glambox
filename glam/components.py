@@ -22,7 +22,8 @@ def tt_wienerpos_fpt_pdf(t, drift, noise, boundary):
     """
     mu = boundary / drift
     lam = (boundary**2 / noise**2)
-    return ((lam / (2*np.pi*t**3))**0.5 * tt.exp((-lam * (t - mu)**2)/(2*mu**2*t)))
+    return ((lam / (2 * np.pi * t**3))**0.5 * tt.exp(
+        (-lam * (t - mu)**2) / (2 * mu**2 * t)))
 
 
 def tt_wienerpos_fpt_cdf(t, drift, noise, boundary, numerical_stability=100):
@@ -35,10 +36,10 @@ def tt_wienerpos_fpt_cdf(t, drift, noise, boundary, numerical_stability=100):
     """
     mu = boundary / drift
     lam = (boundary / noise)**2
-    bounded_ratio = tt.where(
-        lam/mu >= numerical_stability, numerical_stability, lam/mu)
+    bounded_ratio = tt.where(lam / mu >= numerical_stability,
+                             numerical_stability, lam / mu)
     return (tt_normal_cdf(tt.sqrt(lam / t) * (t / mu - 1)) +
-            tt.exp(2*bounded_ratio) * tt_normal_cdf(-(tt.sqrt(lam / t) * (t / mu + 1))))
+            tt.exp(2 * bounded_ratio) * tt_normal_cdf(-(tt.sqrt(lam / t) * (t / mu + 1))))
 
 
 def tt_wienerrace_pdf(t, drift, noise, boundary, t0, zerotol=1e-14):
@@ -67,8 +68,7 @@ def tt_wienerrace_pdf(t, drift, noise, boundary, t0, zerotol=1e-14):
 def expdrift(v, tau, gamma, values, gaze, zerotol):
     """
     expdrift
-    scaling between 0 and 10
-
+    
     vectorized, i.e., runs on all trials simultaneously
 
     R = v * 10 / (1 + exp(-tau * (E_i - max(E_j))))
@@ -77,12 +77,14 @@ def expdrift(v, tau, gamma, values, gaze, zerotol):
     E_drifts = gaze * values + (1. - gaze) * gamma * values
     n_items = tt.cast(E_drifts.shape[1], dtype='int32')
     stacked_E = tt.repeat(E_drifts, repeats=n_items, axis=1).T
-    stacked_E_reshaped = tt.reshape(stacked_E, newshape=(
-        E_drifts.shape[1], E_drifts.shape[1], E_drifts.shape[0])).T
+    stacked_E_reshaped = tt.reshape(stacked_E,
+                                    newshape=(E_drifts.shape[1],
+                                              E_drifts.shape[1],
+                                              E_drifts.shape[0])).T
     identity = 1 - tt.eye(n_items)
     max_others = tt.max(stacked_E_reshaped * identity[None, :, :], axis=2)
 
     drift = E_drifts - max_others
-    drift = v * 10 / (1 + tt.exp(-tau*drift))
+    drift = v * 10 / (1 + tt.exp(-tau * drift))
 
     return drift

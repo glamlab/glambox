@@ -6,7 +6,14 @@ from scipy.stats import invgauss
 from tqdm import tqdm
 
 
-def simulate_subject(parameters, values, gaze, n_repeats=1, subject=0, boundary=1, error_weight=0.05, error_range=(0, 5000)):
+def simulate_subject(parameters,
+                     values,
+                     gaze,
+                     n_repeats=1,
+                     subject=0,
+                     boundary=1,
+                     error_weight=0.05,
+                     error_range=(0, 5000)):
     n_trials, n_items = values.shape
 
     rts = np.zeros(n_trials * n_repeats) * np.nan
@@ -19,7 +26,9 @@ def simulate_subject(parameters, values, gaze, n_repeats=1, subject=0, boundary=
     for trial in range(n_trials):
         for repeat in range(n_repeats):
 
-            choice, rt = simulate_trial(parameters, values[trial], gaze[trial],
+            choice, rt = simulate_trial(parameters,
+                                        values[trial],
+                                        gaze[trial],
                                         boundary=boundary,
                                         error_weight=error_weight,
                                         error_range=error_range)
@@ -31,11 +40,12 @@ def simulate_subject(parameters, values, gaze, n_repeats=1, subject=0, boundary=
 
             running_idx += 1
 
-    df = pd.DataFrame(dict(subject=np.ones(n_trials * n_repeats) * subject,
-                           trial=trial_idx,
-                           repeat=repeat_idx,
-                           choice=choices,
-                           rt=rts))
+    df = pd.DataFrame(
+        dict(subject=np.ones(n_trials * n_repeats) * subject,
+             trial=trial_idx,
+             repeat=repeat_idx,
+             choice=choices,
+             rt=rts))
 
     for i in range(n_items):
         df['item_value_{}'.format(i)] = np.repeat(values[:, i], n_repeats)
@@ -44,7 +54,12 @@ def simulate_subject(parameters, values, gaze, n_repeats=1, subject=0, boundary=
     return df
 
 
-def simulate_trial(parameters, values, gaze, boundary=1, error_weight=0.05, error_range=(0, 5000)):
+def simulate_trial(parameters,
+                   values,
+                   gaze,
+                   boundary=1,
+                   error_weight=0.05,
+                   error_range=(0, 5000)):
     """
     Simulate GLAM for a single trial.
 
@@ -99,7 +114,7 @@ def expdrift(v, tau, gamma, values, gaze):
         others = np.arange(n_items)[np.arange(n_items) != i].astype(int)
         relative[i] = absolute[i] - np.max(absolute[others])
 
-    scaled = v * 10 / (1 + np.exp(-tau*relative))
+    scaled = v * 10 / (1 + np.exp(-tau * relative))
 
     return scaled
 
@@ -117,40 +132,41 @@ def predict(model, n_repeats=1, boundary=1., error_weight=0.05, verbose=True):
 
     subjects = np.unique(model.data['subject'])
 
-    value_cols = ['item_value_{}'.format(i)
-                  for i in range(model.n_items)]
-    gaze_cols = ['gaze_{}'.format(i)
-                 for i in range(model.n_items)]
+    value_cols = ['item_value_{}'.format(i) for i in range(model.n_items)]
+    gaze_cols = ['gaze_{}'.format(i) for i in range(model.n_items)]
 
     if not verbose:
         row_iterator = range(model.data.shape[0])
     else:
         row_iterator = tqdm(range(model.data.shape[0]))
-        print('Generating predictions for {} trials ({} repeats each)...'.format(model.data.shape[0],
-                                                                                 n_repeats))
+        print(
+            'Generating predictions for {} trials ({} repeats each)...'.format(
+                model.data.shape[0], n_repeats))
     for row_index in row_iterator:
 
         row = model.data.iloc[row_index, :]
 
         subject = row['subject']
         trial = row['trial']
-        subject_estimates = model.estimates[model.estimates['subject'] == subject]
+        subject_estimates = model.estimates[model.estimates['subject'] ==
+                                            subject]
         # Get the right parameter estimates for the trial
         parameters = np.zeros(5) * np.nan
         for p, parameter in enumerate(['v', 'gamma', 's', 'tau', 't0']):
             dependence = model.depends_on.get(parameter)
             if dependence is not None:
                 condition = row[model.depends_on[parameter]]
-                parameters[p] = subject_estimates.loc[subject_estimates[dependence]
-                                                      == condition, parameter].head(1)
+                parameters[
+                    p] = subject_estimates.loc[subject_estimates[dependence] ==
+                                               condition, parameter].head(1)
             else:
                 parameters[p] = subject_estimates[parameter].head(1).values
 
         # Compute error RT range
-        rt_min = model.data['rt'][model.data['subject']
-                                  == subject].values.min()
-        rt_max = model.data['rt'][model.data['subject']
-                                  == subject].values.max()
+        rt_min = model.data['rt'][model.data['subject'] ==
+                                  subject].values.min()
+        rt_max = model.data['rt'][model.data['subject'] ==
+                                  subject].values.max()
         error_range = (rt_min, rt_max)
 
         values = row[value_cols].values
@@ -158,7 +174,8 @@ def predict(model, n_repeats=1, boundary=1., error_weight=0.05, verbose=True):
 
         for r in range(n_repeats):
             choice, rt = simulate_trial(parameters=parameters,
-                                        values=values, gaze=gaze,
+                                        values=values,
+                                        gaze=gaze,
                                         boundary=boundary,
                                         error_weight=error_weight,
                                         error_range=error_range)

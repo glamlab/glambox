@@ -18,15 +18,18 @@ class GLAM(object):
     def __init__(self, data=None):
         self.data = data
         if self.data is not None:
-            self.n_items = len([col for col in data.columns
-                                if col.startswith('item_value_')])
+            self.n_items = len(
+                [col for col in data.columns if col.startswith('item_value_')])
         else:
             self.n_items = None
 
         self.parameters = dict()
 
-    def simulate_group(self, kind='hierarchical',
-                       n_individuals=10, n_trials=100, n_items=3,
+    def simulate_group(self,
+                       kind='hierarchical',
+                       n_individuals=10,
+                       n_trials=100,
+                       n_items=3,
                        individual_idx=None,
                        stimuli=None,
                        parameters=None,
@@ -98,21 +101,17 @@ class GLAM(object):
                 n_existing_individuals = self.data['subject'].max() + 1
             else:
                 n_existing_individuals = 0
-            individual_idx = np.arange(
-                n_existing_individuals, n_existing_individuals + n_individuals)
+            individual_idx = np.arange(n_existing_individuals,
+                                       n_existing_individuals + n_individuals)
 
         # Set up parameters
         if kind == 'hierarchical':
-            default_parameters = dict(v=dict(mu=0.00007, sd=0.00001, bounds=(0.00003, 0.00015)),
-                                      s=dict(mu=0.008, sd=0.001,
-                                             bounds=(0.005, 0.011)),
-                                      gamma=dict(mu=0.3, sd=0.3,
-                                                 bounds=(-1.0, 1.0)),
-                                      tau=dict(mu=0.8, sd=0.1,
-                                               bounds=(0.2, 2)),
-                                      # results in no t0
-                                      t0=dict(mu=0, sd=0, bounds=(0.0, 0.0))
-                                      )
+            default_parameters = dict(
+                v=dict(mu=0.00007, sd=0.00001, bounds=(0.00003, 0.00015)),
+                s=dict(mu=0.008, sd=0.001, bounds=(0.005, 0.011)),
+                gamma=dict(mu=0.3, sd=0.3, bounds=(-1.0, 1.0)),
+                tau=dict(mu=0.8, sd=0.1, bounds=(0.2, 2)),
+                t0=dict(mu=0, sd=0, bounds=(0.0, 0.0)))  # results in no t0
 
             parameters_formatted = dict()
             for p in ['v', 's', 'gamma', 'tau', 't0']:
@@ -123,16 +122,17 @@ class GLAM(object):
                 tmp = np.random.normal(loc=default_parameters[p]['mu'],
                                        scale=default_parameters[p]['sd'],
                                        size=n_individuals)
-                tmp[tmp < default_parameters[p]['bounds'][0]
-                    ] = default_parameters[p]['bounds'][0]
-                tmp[tmp > default_parameters[p]['bounds'][1]
-                    ] = default_parameters[p]['bounds'][1]
+                tmp[tmp < default_parameters[p]['bounds']
+                    [0]] = default_parameters[p]['bounds'][0]
+                tmp[tmp > default_parameters[p]['bounds']
+                    [1]] = default_parameters[p]['bounds'][1]
                 parameters_formatted[p] = tmp
         elif kind == 'individual':
             parameters_formatted = parameters
         else:
             raise ValueError(
-                "'kind' must be 'individual' or 'hierarchical' (is '{}')".format(kind))
+                "'kind' must be 'individual' or 'hierarchical' (is '{}')".
+                format(kind))
 
         # Save generating parameters
         self.parameters[label] = parameters_formatted
@@ -140,23 +140,26 @@ class GLAM(object):
         if stimuli is None:
             data = pd.DataFrame()
             for i, idx in enumerate(individual_idx):
-                parameters_individual = [parameters_formatted[p][i]
-                                         for p in ['v', 'gamma', 's', 'tau', 't0']]
+                parameters_individual = [
+                    parameters_formatted[p][i]
+                    for p in ['v', 'gamma', 's', 'tau', 't0']
+                ]
                 # No stimuli supplied, so we generate item_value and gaze data
-                values = np.random.randint(value_range[0], value_range[1],
+                values = np.random.randint(value_range[0],
+                                           value_range[1],
                                            size=(n_trials, n_items))
-                gaze = np.random.uniform(0, 1,
-                                         size=(n_trials, n_items))
+                gaze = np.random.uniform(0, 1, size=(n_trials, n_items))
                 gaze = gaze / gaze.sum(axis=1, keepdims=True)
 
-                individual_data = glam.simulation.simulate_subject(parameters_individual,
-                                                                   values,
-                                                                   gaze,
-                                                                   n_repeats=1,
-                                                                   subject=idx,
-                                                                   boundary=1,
-                                                                   error_weight=error_weight,
-                                                                   error_range=error_range)
+                individual_data = glam.simulation.simulate_subject(
+                    parameters_individual,
+                    values,
+                    gaze,
+                    n_repeats=1,
+                    subject=idx,
+                    boundary=1,
+                    error_weight=error_weight,
+                    error_range=error_range)
                 data = pd.concat([data, individual_data])
 
             data['condition'] = label
@@ -169,9 +172,13 @@ class GLAM(object):
             print('Not implemented yet. Please run again with "stimuli=None".')
             return
 
-    def make_model(self, kind,
-                   depends_on=dict(v=None, gamma=None,
-                                   s=None, tau=None, t0=None),
+    def make_model(self,
+                   kind,
+                   depends_on=dict(v=None,
+                                   gamma=None,
+                                   s=None,
+                                   tau=None,
+                                   t0=None),
                    within_dependent=[],
                    **kwargs):
         """
@@ -180,8 +187,10 @@ class GLAM(object):
         self.depends_on = depends_on
         self.within_dependent = within_dependent
         self.design = glam.utils.get_design(self)
-        self.model = make_models(
-            df=self.data, kind=kind, design=self.design, **kwargs)
+        self.model = make_models(df=self.data,
+                                 kind=kind,
+                                 design=self.design,
+                                 **kwargs)
 
     def fit(self, method='MCMC', **kwargs):
         self.trace = glam.fit.fit_models(self.model, method=method, **kwargs)
@@ -191,10 +200,16 @@ class GLAM(object):
         if not isinstance(self.model, list):
             self.dic = pm.dic(trace=self.trace, model=self.model)
         else:
-            self.dic = np.array([pm.dic(trace=trace, model=model)
-                                 for (trace, model) in zip(self.trace, self.model)])
+            self.dic = np.array([
+                pm.dic(trace=trace, model=model)
+                for (trace, model) in zip(self.trace, self.model)
+            ])
 
-    def predict(self, n_repeats=1, boundary=1.0, error_weight=0.05, verbose=True):
+    def predict(self,
+                n_repeats=1,
+                boundary=1.0,
+                error_weight=0.05,
+                verbose=True):
         self.prediction = glam.simulation.predict(self,
                                                   n_repeats=n_repeats,
                                                   boundary=boundary,
@@ -203,12 +218,17 @@ class GLAM(object):
 
     def exchange_data(self, new_data, verbose=True):
         if verbose:
-            print('Replaced attached data ({} trials) with new data ({} trials)...'.format(
-                len(self.data), len(new_data)))
+            print(
+                'Replaced attached data ({} trials) with new data ({} trials)...'
+                .format(len(self.data), len(new_data)))
         self.data = new_data
 
 
-def make_models(df, kind, verbose=True, design=dict(v=None, gamma=None, s=None, tau=None, t0=None), **kwargs):
+def make_models(df,
+                kind,
+                verbose=True,
+                design=dict(v=None, gamma=None, s=None, tau=None, t0=None),
+                **kwargs):
 
     if kind == 'individual':
         data = glam.utils.format_data(df)
@@ -220,22 +240,24 @@ def make_models(df, kind, verbose=True, design=dict(v=None, gamma=None, s=None, 
             design_subject = dict()
             for parameter in ['v', 'gamma', 's', 'tau', 't0']:
                 design_subject[parameter] = design[parameter].copy()
-                design_subject[parameter]['conditions'] = design[parameter]['conditions']
-                design_subject[parameter]['condition_index'] = design[parameter]['condition_index'][data['subject_idx'] == subject]
-            subject_model = make_subject_model(rts=data['rts'][data['subject_idx'] == subject],
-                                               gaze=data['gaze'][data['subject_idx']
-                                                                 == subject],
-                                               values=data['values'][data['subject_idx']
-                                                                     == subject],
-                                               error_ll=data['error_lls'][s],
-                                               design=design_subject,
-                                               **kwargs)
+                design_subject[parameter]['conditions'] = design[parameter][
+                    'conditions']
+                design_subject[parameter]['condition_index'] = design[
+                    parameter]['condition_index'][data['subject_idx'] == subject]
+            subject_model = make_subject_model(
+                rts=data['rts'][data['subject_idx'] == subject],
+                gaze=data['gaze'][data['subject_idx'] == subject],
+                values=data['values'][data['subject_idx'] == subject],
+                error_ll=data['error_lls'][s],
+                design=design_subject,
+                **kwargs)
             models.append(subject_model)
         return models
 
     elif kind == 'pooled':
         if verbose:
-            print('Generating pooled model including {} trials...'.format(len(df)))
+            print('Generating pooled model including {} trials...'.format(
+                len(df)))
         pooled = df.copy()
         pooled['subject'] = 0
         data = glam.utils.format_data(pooled)
@@ -252,24 +274,28 @@ def make_models(df, kind, verbose=True, design=dict(v=None, gamma=None, s=None, 
         if verbose:
             print('Generating hierarchical model for {} subjects...'.format(
                 data['n_subjects']))
-        hierarchical_model = make_hierarchical_model(rts=data['rts'],
-                                                     gaze=data['gaze'],
-                                                     values=data['values'],
-                                                     error_lls=data['error_lls'],
-                                                     subject_idx=data['subject_idx'],
-                                                     design=design,
-                                                     **kwargs)
+        hierarchical_model = make_hierarchical_model(
+            rts=data['rts'],
+            gaze=data['gaze'],
+            values=data['values'],
+            error_lls=data['error_lls'],
+            subject_idx=data['subject_idx'],
+            design=design,
+            **kwargs)
         return hierarchical_model
 
     else:
         raise ValueError(
-            "'{}' model not Recognized. Use 'individual', 'pooled' or 'hierarchical'.".format(kind))
+            "'{}' model not Recognized. Use 'individual', 'pooled' or 'hierarchical'."
+            .format(kind))
 
 
 def generate_subject_model_parameters(parameter,
                                       design,
-                                      lower, upper,
-                                      val, testval,
+                                      lower,
+                                      upper,
+                                      val,
+                                      testval,
                                       within_dependent=False):
 
     if design['conditions'] is not None:
@@ -280,122 +306,145 @@ def generate_subject_model_parameters(parameter,
             if within_dependent:
                 bounded = pm.Bound(pm.Normal, lower, upper)
                 meta_mu = pm.Uniform('{}_mu'.format(parameter), lower, upper)
-                meta_sd = pm.Uniform('{}_sd'.format(
-                    parameter), 1e-10, upper - lower)
+                meta_sd = pm.Uniform('{}_sd'.format(parameter), 1e-10,
+                                     upper - lower)
 
             for c, condition in enumerate(design['conditions']):
                 if len(np.unique(design['condition_index'])) == 1:
                     if c == np.unique(design['condition_index']):
-                        parms.append(pm.Uniform('{}'.format(parameter),
-                                                lower,
-                                                upper,
-                                                testval=testval,
-                                                shape=(1, 1)))
+                        parms.append(
+                            pm.Uniform('{}'.format(parameter),
+                                       lower,
+                                       upper,
+                                       testval=testval,
+                                       shape=(1, 1)))
                     else:
                         parms.append(tt.zeros((1, 1)))
                 else:
                     # if we want meta distribution for conditions, now drawn parameters should come from meta distribution
                     if within_dependent:
-                        parms.append(bounded('{}_{}'.format(
-                            parameter, condition), mu=meta_mu, sd=meta_sd, shape=(1, 1)))
+                        parms.append(
+                            bounded('{}_{}'.format(parameter, condition),
+                                    mu=meta_mu,
+                                    sd=meta_sd,
+                                    shape=(1, 1)))
                     else:
-                        parms.append(pm.Uniform('{}_{}'.format(parameter, condition),
-                                                lower,
-                                                upper,
-                                                testval=testval,
-                                                shape=(1, 1)))
+                        parms.append(
+                            pm.Uniform('{}_{}'.format(parameter, condition),
+                                       lower,
+                                       upper,
+                                       testval=testval,
+                                       shape=(1, 1)))
             parms = tt.concatenate(parms, axis=1)
         else:
             if len(val) != len(design['conditions']):
                 raise ValueError(
-                    'Number of values in {}_val does not match the number of conditions.'.format(parameter))
+                    'Number of values in {}_val does not match the number of conditions.'
+                    .format(parameter))
             else:
-                parms = tt.stack([pm.Deterministic('{}_{}'.format(parameter, condition), tt.ones((1, 1)) * v)
-                                  for condition, v in zip(design['{}_conditions'.format(parameter)], val)])
+                parms = tt.stack([
+                    pm.Deterministic('{}_{}'.format(parameter, condition),
+                                     tt.ones((1, 1)) * v)
+                    for condition, v in zip(
+                        design['{}_conditions'.format(parameter)], val)
+                ])
     else:
         if val is None:
-            parms = pm.Uniform(parameter, lower, upper,
-                               testval=testval, shape=(1, 1))
+            parms = pm.Uniform(parameter,
+                               lower,
+                               upper,
+                               testval=testval,
+                               shape=(1, 1))
         else:
             parms = pm.Deterministic(parameter, tt.ones((1, 1)) * val)
 
     return parms
 
 
-def make_subject_model(rts, gaze, values, error_ll,
+def make_subject_model(rts,
+                       gaze,
+                       values,
+                       error_ll,
                        v_val=None,
                        gamma_val=None,
                        s_val=None,
                        tau_val=None,
                        t0_val=0,
-                       zerotol=1e-6, error_weight=0.05, boundary=1.,
+                       zerotol=1e-6,
+                       error_weight=0.05,
+                       boundary=1.,
                        gamma_bounds=(-10, 1),
-                       design=dict(v=dict(), gamma=dict(), s=dict(), tau=dict(), t0=dict())):
+                       design=dict(v=dict(),
+                                   gamma=dict(),
+                                   s=dict(),
+                                   tau=dict(),
+                                   t0=dict())):
     with pm.Model() as glam_individual:
 
         # Mechanics
         b = pm.Deterministic('b', tt.constant(boundary, dtype='float32'))
-        p_error = pm.Deterministic(
-            'p_error', tt.constant(error_weight, dtype='float32'))
+        p_error = pm.Deterministic('p_error',
+                                   tt.constant(error_weight, dtype='float32'))
 
-        v = generate_subject_model_parameters(parameter='v',
-                                              design=design['v'],
-                                              lower=zerotol, upper=0.01,
-                                              val=v_val, testval=0.0002,
-                                              within_dependent=(design['v']['within_dependent']))
+        v = generate_subject_model_parameters(
+            parameter='v',
+            design=design['v'],
+            lower=zerotol,
+            upper=0.01,
+            val=v_val,
+            testval=0.0002,
+            within_dependent=(design['v']['within_dependent']))
 
-        gamma = generate_subject_model_parameters(parameter='gamma',
-                                                  design=design['gamma'],
-                                                  lower=gamma_bounds[0], upper=gamma_bounds[1],
-                                                  val=gamma_val, testval=0,
-                                                  within_dependent=(design['gamma']['within_dependent']))
+        gamma = generate_subject_model_parameters(
+            parameter='gamma',
+            design=design['gamma'],
+            lower=gamma_bounds[0],
+            upper=gamma_bounds[1],
+            val=gamma_val,
+            testval=0,
+            within_dependent=(design['gamma']['within_dependent']))
 
-        s = generate_subject_model_parameters(parameter='s',
-                                              design=design['s'],
-                                              lower=zerotol, upper=0.02,
-                                              val=s_val, testval=0.0075,
-                                              within_dependent=(design['s']['within_dependent']))
+        s = generate_subject_model_parameters(
+            parameter='s',
+            design=design['s'],
+            lower=zerotol,
+            upper=0.02,
+            val=s_val,
+            testval=0.0075,
+            within_dependent=(design['s']['within_dependent']))
 
-        tau = generate_subject_model_parameters(parameter='tau',
-                                                design=design['tau'],
-                                                lower=0, upper=5,
-                                                val=tau_val, testval=1,
-                                                within_dependent=(design['tau']['within_dependent']))
+        tau = generate_subject_model_parameters(
+            parameter='tau',
+            design=design['tau'],
+            lower=0,
+            upper=5,
+            val=tau_val,
+            testval=1,
+            within_dependent=(design['tau']['within_dependent']))
 
-        t0 = generate_subject_model_parameters(parameter='t0',
-                                               design=design['t0'],
-                                               lower=0, upper=500,
-                                               val=t0_val, testval=1,
-                                               within_dependent=(design['t0']['within_dependent']))
+        t0 = generate_subject_model_parameters(
+            parameter='t0',
+            design=design['t0'],
+            lower=0,
+            upper=500,
+            val=t0_val,
+            testval=1,
+            within_dependent=(design['t0']['within_dependent']))
 
         # Likelihood
-        def lda_logp(rt,
-                     gaze, values,
-                     error_ll,
-                     v_index,
-                     tau_index,
-                     gamma_index,
-                     s_index,
-                     t0_index,
-                     zerotol):
+        def lda_logp(rt, gaze, values, error_ll, v_index, tau_index,
+                     gamma_index, s_index, t0_index, zerotol):
 
             # compute drifts
-            drift = glam.components.expdrift(v[0, tt.cast(v_index, dtype='int32')][:, None],
-                                             tau[0, tt.cast(
-                                                 tau_index, dtype='int32')][:, None],
-                                             gamma[0, tt.cast(
-                                                 gamma_index, dtype='int32')][:, None],
-                                             values,
-                                             gaze,
-                                             zerotol)
-            glam_ll = glam.components.tt_wienerrace_pdf(rt[:, None],
-                                                        drift,
-                                                        s[0, tt.cast(
-                                                            s_index, dtype='int32')][:, None],
-                                                        b,
-                                                        t0[0, tt.cast(
-                                                            t0_index, dtype='int32')][:, None],
-                                                        zerotol)
+            drift = glam.components.expdrift(
+                v[0, tt.cast(v_index, dtype='int32')][:, None],
+                tau[0, tt.cast(tau_index, dtype='int32')][:, None],
+                gamma[0, tt.cast(gamma_index, dtype='int32')][:, None], values,
+                gaze, zerotol)
+            glam_ll = glam.components.tt_wienerrace_pdf(
+                rt[:, None], drift,
+                s[0, tt.cast(s_index, dtype='int32')][:, None], b,
+                t0[0, tt.cast(t0_index, dtype='int32')][:, None], zerotol)
 
             # mix likelihoods
             mixed_ll = ((1 - p_error) * glam_ll + p_error * error_ll)
@@ -404,64 +453,88 @@ def make_subject_model(rts, gaze, values, error_ll,
             mixed_ll = tt.where(tt.isinf(mixed_ll), 0., mixed_ll)
             return tt.log(mixed_ll + zerotol)
 
-        obs = pm.DensityDist('obs', logp=lda_logp,
-                             observed=dict(rt=rts,
-                                           gaze=gaze,
-                                           values=values,
-                                           error_ll=error_ll,
-                                           v_index=design['v']['condition_index'].astype(
-                                               np.int32),
-                                           tau_index=design['tau']['condition_index'].astype(
-                                               np.int32),
-                                           gamma_index=design['gamma']['condition_index'].astype(
-                                               np.int32),
-                                           s_index=design['s']['condition_index'].astype(
-                                               np.int32),
-                                           t0_index=design['t0']['condition_index'].astype(
-                                               np.int32),
-                                           zerotol=zerotol))
+        obs = pm.DensityDist(
+            'obs',
+            logp=lda_logp,
+            observed=dict(
+                rt=rts,
+                gaze=gaze,
+                values=values,
+                error_ll=error_ll,
+                v_index=design['v']['condition_index'].astype(np.int32),
+                tau_index=design['tau']['condition_index'].astype(np.int32),
+                gamma_index=design['gamma']['condition_index'].astype(
+                    np.int32),
+                s_index=design['s']['condition_index'].astype(np.int32),
+                t0_index=design['t0']['condition_index'].astype(np.int32),
+                zerotol=zerotol))
     return glam_individual
 
 
 def generate_hierarchical_model_parameters(parameter,
                                            n_subjects,
                                            design,
-                                           mu_mean, mu_sd, mu_lower, mu_upper,
-                                           sd_mean, sd_sd, sd_lower, sd_upper,
-                                           val, testval,
+                                           mu_mean,
+                                           mu_sd,
+                                           mu_lower,
+                                           mu_upper,
+                                           sd_mean,
+                                           sd_sd,
+                                           sd_lower,
+                                           sd_upper,
+                                           val,
+                                           testval,
                                            offset=True,
                                            within_dependent=False):
 
     if (design['conditions'] is not None):  # Parameter has dependence
         if val is None:  # Parameter is not set deterministically to some value
             if not within_dependent:  # The parameter's conditions have distributions from which subject parameters are drawn (e.g., a subject's fast v is drawn from the distribution of all subjects' fast vs)
-                bounded_mu = pm.Bound(pm.Normal, lower=mu_lower, upper=mu_upper)
-                bounded_sd = pm.Bound(pm.Normal, lower=sd_lower, upper=sd_upper)
-                mu = tt.stack([bounded_mu('{}_{}_mu'.format(parameter, condition),
-                                          mu_mean,
-                                          mu_sd,
-                                          testval=testval) for condition in design['conditions']])
-                sd = tt.stack([bounded_sd('{}_{}_sd'.format(parameter, condition),
-                                          sd_mean,
-                                          sd_sd,
-                                          testval=testval) for condition in design['conditions']])
+                bounded_mu = pm.Bound(pm.Normal,
+                                      lower=mu_lower,
+                                      upper=mu_upper)
+                bounded_sd = pm.Bound(pm.Normal,
+                                      lower=sd_lower,
+                                      upper=sd_upper)
+                mu = tt.stack([
+                    bounded_mu('{}_{}_mu'.format(parameter, condition),
+                               mu_mean,
+                               mu_sd,
+                               testval=testval)
+                    for condition in design['conditions']
+                ])
+                sd = tt.stack([
+                    bounded_sd('{}_{}_sd'.format(parameter, condition),
+                               sd_mean,
+                               sd_sd,
+                               testval=testval)
+                    for condition in design['conditions']
+                ])
                 parms = []
                 n_subjects_per_condition = []
                 for c, condition in enumerate(design['conditions']):
-                    n_subjects_in_condition = np.unique(design['subject_index'][design['condition_index'] == c]).size
+                    n_subjects_in_condition = np.unique(
+                        design['subject_index'][design['condition_index'] == c]).size
                     n_subjects_per_condition.append(n_subjects_in_condition)
                     if offset:
                         # Escape the Funnel of Hell (cf. https://twiecki.io/blog/2017/02/08/bayesian-hierchical-non-centered/)
-                        parms_tmp_offset = pm.Normal('{}_{}_offset'.format(parameter, condition),
-                                                     mu=0, sd=1, shape=(n_subjects_in_condition))
-                        parms_tmp = pm.Deterministic('{}_{}'.format(parameter, condition),
-                                                     tt.clip(mu[c] + parms_tmp_offset * sd[c],
-                                                             mu_lower, mu_upper))
+                        parms_tmp_offset = pm.Normal(
+                            '{}_{}_offset'.format(parameter, condition),
+                            mu=0,
+                            sd=1,
+                            shape=(n_subjects_in_condition))
+                        parms_tmp = pm.Deterministic(
+                            '{}_{}'.format(parameter, condition),
+                            tt.clip(mu[c] + parms_tmp_offset * sd[c], mu_lower,
+                                    mu_upper))
                     else:  # no offset
-                        # Reenter the Funnel of Hell, because somehow this did not help convergence too much
-                        bounded_i = pm.Bound(pm.Normal, lower=mu_lower, upper=mu_upper)
+                        # Disregard Funnel of Hell
+                        bounded_i = pm.Bound(pm.Normal,
+                                             lower=mu_lower,
+                                             upper=mu_upper)
                         parms_tmp = bounded_i('{}_{}'.format(parameter, condition),
-                                              mu=mu[c], sd=sd[c],
+                                              mu=mu[c],
+                                              sd=sd[c],
                                               shape=(n_subjects_in_condition))
                     parms_tmp = tt.concatenate([tt.zeros(1), parms_tmp])
                     parms.append(parms_tmp[design['D'][:, c]][:, None])
@@ -473,16 +546,23 @@ def generate_hierarchical_model_parameters(parameter,
             parms = []
             n_subjects_per_condition = []
             for c, condition in enumerate(design['conditions']):
-                n_subjects_in_condition = np.unique(design['subject_index'][design['condition_index'] == c]).size
+                n_subjects_in_condition = np.unique(design['subject_index'][
+                    design['condition_index'] == c]).size
                 n_subjects_per_condition.append(n_subjects_in_condition)
                 if len(val) == len(design['conditions']):
-                    parms.append(pm.Deterministic('{}_{}'.format(parameter, condition), tt.ones(n_subjects_in_condition, 1) * val[c]))
+                    parms.append(
+                        pm.Deterministic(
+                            '{}_{}'.format(parameter, condition),
+                            tt.ones(n_subjects_in_condition, 1) * val[c]))
                 else:
-                    raise ValueError('Number of values in {}_val does not match the number of specified {}-conditions.'.format(parameter, parameter))
+                    raise ValueError(
+                        'Number of values in {}_val does not match the number of specified {}-conditions.'
+                        .format(parameter, parameter))
             # make sure all elements in parms have same size
             for set_i, parm_set in enumerate(parms):
                 if n_subjects_per_condition[set_i] < n_subjects:
-                    parms[set_i] = tt.concatenate([parm_set, tt.zeros((n_subjects - n_subjects_per_condition[set_i], 1))],
+                    parms[set_i] = tt.concatenate([parm_set,
+                                                   tt.zeros((n_subjects - n_subjects_per_condition[set_i], 1))],
                                                   axis=0)
             parms = tt.concatenate(parms, axis=1)
 
@@ -490,14 +570,25 @@ def generate_hierarchical_model_parameters(parameter,
         if val is None:
             bounded_mu = pm.Bound(pm.Normal, lower=mu_lower, upper=mu_upper)
             bounded_sd = pm.Bound(pm.Normal, lower=sd_lower, upper=sd_upper)
-            mu = bounded_mu('{}_mu'.format(parameter), mu_mean, mu_sd, testval=testval)
-            sd = bounded_sd('{}_sd'.format(parameter), sd_mean, sd_sd, testval=testval)
+            mu = bounded_mu('{}_mu'.format(parameter),
+                            mu_mean,
+                            mu_sd,
+                            testval=testval)
+            sd = bounded_sd('{}_sd'.format(parameter),
+                            sd_mean,
+                            sd_sd,
+                            testval=testval)
             if offset:
                 # Escape the Funnel of Hell (cf. https://twiecki.io/blog/2017/02/08/bayesian-hierchical-non-centered/)
-                parms_offset = pm.Normal(parameter + '_offset', mu=0, sd=1, shape=(n_subjects, 1))
-                parms = pm.Deterministic(parameter, tt.clip(mu + parms_offset * sd, mu_lower, mu_upper))
+                parms_offset = pm.Normal(parameter + '_offset',
+                                         mu=0,
+                                         sd=1,
+                                         shape=(n_subjects, 1))
+                parms = pm.Deterministic(
+                    parameter,
+                    tt.clip(mu + parms_offset * sd, mu_lower, mu_upper))
             else:  # no offset
-                # Reenter the Funnel of Hell, as it did not help too much
+                # Disregard Funnel of Hell
                 bounded = pm.Bound(pm.Normal, lower=mu_lower, upper=mu_upper)
                 parms = bounded(parameter, mu=mu, sd=sd, shape=(n_subjects, 1))
         else:
@@ -506,18 +597,27 @@ def generate_hierarchical_model_parameters(parameter,
     return parms
 
 
-def make_hierarchical_model(rts, gaze, values, error_lls,
+def make_hierarchical_model(rts,
+                            gaze,
+                            values,
+                            error_lls,
                             subject_idx,
                             v_val=None,
                             gamma_val=None,
                             s_val=None,
                             tau_val=None,
                             t0_val=0,
-                            zerotol=1e-6, error_weight=0.05, boundary=1.,
+                            zerotol=1e-6,
+                            error_weight=0.05,
+                            boundary=1.,
                             gamma_bounds=(-2, 1),
                             offset=False,
                             f=5,
-                            design=dict(v=dict(), gamma=dict(), s=dict(), tau=dict(), t0=dict())):
+                            design=dict(v=dict(),
+                                        gamma=dict(),
+                                        s=dict(),
+                                        tau=dict(),
+                                        t0=dict())):
 
     n_subjects = np.unique(subject_idx).size
 
@@ -525,45 +625,77 @@ def make_hierarchical_model(rts, gaze, values, error_lls,
 
         # Mechanics
         b = pm.Deterministic('b', tt.constant(boundary, dtype='float32'))
-        p_error = pm.Deterministic(
-            'p_error', tt.constant(error_weight, dtype='float32'))
+        p_error = pm.Deterministic('p_error',
+                                   tt.constant(error_weight, dtype='float32'))
 
         # Parameter priors
-        v = generate_hierarchical_model_parameters(parameter='v',
-                                                   n_subjects=n_subjects,
-                                                   design=design['v'],
-                                                   mu_mean=6.4e-5, mu_sd=f * 2.6e-5, mu_lower=1e-5, mu_upper=0.0002,
-                                                   sd_mean=2.6e-5, sd_sd=f * 2.6e-5, sd_lower=0, sd_upper=0.0002,
-                                                   val=v_val, testval=6.4e-5,
-                                                   offset=offset,
-                                                   within_dependent=design['v']['within_dependent'])
+        v = generate_hierarchical_model_parameters(
+            parameter='v',
+            n_subjects=n_subjects,
+            design=design['v'],
+            mu_mean=6.4e-5,
+            mu_sd=f * 2.6e-5,
+            mu_lower=1e-5,
+            mu_upper=0.0002,
+            sd_mean=2.6e-5,
+            sd_sd=f * 2.6e-5,
+            sd_lower=0,
+            sd_upper=0.0002,
+            val=v_val,
+            testval=6.4e-5,
+            offset=offset,
+            within_dependent=design['v']['within_dependent'])
 
-        gamma = generate_hierarchical_model_parameters(parameter='gamma',
-                                                       n_subjects=n_subjects,
-                                                       design=design['gamma'],
-                                                       mu_mean=0.13, mu_sd=f * 0.35, mu_lower=gamma_bounds[0], mu_upper=gamma_bounds[1],
-                                                       sd_mean=0.35, sd_sd=f * 0.35, sd_lower=0, sd_upper=gamma_bounds[1],
-                                                       val=gamma_val, testval=0.13,
-                                                       offset=offset,
-                                                       within_dependent=design['gamma']['within_dependent'])
+        gamma = generate_hierarchical_model_parameters(
+            parameter='gamma',
+            n_subjects=n_subjects,
+            design=design['gamma'],
+            mu_mean=0.13,
+            mu_sd=f * 0.35,
+            mu_lower=gamma_bounds[0],
+            mu_upper=gamma_bounds[1],
+            sd_mean=0.35,
+            sd_sd=f * 0.35,
+            sd_lower=0,
+            sd_upper=gamma_bounds[1],
+            val=gamma_val,
+            testval=0.13,
+            offset=offset,
+            within_dependent=design['gamma']['within_dependent'])
 
-        s = generate_hierarchical_model_parameters(parameter='s',
-                                                   n_subjects=n_subjects,
-                                                   design=design['s'],
-                                                   mu_mean=0.0084, mu_sd=f * 0.0015, mu_lower=0.001, mu_upper=0.02,
-                                                   sd_mean=0.0015, sd_sd=f * 0.0015, sd_lower=0, sd_upper=0.01,
-                                                   val=s_val, testval=0.0084,
-                                                   offset=offset,
-                                                   within_dependent=design['s']['within_dependent'])
+        s = generate_hierarchical_model_parameters(
+            parameter='s',
+            n_subjects=n_subjects,
+            design=design['s'],
+            mu_mean=0.0084,
+            mu_sd=f * 0.0015,
+            mu_lower=0.001,
+            mu_upper=0.02,
+            sd_mean=0.0015,
+            sd_sd=f * 0.0015,
+            sd_lower=0,
+            sd_upper=0.01,
+            val=s_val,
+            testval=0.0084,
+            offset=offset,
+            within_dependent=design['s']['within_dependent'])
 
-        tau = generate_hierarchical_model_parameters(parameter='tau',
-                                                     n_subjects=n_subjects,
-                                                     design=design['tau'],
-                                                     mu_mean=0.94, mu_sd=f * 0.64, mu_lower=0, mu_upper=5,
-                                                     sd_mean=0.64, sd_sd=f * 0.64, sd_lower=0, sd_upper=3,
-                                                     val=tau_val, testval=0.94,
-                                                     offset=offset,
-                                                     within_dependent=design['tau']['within_dependent'])
+        tau = generate_hierarchical_model_parameters(
+            parameter='tau',
+            n_subjects=n_subjects,
+            design=design['tau'],
+            mu_mean=0.94,
+            mu_sd=f * 0.64,
+            mu_lower=0,
+            mu_upper=5,
+            sd_mean=0.64,
+            sd_sd=f * 0.64,
+            sd_lower=0,
+            sd_upper=3,
+            val=tau_val,
+            testval=0.94,
+            offset=offset,
+            within_dependent=design['tau']['within_dependent'])
 
         if t0_val is None:
             t0 = pm.Uniform('t0', 0, 500, testval=50, shape=(n_subjects, 1))
@@ -571,37 +703,28 @@ def make_hierarchical_model(rts, gaze, values, error_lls,
             t0 = pm.Deterministic('t0', tt.ones((n_subjects, 1)) * t0_val)
 
         # Likelihood
-        def lda_logp(rt,
-                     gaze, values,
-                     error_lls,
-                     s_condition_index,
-                     s_subject_index,
-                     v_condition_index,
-                     v_subject_index,
-                     tau_condition_index,
-                     tau_subject_index,
-                     gamma_condition_index,
-                     gamma_subject_index,
-                     t0_condition_index,
-                     t0_subject_index,
-                     zerotol):
+        def lda_logp(rt, gaze, values, error_lls, s_condition_index,
+                     s_subject_index, v_condition_index, v_subject_index,
+                     tau_condition_index, tau_subject_index,
+                     gamma_condition_index, gamma_subject_index,
+                     t0_condition_index, t0_subject_index, zerotol):
 
             # compute drifts
-            drift = glam.components.expdrift(v[tt.cast(v_subject_index, dtype='int32'),
-                                               tt.cast(v_condition_index, dtype='int32')][:, None],
-                                             tau[tt.cast(tau_subject_index, dtype='int32'),
-                                                 tt.cast(tau_condition_index, dtype='int32')][:, None],
-                                             gamma[tt.cast(gamma_subject_index, dtype='int32'),
-                                                   tt.cast(gamma_condition_index, dtype='int32')][:, None],
-                                             values, gaze, zerotol)
-            glam_ll = glam.components.tt_wienerrace_pdf(rt[:, None],
-                                                        drift,
-                                                        s[tt.cast(s_subject_index, dtype='int32'),
-                                                          tt.cast(s_condition_index, dtype='int32')][:, None],
-                                                        b,
-                                                        t0[tt.cast(t0_subject_index, dtype='int32'),
-                                                           tt.cast(t0_condition_index, dtype='int32')][:, None],
-                                                        zerotol)
+            drift = glam.components.expdrift(
+                v[tt.cast(v_subject_index, dtype='int32'),
+                  tt.cast(v_condition_index, dtype='int32')][:, None],
+                tau[tt.cast(tau_subject_index, dtype='int32'),
+                    tt.cast(tau_condition_index, dtype='int32')][:, None],
+                gamma[tt.cast(gamma_subject_index, dtype='int32'),
+                      tt.cast(gamma_condition_index, dtype='int32')][:, None],
+                values, gaze, zerotol)
+            glam_ll = glam.components.tt_wienerrace_pdf(
+                rt[:, None], drift,
+                s[tt.cast(s_subject_index, dtype='int32'),
+                  tt.cast(s_condition_index, dtype='int32')][:, None], b,
+                t0[tt.cast(t0_subject_index, dtype='int32'),
+                   tt.cast(t0_condition_index, dtype='int32')][:, None],
+                zerotol)
 
             # mix likelihoods
             mixed_ll = ((1 - p_error) * glam_ll +
@@ -611,30 +734,31 @@ def make_hierarchical_model(rts, gaze, values, error_lls,
             mixed_ll = tt.where(tt.isinf(mixed_ll), 0., mixed_ll)
             return tt.log(mixed_ll + zerotol)
 
-        obs = pm.DensityDist('obs', logp=lda_logp,
-                             observed=dict(rt=rts,
-                                           gaze=gaze,
-                                           values=values,
-                                           error_lls=error_lls,
-                                           s_condition_index=design['s']['condition_index'].astype(
-                                               np.int32),
-                                           s_subject_index=design['s']['subject_index'].astype(
-                                               np.int32),
-                                           v_condition_index=design['v']['condition_index'].astype(
-                                               np.int32),
-                                           v_subject_index=design['v']['subject_index'].astype(
-                                               np.int32),
-                                           tau_condition_index=design['tau']['condition_index'].astype(
-                                               np.int32),
-                                           tau_subject_index=design['tau']['subject_index'].astype(
-                                               np.int32),
-                                           gamma_condition_index=design['gamma']['condition_index'].astype(
-                                               np.int32),
-                                           gamma_subject_index=design['gamma']['subject_index'].astype(
-                                               np.int32),
-                                           t0_condition_index=design['t0']['condition_index'].astype(
-                                               np.int32),
-                                           t0_subject_index=design['t0']['subject_index'].astype(
-                                               np.int32),
-                                           zerotol=zerotol))
+        obs = pm.DensityDist(
+            'obs',
+            logp=lda_logp,
+            observed=dict(
+                rt=rts,
+                gaze=gaze,
+                values=values,
+                error_lls=error_lls,
+                s_condition_index=design['s']['condition_index'].astype(
+                    np.int32),
+                s_subject_index=design['s']['subject_index'].astype(np.int32),
+                v_condition_index=design['v']['condition_index'].astype(
+                    np.int32),
+                v_subject_index=design['v']['subject_index'].astype(np.int32),
+                tau_condition_index=design['tau']['condition_index'].astype(
+                    np.int32),
+                tau_subject_index=design['tau']['subject_index'].astype(
+                    np.int32),
+                gamma_condition_index=design['gamma']
+                ['condition_index'].astype(np.int32),
+                gamma_subject_index=design['gamma']['subject_index'].astype(
+                    np.int32),
+                t0_condition_index=design['t0']['condition_index'].astype(
+                    np.int32),
+                t0_subject_index=design['t0']['subject_index'].astype(
+                    np.int32),
+                zerotol=zerotol))
     return glam_hierarchical

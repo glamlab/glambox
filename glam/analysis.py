@@ -3,9 +3,6 @@
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
-import scipy as sp
-import os
-import errno
 
 
 def compute_gaze_influence_score(data, n_items=None):
@@ -44,19 +41,19 @@ def compute_gaze_influence_score(data, n_items=None):
             index = np.where(np.arange(n_items) != i)
             rel_gaze[t, i] = gaze[t, i] - np.mean(gaze[t, index])
             rel_values[t, i] = values[t, i] - np.mean(values[t, index])
-            value_range[t, i] = np.max(
-                values[t, index]) - np.min(values[t, index])
+            value_range[t, i] = np.max(values[t, index]) - np.min(
+                values[t, index])
 
     # create new dataframe (long format, one row per item)
-    data_long = pd.DataFrame(dict(subject=np.repeat(data['subject'].values, n_items),
-                                  is_choice=choice.ravel(),
-                                  value=values.ravel(),
-                                  rel_value=rel_values.ravel(),
-                                  value_range_others=value_range.ravel(),
-                                  rel_gaze=rel_gaze.ravel(),
-                                  gaze_pos=np.array(
-                                      rel_gaze.ravel() > 0, dtype=np.bool),
-                                  gaze=gaze.ravel()))
+    data_long = pd.DataFrame(
+        dict(subject=np.repeat(data['subject'].values, n_items),
+             is_choice=choice.ravel(),
+             value=values.ravel(),
+             rel_value=rel_values.ravel(),
+             value_range_others=value_range.ravel(),
+             rel_gaze=rel_gaze.ravel(),
+             gaze_pos=np.array(rel_gaze.ravel() > 0, dtype=np.bool),
+             gaze=gaze.ravel()))
 
     # estimate value-based choice prob.
     # for each individual and subtract
@@ -85,8 +82,8 @@ def compute_gaze_influence_score(data, n_items=None):
     data_out = pd.concat(data_out_list)
 
     # compute corrected psychometric, given gaze
-    tmp = data_out.groupby(['subject', 'gaze_pos']
-                           ).corrected_choice.mean().unstack()
+    tmp = data_out.groupby(['subject',
+                            'gaze_pos']).corrected_choice.mean().unstack()
     gaze_influence_score = (tmp[True] - tmp[False]).values
 
     return gaze_influence_score
@@ -116,8 +113,8 @@ def add_best_chosen(df):
     df = df.copy()
     values = df[[c for c in df.columns if c.startswith('item_value_')]].values
     choices = df['choice'].values.astype(np.int)
-    best_chosen = (values[np.arange(choices.size), choices]
-                   == np.nanmax(values, axis=1)).astype(int)
+    best_chosen = (values[np.arange(choices.size), choices] == np.nanmax(
+        values, axis=1)).astype(int)
     df['best_chosen'] = best_chosen
     return df
 
@@ -173,8 +170,11 @@ def aggregate_subject_level_data(data, n_items):
     data = add_best_chosen(data)
 
     # Summarize variables
-    subject_summary = data.groupby('subject').agg({'rt': ['mean', std, 'min', 'max', se, q1, q3, iqr],
-                                                   'best_chosen': 'mean'})
+    subject_summary = data.groupby('subject').agg({
+        'rt': ['mean', std, 'min', 'max', se, q1, q3, iqr],
+        'best_chosen':
+        'mean'
+    })
     # Influence of gaze on P(choose left)
     subject_summary['gaze_influence'] = compute_gaze_influence_score(
         data, n_items=n_items)
@@ -188,10 +188,12 @@ def aggregate_group_level_data(subject_summary):
     """
     Aggregates a subject summary to group level
     """
-    group_summary = subject_summary.agg({('rt', 'mean'): ['mean', std, 'min', 'max', se, iqr],
-                                         ('best_chosen', 'mean'): ['mean', std, 'min', 'max', se, iqr],
-                                         'gaze_influence': ['mean', std, 'min', 'max', se, iqr]})
-    group_summary = group_summary[[
-        ('rt', 'mean'), ('best_chosen', 'mean'), ('gaze_influence')]].copy()
+    group_summary = subject_summary.agg({
+        ('rt', 'mean'): ['mean', std, 'min', 'max', se, iqr],
+        ('best_chosen', 'mean'): ['mean', std, 'min', 'max', se, iqr],
+        'gaze_influence': ['mean', std, 'min', 'max', se, iqr]
+    })
+    group_summary = group_summary[[('rt', 'mean'), ('best_chosen', 'mean'),
+                                   ('gaze_influence')]].copy()
     group_summary.columns = ['Mean RT', 'P(choose best)', 'Gaze Influence']
     return group_summary.T

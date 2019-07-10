@@ -4,11 +4,17 @@ import pymc3 as pm
 import numpy as np
 
 
-def fit_models(models, method='MCMC', verbose=True, draws=2000, n_vi=200000, step=pm.Metropolis, **kwargs):
+def fit_models(models,
+               method='MCMC',
+               verbose=True,
+               draws=2000,
+               n_vi=200000,
+               step=pm.Metropolis,
+               **kwargs):
     if isinstance(models, pm.model.Model):
         models = [models]
-    elif isinstance(models, list) and np.alltrue(np.array([isinstance(model, pm.model.Model)
-                                                           for model in models])):
+    elif isinstance(models, list) and np.alltrue(
+            np.array([isinstance(model, pm.model.Model) for model in models])):
         pass
     else:
         raise ValueError(
