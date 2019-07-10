@@ -1000,7 +1000,7 @@ def plot_node(model,
 def plot_individual_node_comparison(model,
                                     parameter,
                                     comparisons,
-                                    fontsize=12,
+                                    fontsize=7,
                                     hpd_alpha=0.05):
 
     # determine model type
@@ -1050,8 +1050,7 @@ def plot_individual_node_comparison(model,
     # set up figure
     fig, axs = plt.subplots(1,
                             n_comparisons,
-                            figsize=(4 * n_comparisons,
-                                     np.max([np.int(n_subjects * 1 / 2), 2])),
+                            figsize=cm2inch(18,9*n_comparisons),
                             dpi=300,
                             sharey=True,
                             sharex=True)
@@ -1437,7 +1436,12 @@ def plot_individual(observed,
                     colors=None,
                     fontsize=7,
                     alpha=1.0,
-                    figsize=None):
+                    figsize=None,
+                    limits={
+                               'p_choose_best': (0, 1),
+                               'rt': (0, None),
+                               'gaze_influence': (None, None)
+                           }):
 
     # count number of predictions
     n_predictions = len(predictions)
@@ -1468,11 +1472,11 @@ def plot_individual(observed,
 
     # extract oberved value ranges
     rt_range = extract_range(observed_subject_summary['rt']['mean'],
-                             bound=(0, None))
+                             bound=limits['rt'])
     best_chosen_range = extract_range(
-        observed_subject_summary['best_chosen']['mean'], bound=(0, 1))
+        observed_subject_summary['best_chosen']['mean'], bound=limits['p_choose_best'])
     gaze_influence_range = extract_range(
-        observed_subject_summary['gaze_influence'], bound=(-1, 1))
+        observed_subject_summary['gaze_influence'], bound=limits['gaze_influence'])
 
     # plot observed vs predicted
     for m, prediction in enumerate(predictions):
@@ -1531,21 +1535,21 @@ def plot_individual(observed,
 
         # update parameter ranges
         rt_range_prediction = extract_range(
-            prediction_subject_summary['rt']['mean'], bound=(0, None))
+            prediction_subject_summary['rt']['mean'], bound=limits['rt'])
         if rt_range[0] > rt_range_prediction[0]:
             rt_range[0] = rt_range_prediction[0]
         if rt_range[1] < rt_range_prediction[1]:
             rt_range[1] = rt_range_prediction[1]
 
         best_chosen_range_prediction = extract_range(
-            prediction_subject_summary['best_chosen']['mean'], bound=(0, 1))
+            prediction_subject_summary['best_chosen']['mean'], bound=limits['p_choose_best'])
         if best_chosen_range[0] > best_chosen_range_prediction[0]:
             best_chosen_range[0] = best_chosen_range_prediction[0]
         if best_chosen_range[1] < best_chosen_range_prediction[1]:
             best_chosen_range[1] = best_chosen_range_prediction[1]
 
         gaze_influence_range_prediction = extract_range(
-            prediction_subject_summary['gaze_influence'], bound=(-1, 1))
+            prediction_subject_summary['gaze_influence'], bound=limits['gaze_influence'])
         if gaze_influence_range[0] > gaze_influence_range_prediction[0]:
             gaze_influence_range[0] = gaze_influence_range_prediction[0]
         if gaze_influence_range[1] < gaze_influence_range_prediction[1]:
@@ -1564,27 +1568,32 @@ def plot_individual(observed,
                              fontsize=fontsize)
 
     # update axes limits and ticks
-    rt_ticks = np.linspace(rt_range[0], rt_range[1], 4).astype(np.int)
+    if (rt_range[1] - rt_range[0]) > 3000:
+        rt_tickstep = 1500
+    else:
+        rt_tickstep = 750
+    rt_ticks = np.arange(rt_range[0], rt_range[1] + rt_tickstep,
+                         rt_tickstep).astype(np.int)
     for ax in axs[:, 0]:
-        ax.set_xlim(rt_range)
-        ax.set_ylim(rt_range)
         ax.set_yticks(rt_ticks)
         ax.set_xticks(rt_ticks)
-    best_chosen_ticks = np.round(
-        np.linspace(best_chosen_range[0], best_chosen_range[1], 4), 2)
+        ax.set_xlim(rt_range)
+        ax.set_ylim(rt_range)
+        
+    best_chosen_ticks = np.arange(0,1.1,0.2)
     for ax in axs[:, 1]:
-        ax.set_xlim(best_chosen_range)
-        ax.set_ylim(best_chosen_range)
         ax.set_yticks(best_chosen_ticks)
         ax.set_xticks(best_chosen_ticks)
-    gaze_influence_ticks = np.round(
-        np.linspace(gaze_influence_range[0], gaze_influence_range[1], 4), 2)
+        ax.set_xlim(best_chosen_range)
+        ax.set_ylim(best_chosen_range)
+        
+    gaze_influence_ticks = np.arange(-1,1.1,0.2)
     for ax in axs[:, 2]:
-        ax.set_xlim(gaze_influence_range)
-        ax.set_ylim(gaze_influence_range)
         ax.set_yticks(gaze_influence_ticks)
         ax.set_xticks(gaze_influence_ticks)
-
+        ax.set_xlim(gaze_influence_range)
+        ax.set_ylim(gaze_influence_range)
+       
     # label panels
     for label, ax in zip(list('ABCDEF'), axs.ravel()):
         ax.text(-0.4,
@@ -1605,7 +1614,7 @@ def plot_individual(observed,
                 alpha=1.0,
                 zorder=-1)
 
-    fig.tight_layout(pad=2)
+    fig.tight_layout()
 
     return fig
 
