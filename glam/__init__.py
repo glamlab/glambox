@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 from . import utils
 from . import components
 from . import simulation

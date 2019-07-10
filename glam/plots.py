@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 from arviz import plot_posterior
 import numpy as np
 import pandas as pd
