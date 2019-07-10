@@ -426,101 +426,59 @@ def make_subject_model(rts, gaze, values, error_ll,
 def generate_hierarchical_model_parameters(parameter,
                                            n_subjects,
                                            design,
-                                           mu_lower, mu_upper,
-                                           sd_lower, sd_upper,
-                                           bound_lower, bound_upper,
+                                           mu_mean, mu_sd, mu_lower, mu_upper,
+                                           sd_mean, sd_sd, sd_lower, sd_upper,
                                            val, testval,
+                                           offset=True,
                                            within_dependent=False):
 
     if (design['conditions'] is not None):  # Parameter has dependence
         if val is None:  # Parameter is not set deterministically to some value
-            # The parameter's conditions have distributions from which subject parameters are drawn (e.g., a subject's fast v is drawn from the distribution of all subjects' fast vs)
-            if not within_dependent:
-                mu = tt.stack([pm.Uniform('{}_{}_mu'.format(parameter, condition),
-                                          mu_lower,
-                                          mu_upper,
+            if not within_dependent:  # The parameter's conditions have distributions from which subject parameters are drawn (e.g., a subject's fast v is drawn from the distribution of all subjects' fast vs)
+                bounded_mu = pm.Bound(pm.Normal, lower=mu_lower, upper=mu_upper)
+                bounded_sd = pm.Bound(pm.Normal, lower=sd_lower, upper=sd_upper)
+                mu = tt.stack([bounded_mu('{}_{}_mu'.format(parameter, condition),
+                                          mu_mean,
+                                          mu_sd,
                                           testval=testval) for condition in design['conditions']])
-                sd = tt.stack([pm.Uniform('{}_{}_sd'.format(parameter, condition),
-                                          sd_lower,
-                                          sd_upper,
+                sd = tt.stack([bounded_sd('{}_{}_sd'.format(parameter, condition),
+                                          sd_mean,
+                                          sd_sd,
                                           testval=testval) for condition in design['conditions']])
                 parms = []
                 n_subjects_per_condition = []
                 for c, condition in enumerate(design['conditions']):
-                    n_subjects_in_condition = np.unique(
-                        design['subject_index'][design['condition_index'] == c]).size
+                    n_subjects_in_condition = np.unique(design['subject_index'][design['condition_index'] == c]).size
                     n_subjects_per_condition.append(n_subjects_in_condition)
-                    # Escape the Funnel of Hell (cf. https://twiecki.io/blog/2017/02/08/bayesian-hierchical-non-centered/)
-                    # parms_tmp_offset = pm.Normal('{}_{}_offset'.format(parameter, condition),
-                    #                              mu=0, sd=1, shape=(n_subjects_in_condition))
-                    # parms_tmp = pm.Deterministic('{}_{}'.format(parameter, condition),
-                    #                              tt.clip(mu[c] + parms_tmp_offset * sd[c],
-                    #                                      bound_lower, bound_upper))
-                    # Reenter the Funnel of Hell, because somehow this did not help convergence too much
-                    bounded = pm.Bound(
-                        pm.Normal, lower=bound_lower, upper=bound_upper)
-                    parms_tmp = bounded('{}_{}'.format(parameter, condition),
-                                        mu=mu[c], sd=sd[c],
-                                        shape=(n_subjects_in_condition))
+                    if offset:
+                        # Escape the Funnel of Hell (cf. https://twiecki.io/blog/2017/02/08/bayesian-hierchical-non-centered/)
+                        parms_tmp_offset = pm.Normal('{}_{}_offset'.format(parameter, condition),
+                                                     mu=0, sd=1, shape=(n_subjects_in_condition))
+                        parms_tmp = pm.Deterministic('{}_{}'.format(parameter, condition),
+                                                     tt.clip(mu[c] + parms_tmp_offset * sd[c],
+                                                             mu_lower, mu_upper))
+                    else:  # no offset
+                        # Reenter the Funnel of Hell, because somehow this did not help convergence too much
+                        bounded_i = pm.Bound(pm.Normal, lower=mu_lower, upper=mu_upper)
+                        parms_tmp = bounded_i('{}_{}'.format(parameter, condition),
+                                              mu=mu[c], sd=sd[c],
+                                              shape=(n_subjects_in_condition))
                     parms_tmp = tt.concatenate([tt.zeros(1), parms_tmp])
                     parms.append(parms_tmp[design['D'][:, c]][:, None])
                 parms = tt.concatenate(parms, axis=1)
 
-            # within dependent: The parameter's values per condition are drawn from individual subject distributions (e.g., a subject's fast and slow v are both drawn from a subject's base v)
-            else:
-                #   population distribution (not dependent on condition)
-                #   this is a distribution per parameter, from which single subject's mean parameters are drawn
-                mu = pm.Uniform('{}_mu'.format(parameter),
-                                mu_lower, mu_upper, testval=testval)
-                sd = pm.Uniform('{}_sd'.format(parameter),
-                                sd_lower, sd_upper, testval=testval)
-
-                # individual distributions (not dependent on condition)
-                #   this is a distribution of parameter means and sds per subject,
-                #   from which this subject's parameters for different conditions are drawn
-                bounded_mu = pm.Bound(
-                    pm.Normal, lower=mu_lower, upper=mu_upper)
-                bounded_sd = pm.Bound(
-                    pm.Normal, lower=sd_lower, upper=sd_upper)
-
-                mu_subject = bounded_mu('{}_mu_subject'.format(
-                    parameter), mu=mu, sd=sd, shape=n_subjects)
-                sd_subject = bounded_sd('{}_sd_subject'.format(
-                    parameter), mu=mu, sd=sd, shape=n_subjects)
-
-                # subject condition parameters
-                #   for every subject, draw a parameter for from this subject's parameter distribution
-                #   for every condition this subject is in.
-                parameters = []
-
-                bounded_subject = pm.Bound(
-                    pm.Normal, lower=bound_lower, upper=bound_upper)
-
-                for s, subject in enumerate(np.arange(n_subjects)):
-                    subject_parameters = []
-                    for c, condition in enumerate(design['conditions']):
-                        subject_parameters.append(
-                            bounded_subject('{}_{}__{}'.format(parameter, condition, subject),
-                                            mu=mu_subject[s],
-                                            sd=sd_subject[s],
-                                            shape=(1, 1)))
-                    subject_parameters = tt.concatenate(subject_parameters)
-                    parameters.append(subject_parameters[None, :])
-                parms = tt.concatenate(parameters, axis=0)
-
+            else:  # within dependent: The parameter's values per condition are drawn from individual subject distributions (e.g., a subject's fast and slow v are both drawn from a subject's base v)
+                raise ValueError('within dependent not implemented yet')
         else:
             parms = []
             n_subjects_per_condition = []
             for c, condition in enumerate(design['conditions']):
-                n_subjects_in_condition = np.unique(
-                    design['subject_index'][design['condition_index'] == c]).size
+                n_subjects_in_condition = np.unique(design['subject_index'][design['condition_index'] == c]).size
                 n_subjects_per_condition.append(n_subjects_in_condition)
                 if len(val) == len(design['conditions']):
-                    parms.append(pm.Deterministic('{}_{}'.format(
-                        parameter, condition), tt.ones(n_subjects_in_condition, 1) * val[c]))
+                    parms.append(pm.Deterministic('{}_{}'.format(parameter, condition), tt.ones(n_subjects_in_condition, 1) * val[c]))
                 else:
-                    raise ValueError(
-                        'Number of values in {}_val does not match the number of specified {}-conditions.'.format(parameter, parameter))
+                    raise ValueError('Number of values in {}_val does not match the number of specified {}-conditions.'.format(parameter, parameter))
             # make sure all elements in parms have same size
             for set_i, parm_set in enumerate(parms):
                 if n_subjects_per_condition[set_i] < n_subjects:
@@ -530,16 +488,18 @@ def generate_hierarchical_model_parameters(parameter,
 
     else:  # Parameter has no dependence
         if val is None:
-            mu = pm.Uniform('{}_mu'.format(parameter),
-                            mu_lower, mu_upper, testval=testval)
-            sd = pm.Uniform('{}_sd'.format(parameter),
-                            sd_lower, sd_upper, testval=testval)
-            # Escape the Funnel of Hell (cf. https://twiecki.io/blog/2017/02/08/bayesian-hierchical-non-centered/)
-            # parms_offset = pm.Normal(parameter + '_offset', mu=0, sd=1, shape=(n_subjects, 1))
-            # parms = pm.Deterministic(parameter, tt.clip(mu + parms_offset * sd, bound_lower, bound_upper))
-            # Reenter the Funnel of Hell, as it did not help too much
-            bounded = pm.Bound(pm.Normal, lower=bound_lower, upper=bound_upper)
-            parms = bounded(parameter, mu=mu, sd=sd, shape=(n_subjects, 1))
+            bounded_mu = pm.Bound(pm.Normal, lower=mu_lower, upper=mu_upper)
+            bounded_sd = pm.Bound(pm.Normal, lower=sd_lower, upper=sd_upper)
+            mu = bounded_mu('{}_mu'.format(parameter), mu_mean, mu_sd, testval=testval)
+            sd = bounded_sd('{}_sd'.format(parameter), sd_mean, sd_sd, testval=testval)
+            if offset:
+                # Escape the Funnel of Hell (cf. https://twiecki.io/blog/2017/02/08/bayesian-hierchical-non-centered/)
+                parms_offset = pm.Normal(parameter + '_offset', mu=0, sd=1, shape=(n_subjects, 1))
+                parms = pm.Deterministic(parameter, tt.clip(mu + parms_offset * sd, mu_lower, mu_upper))
+            else:  # no offset
+                # Reenter the Funnel of Hell, as it did not help too much
+                bounded = pm.Bound(pm.Normal, lower=mu_lower, upper=mu_upper)
+                parms = bounded(parameter, mu=mu, sd=sd, shape=(n_subjects, 1))
         else:
             parms = pm.Deterministic(parameter, tt.ones((n_subjects, 1)) * val)
 
@@ -554,7 +514,9 @@ def make_hierarchical_model(rts, gaze, values, error_lls,
                             tau_val=None,
                             t0_val=0,
                             zerotol=1e-6, error_weight=0.05, boundary=1.,
-                            gamma_bounds=(-10, 1),
+                            gamma_bounds=(-2, 1),
+                            offset=False,
+                            f=5,
                             design=dict(v=dict(), gamma=dict(), s=dict(), tau=dict(), t0=dict())):
 
     n_subjects = np.unique(subject_idx).size
@@ -570,38 +532,37 @@ def make_hierarchical_model(rts, gaze, values, error_lls,
         v = generate_hierarchical_model_parameters(parameter='v',
                                                    n_subjects=n_subjects,
                                                    design=design['v'],
-                                                   mu_lower=zerotol, mu_upper=0.0005,
-                                                   sd_lower=zerotol, sd_upper=0.0005,
-                                                   bound_lower=0, bound_upper=0.0005,
-                                                   val=v_val, testval=0.0001,
+                                                   mu_mean=6.4e-5, mu_sd=f * 2.6e-5, mu_lower=1e-5, mu_upper=0.0002,
+                                                   sd_mean=2.6e-5, sd_sd=f * 2.6e-5, sd_lower=0, sd_upper=0.0002,
+                                                   val=v_val, testval=6.4e-5,
+                                                   offset=offset,
                                                    within_dependent=design['v']['within_dependent'])
 
         gamma = generate_hierarchical_model_parameters(parameter='gamma',
                                                        n_subjects=n_subjects,
                                                        design=design['gamma'],
-                                                       mu_lower=gamma_bounds[0], mu_upper=gamma_bounds[1],
-                                                       sd_lower=zerotol, sd_upper=gamma_bounds[1] -
-                                                       gamma_bounds[0],
-                                                       bound_lower=gamma_bounds[0], bound_upper=gamma_bounds[1],
-                                                       val=gamma_val, testval=.5,
+                                                       mu_mean=0.13, mu_sd=f * 0.35, mu_lower=gamma_bounds[0], mu_upper=gamma_bounds[1],
+                                                       sd_mean=0.35, sd_sd=f * 0.35, sd_lower=0, sd_upper=gamma_bounds[1],
+                                                       val=gamma_val, testval=0.13,
+                                                       offset=offset,
                                                        within_dependent=design['gamma']['within_dependent'])
 
         s = generate_hierarchical_model_parameters(parameter='s',
                                                    n_subjects=n_subjects,
                                                    design=design['s'],
-                                                   mu_lower=zerotol, mu_upper=0.02,
-                                                   sd_lower=zerotol, sd_upper=0.02,
-                                                   bound_lower=zerotol, bound_upper=0.02,
-                                                   val=s_val, testval=0.0075,
+                                                   mu_mean=0.0084, mu_sd=f * 0.0015, mu_lower=0.001, mu_upper=0.02,
+                                                   sd_mean=0.0015, sd_sd=f * 0.0015, sd_lower=0, sd_upper=0.01,
+                                                   val=s_val, testval=0.0084,
+                                                   offset=offset,
                                                    within_dependent=design['s']['within_dependent'])
 
         tau = generate_hierarchical_model_parameters(parameter='tau',
                                                      n_subjects=n_subjects,
                                                      design=design['tau'],
-                                                     mu_lower=0, mu_upper=5,
-                                                     sd_lower=zerotol, sd_upper=5,
-                                                     bound_lower=0, bound_upper=5,
-                                                     val=tau_val, testval=.5,
+                                                     mu_mean=0.94, mu_sd=f * 0.64, mu_lower=0, mu_upper=5,
+                                                     sd_mean=0.64, sd_sd=f * 0.64, sd_lower=0, sd_upper=3,
+                                                     val=tau_val, testval=0.94,
+                                                     offset=offset,
                                                      within_dependent=design['tau']['within_dependent'])
 
         if t0_val is None:
