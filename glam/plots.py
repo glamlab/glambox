@@ -1,18 +1,19 @@
 #!/usr/bin/python
 
-from arviz import plot_posterior
 import numpy as np
 import pandas as pd
-# from pymc3 import plot_posterior
 from pymc3.stats import hpd
 import statsmodels.api as sm
 from statsmodels.stats.outliers_influence import summary_table
 
+# from pymc3 import plot_posterior
+from arviz import plot_posterior
 import matplotlib.pyplot as plt
 from seaborn import despine
 plt.rc("axes.spines", top=False, right=False)
 
 from .analysis import aggregate_subject_level_data
+
 
 def cm2inch(*tupl):
     inch = 2.54
