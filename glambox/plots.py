@@ -26,30 +26,30 @@ def plot_aggregate(bar_data,
                    gaze_bins=7):
     fig, axs = plt.subplots(1, 4, figsize=(12, 3))
 
-    plot_rt_by_difficulty(bar_data,
-                          line_data,
-                          xlabel_skip=2,
-                          ax=axs[0],
-                          line_labels=line_labels,
-                          bins=value_bins,
-                          fontsize=fontsize)
-    plot_pchoose_by_value_minus_mean_others(bar_data,
+    axs[0] = plot_rt_by_difficulty(bar_data,
+                                   line_data,
+                                   xlabel_skip=2,
+                                   ax=axs[0],
+                                   line_labels=line_labels,
+                                   bins=value_bins,
+                                   fontsize=fontsize)
+    axs[1] = plot_pchoose_by_value_minus_mean_others(bar_data,
                                             line_data,
                                             xlabel_skip=4,
                                             xlabel_start=0,
                                             ax=axs[1],
                                             bins=value_bins,
                                             fontsize=fontsize)
-    plot_pchoose_by_gaze_minus_mean_others(bar_data,
-                                           line_data,
-                                           ax=axs[2],
-                                           bins=gaze_bins,
-                                           fontsize=fontsize)
-    plot_corp_by_gaze_advantage(bar_data,
-                                line_data,
-                                ax=axs[3],
-                                bins=gaze_bins,
-                                fontsize=fontsize)
+    axs[2] = plot_pchoose_by_gaze_minus_mean_others(bar_data,
+                                                    line_data,
+                                                    ax=axs[2],
+                                                    bins=gaze_bins,
+                                                    fontsize=fontsize)
+    axs[3] = plot_corp_by_gaze_advantage(bar_data,
+                                         line_data,
+                                         ax=axs[3],
+                                         bins=gaze_bins,
+                                         fontsize=fontsize)
 
     # Labels
     for label, ax in zip(list('abcd'), axs.ravel()):
@@ -61,6 +61,7 @@ def plot_aggregate(bar_data,
                 fontweight='bold',
                 va='top')
         ax.tick_params(axis='both', which='major', labelsize=fontsize)
+        sns.despine(ax=ax)
 
     fig.tight_layout()
 
@@ -206,6 +207,9 @@ def plot_rt_by_difficulty(bar_data,
     ax.set_xticklabels(means.index.values[::xlabel_skip])
     if add_labels:
         ax.legend(loc='upper left', fontsize=fontsize, frameon=False)
+    sns.despine(ax=ax)
+
+    return ax
 
 
 def add_value_minus_mean_others(df, bins=7, return_bins=False):
@@ -388,6 +392,9 @@ def plot_pchoose_by_value_minus_mean_others(bar_data,
     ax.set_xlim(xlims)
     if add_labels:
         ax.legend(loc='upper left', fontsize=fontsize, frameon=False)
+    sns.despine(ax=ax)
+
+    return ax
 
 
 def add_gaze_advantage(df, bins=7, return_bins=False):
@@ -559,6 +566,9 @@ def plot_pchoose_by_gaze_minus_mean_others(bar_data,
         ax.set_xlim(xlims)
     if add_labels:
         ax.legend(loc='upper left', fontsize=fontsize, frameon=False)
+    sns.despine(ax=ax)
+
+    return ax
 
 
 def compute_corrected_choice(df):
@@ -745,6 +755,9 @@ def plot_corp_by_gaze_advantage(bar_data,
         ax.set_xlim(xlims)
     if add_labels:
         ax.legend(loc='upper left', fontsize=fontsize, frameon=False)
+    sns.despine(ax=ax)
+
+    return ax
 
 
 def plot_node(model,
@@ -966,6 +979,7 @@ def plot_node(model,
             if (model_type != 'individual') or (i > 0):
                 ax.set_yticks([])
                 ax.set_yticklabels([])
+            sns.despine(ax=ax)
 
     # add legend
     axs[0][0].legend(loc='upper center',
@@ -979,7 +993,6 @@ def plot_node(model,
 
     # autmomatic cleaning
     fig.tight_layout()
-    sns.despine()
 
     return fig, axs
 
@@ -1094,7 +1107,6 @@ def plot_individual_node_comparison(model,
 
     # autmomatic cleaning
     fig.tight_layout()
-    sns.despine()
 
     return fig, axs
 
@@ -1278,7 +1290,9 @@ def individual_differences(data,
     ax01.set_xlim(gaze_influence_range)
     ax02.set_xlim(best_chosen_range)
 
-    # fig.subplots_adjust(wspace=0.5, hspace=1.5)
+    for ax in [ax00, ax01, ax02, ax10, ax11, ax12]:
+        sns.despine(ax=ax)
+
     fig.tight_layout()
 
     return fig
@@ -1399,6 +1413,8 @@ def plot_correlation(x,
     ax.set_xlabel(xlabel, fontsize=fontsize_axeslabel)
     ax.set_ylabel(ylabel, fontsize=fontsize_axeslabel)
     ax.set_title(title, fontsize=fontsize_title)
+
+    sns.despine(ax=ax)
 
     if return_correlation:
         return ax, line, annotation
