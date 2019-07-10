@@ -24,7 +24,7 @@ def plot_aggregate(bar_data,
                    fontsize=7,
                    value_bins=7,
                    gaze_bins=7):
-    fig, axs = plt.subplots(1, 4, figsize=(12, 3))
+    fig, axs = plt.subplots(1, 4, figsize=cm2inch(18, 6), dpi=330)
 
     axs[0] = plot_rt_by_difficulty(bar_data,
                                    line_data,
@@ -1143,7 +1143,7 @@ def individual_differences(data,
     if (regression == False) & (annotate == True):
         print('annotate only possible, if regression = True.')
 
-    fig = plt.figure(figsize=figsize)
+    fig = plt.figure(figsize=figsize, dpi=330)
 
     ax00 = plt.subplot2grid((7, 3), (0, 0), rowspan=2)
     ax10 = plt.subplot2grid((7, 3), (2, 0), rowspan=5)
