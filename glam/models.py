@@ -436,13 +436,13 @@ def make_subject_model(rts,
                      gamma_index, s_index, t0_index, zerotol):
 
             # compute drifts
-            drift = glam.components.expdrift(
+            R = glam.components.make_R(
                 v[0, tt.cast(v_index, dtype='int32')][:, None],
                 tau[0, tt.cast(tau_index, dtype='int32')][:, None],
                 gamma[0, tt.cast(gamma_index, dtype='int32')][:, None], values,
                 gaze, zerotol)
             glam_ll = glam.components.tt_wienerrace_pdf(
-                rt[:, None], drift,
+                rt[:, None], R,
                 s[0, tt.cast(s_index, dtype='int32')][:, None], b,
                 t0[0, tt.cast(t0_index, dtype='int32')][:, None], zerotol)
 
@@ -710,7 +710,7 @@ def make_hierarchical_model(rts,
                      t0_condition_index, t0_subject_index, zerotol):
 
             # compute drifts
-            drift = glam.components.expdrift(
+            R = glam.components.make_R(
                 v[tt.cast(v_subject_index, dtype='int32'),
                   tt.cast(v_condition_index, dtype='int32')][:, None],
                 tau[tt.cast(tau_subject_index, dtype='int32'),
@@ -719,7 +719,7 @@ def make_hierarchical_model(rts,
                       tt.cast(gamma_condition_index, dtype='int32')][:, None],
                 values, gaze, zerotol)
             glam_ll = glam.components.tt_wienerrace_pdf(
-                rt[:, None], drift,
+                rt[:, None], R,
                 s[tt.cast(s_subject_index, dtype='int32'),
                   tt.cast(s_condition_index, dtype='int32')][:, None], b,
                 t0[tt.cast(t0_subject_index, dtype='int32'),

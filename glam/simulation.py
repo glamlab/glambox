@@ -85,11 +85,11 @@ def simulate_trial(parameters,
     else:
         rt = np.nan
         while np.isnan(rt):
-            drifts = expdrift(v, tau, gamma, values, gaze)
+            R = make_R(v, tau, gamma, values, gaze)
             FPTs = np.zeros(n_items) * np.nan
 
             for i in range(n_items):
-                mu = boundary / drifts[i]
+                mu = boundary / R[i]
                 lam = (boundary / s)**2
                 FPTs[i] = invgauss.rvs(mu=mu / lam, scale=lam)
             rt = np.min(FPTs)
@@ -104,19 +104,19 @@ def simulate_trial(parameters,
     return choice, rt
 
 
-def expdrift(v, tau, gamma, values, gaze):
+def make_R(v, tau, gamma, values, gaze):
     n_items = len(values)
 
-    absolute = gaze * values + (1. - gaze) * gamma * values
-    relative = np.zeros(n_items)
+    A = gaze * values + (1. - gaze) * gamma * values
+    R_star = np.zeros(n_items)
 
     for i in range(n_items):
         others = np.arange(n_items)[np.arange(n_items) != i].astype(int)
-        relative[i] = absolute[i] - np.max(absolute[others])
+        R_star[i] = A[i] - np.max(A[others])
 
-    scaled = v * 10 / (1 + np.exp(-tau * relative))
+    R = v * 10 / (1 + np.exp(-tau * R_star))
 
-    return scaled
+    return R
 
 
 def predict(model, n_repeats=1, boundary=1., error_weight=0.05, verbose=True):

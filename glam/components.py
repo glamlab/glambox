@@ -65,26 +65,25 @@ def tt_wienerrace_pdf(t, drift, noise, boundary, t0, zerotol=1e-14):
     return l
 
 
-def expdrift(v, tau, gamma, values, gaze, zerotol):
+def make_R(v, tau, gamma, values, gaze, zerotol):
     """
-    expdrift
-    
+    make drift terms R
     vectorized, i.e., runs on all trials simultaneously
 
-    R = v * 10 / (1 + exp(-tau * (E_i - max(E_j))))
+    R = v * 10 / (1 + exp(-tau * (A_i - max(A_J))))
     """
 
-    E_drifts = gaze * values + (1. - gaze) * gamma * values
-    n_items = tt.cast(E_drifts.shape[1], dtype='int32')
-    stacked_E = tt.repeat(E_drifts, repeats=n_items, axis=1).T
-    stacked_E_reshaped = tt.reshape(stacked_E,
-                                    newshape=(E_drifts.shape[1],
-                                              E_drifts.shape[1],
-                                              E_drifts.shape[0])).T
+    A = gaze * values + (1. - gaze) * gamma * values
+    n_items = tt.cast(A.shape[1], dtype='int32')
+    stacked_A = tt.repeat(A, repeats=n_items, axis=1).T
+    stacked_A_reshaped = tt.reshape(stacked_A,
+                                    newshape=(A.shape[1],
+                                              A.shape[1],
+                                              A.shape[0])).T
     identity = 1 - tt.eye(n_items)
-    max_others = tt.max(stacked_E_reshaped * identity[None, :, :], axis=2)
+    max_others = tt.max(stacked_A_reshaped * identity[None, :, :], axis=2)
 
-    drift = E_drifts - max_others
-    drift = v * 10 / (1 + tt.exp(-tau * drift))
+    R_star = A - max_others
+    R = v * 10 / (1 + tt.exp(-tau * R_star))
 
-    return drift
+    return R
