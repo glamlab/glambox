@@ -980,17 +980,18 @@ def plot_individual_node_comparison(model, parameter, comparisons, fontsize=12, 
 
 
 def extract_range(x, extra=0.25, bound=(None, None)):
-    xmean = np.mean(x)
-    xmin = np.min(x) - extra*xmean
-    xmax = np.max(x) + extra*xmean
-
+    
     if bound[0] != None:
-        if xmin < bound[0]:
-            xmin = bound[0]
+        xmin = bound[0]
+    else:
+        xmean = np.mean(x)
+        xmin = np.min(x) - extra*xmean
 
     if bound[1] != None:
-        if xmax > bound[1]:
-            xmax = bound[1]
+        xmax = bound[1]
+    else:
+        xmean = np.mean(x)
+        xmax = np.max(x) + extra*xmean
 
     return [xmin, xmax]
 
@@ -1000,7 +1001,10 @@ def individual_differences(data,
                            fontsize=7,
                            regression=True,
                            annotate=True,
-                           figsize=cm2inch(18, 9)):
+                           figsize=cm2inch(18, 7),
+                           limits={'p_choose_best': (0,1),
+                                   'rt': (0, None),
+                                   'gaze_influence': (None, None)}):
 
     if (regression == False) & (annotate == True):
         print('annotate only possible, if regression = True.')
@@ -1021,22 +1025,18 @@ def individual_differences(data,
     subject_summary = aggregate_subject_level_data(data, n_items=n_items)
 
     # extract plotting ranges
-    rt_range = extract_range(subject_summary['rt']['mean'], bound=(0,None))
-    rt_tickstep = np.int((rt_range[1] - rt_range[0]) / 4)
+    rt_range = extract_range(subject_summary['rt']['mean'], bound=limits['rt'])
+    if (rt_range[1] - rt_range[0]) > 3000:
+        rt_tickstep = 1500
+    else:
+        rt_tickstep = 750
     rt_ticks = np.arange(rt_range[0], rt_range[1]+rt_tickstep, rt_tickstep).astype(np.int)
 
-    best_chosen_range = extract_range(subject_summary['best_chosen']['mean'], bound=(0,1))
-    best_chosen_tickstep = (best_chosen_range[1] - best_chosen_range[0]) / 4
-    best_chosen_ticks = np.arange(
-        best_chosen_range[0], best_chosen_range[1]+best_chosen_tickstep, best_chosen_tickstep)
-    best_chosen_ticks = np.round(best_chosen_ticks, 2)
+    best_chosen_range = extract_range(subject_summary['best_chosen']['mean'], bound=limits['p_choose_best'])
+    best_chosen_ticks = np.arange(0,1.1,0.2)
 
-    gaze_influence_range = extract_range(subject_summary['gaze_influence'], bound=(-1,1))
-    gaze_influence_tickstep = (
-        gaze_influence_range[1] - gaze_influence_range[0]) / 4
-    gaze_influence_ticks = np.arange(
-        gaze_influence_range[0], gaze_influence_range[1]+gaze_influence_tickstep, gaze_influence_tickstep)
-    gaze_influence_ticks = np.round(gaze_influence_ticks, 2)
+    gaze_influence_range = extract_range(subject_summary['gaze_influence'], bound=limits['gaze_influence'])
+    gaze_influence_ticks = np.arange(-1,1.1,0.2)
 
     # Scatter plots
     plot_correlation(subject_summary['rt']['mean'],
@@ -1064,7 +1064,7 @@ def individual_differences(data,
                      markercolor='C0',
                      regression=regression,
                      annotate=annotate,
-                     annotation_pos=(0.1, 0.95),
+                     annotation_pos=(0.1, 0.01),
                      ylabel='Mean RT (ms)',
                      xlabel='Gaze influence\non P(choice | value)',
                      ylim=rt_range,
@@ -1115,10 +1115,6 @@ def individual_differences(data,
                        ax01.get_ylim()[1],
                        ax02.get_ylim()[1]]).astype(np.int) + 1
 
-    ax00.set_xlim(rt_range)
-    ax01.set_xlim(gaze_influence_range)
-    ax02.set_xlim(best_chosen_range)
-
     # Labels
     for label, ax in zip(list('ABC'), [ax00, ax01, ax02]):
         ax.text(-0.45, 1.1, label, transform=ax.transAxes,
@@ -1142,7 +1138,12 @@ def individual_differences(data,
     ax02.set_xticks(best_chosen_ticks)
     ax02.set_xticklabels([])
 
-    fig.subplots_adjust(wspace=0.5, hspace=1.5)
+    ax00.set_xlim(rt_range)
+    ax01.set_xlim(gaze_influence_range)
+    ax02.set_xlim(best_chosen_range)
+
+    # fig.subplots_adjust(wspace=0.5, hspace=1.5)
+    fig.tight_layout()
 
     return fig
 
