@@ -1712,14 +1712,14 @@ def plot_posterior(samples,
 
     # HPD
     hpdvals = hpd(samples, alpha=alpha)
-    ax.hlines(0, *hpdvals, linewidth=15, alpha=0.5)
-    ax.text(x=np.mean(hpdvals),
-            y=(ylim[1] - ylim[0]) * 0.1,
-            s='{:.0f}% HPD'.format(100 * (1 - alpha)),
-            ha='center',
-            va='center',
-            fontweight='bold',
-            fontsize=fontsize)
+    ax.hlines(0, *hpdvals, linewidth=7, alpha=0.5)
+    # ax.text(x=np.mean(hpdvals),
+    #         y=(ylim[1] - ylim[0]) * 0.1,
+    #         s='{:.0f}% HPD'.format(100 * (1 - alpha)),
+    #         ha='center',
+    #         va='center',
+    #         fontweight='bold',
+    #         fontsize=fontsize)
     for val in hpdvals:
         ax.text(x=val,
                 y=(ylim[1] - ylim[0]) * 0.1,
@@ -1730,7 +1730,7 @@ def plot_posterior(samples,
 
     # Reference Value
     if ref_val is not None:
-        ax.axvline(ref_val, color='crimson', linewidth=2)
+        ax.axvline(ref_val, color='crimson', linewidth=1, alpha=0.5)
         less = 100 * np.mean(samples < ref_val)
         more = 100 * np.mean(samples > ref_val)
         ax.text(x=np.mean(xlim),
@@ -1744,6 +1744,7 @@ def plot_posterior(samples,
 
     ax.set_xlabel('Sample value', fontsize=fontsize)
     ax.set_yticks([])
+    ax.tick_params(axis='both', which='major', labelsize=fontsize)
     sns.despine(ax=ax, left=True, top=True, right=True)
 
     return ax
@@ -1773,7 +1774,7 @@ def plot_node_hierarchical(model, parameters, comparisons=None, fontsize=7):
     n_params = len(parameters)
     n_comps = len(comparisons)
 
-    fig = plt.figure(figsize=(4 * (n_comps + 1), 2 * n_params))
+    fig = plt.figure(figsize=cm2inch(5 * (n_comps + 1), 3.5 * n_params))
 
     axs = {}
 
@@ -1799,10 +1800,11 @@ def plot_node_hierarchical(model, parameters, comparisons=None, fontsize=7):
 
         # Labels & Legends
         if model.design[parameter]['dependence'] is not None:
-            axs[(p, 0)].legend(frameon=False)
-        axs[(p, 0)].set_title(parameter_names[parameter] + r'$_\mu$')
-        axs[(p, 0)].set_ylabel('Frequency')
-        axs[(p, 0)].set_xlabel('Sample value')
+            axs[(p, 0)].legend(frameon=False, fontsize=fontsize)
+        axs[(p, 0)].set_title(parameter_names[parameter] + r'$_\mu$', fontsize=fontsize)
+        axs[(p, 0)].set_ylabel('Posterior\ndensity', fontsize=fontsize)
+        axs[(p, 0)].set_yticks([])
+        axs[(p, 0)].set_xlabel('Sample value', fontsize=fontsize)
 
         # Comparisons
         for c, comparison in enumerate(comparisons):
@@ -1869,8 +1871,9 @@ def plot_node_hierarchical(model, parameters, comparisons=None, fontsize=7):
     from string import ascii_uppercase
     for label, ax in zip(list(ascii_uppercase),
                          [axs[(p, 0)] for p in range(n_params)]):
+        ax.tick_params(axis='both', which='major', labelsize=fontsize)
         ax.text(-0.1,
-                1,
+                1.1,
                 label,
                 transform=ax.transAxes,
                 fontsize=fontsize,
