@@ -6,12 +6,8 @@ import pandas as pd
 from pymc3.stats import hpd
 import statsmodels.api as sm
 from statsmodels.stats.outliers_influence import summary_table
-
-# from pymc3 import plot_posterior
-from arviz import plot_posterior
 import matplotlib.pyplot as plt
-from seaborn import despine
-plt.rc("axes.spines", top=False, right=False)
+import seaborn as sns
 
 
 def cm2inch(*tupl):
@@ -983,7 +979,7 @@ def plot_node(model,
 
     # autmomatic cleaning
     fig.tight_layout()
-    despine()
+    sns.despine()
 
     return fig, axs
 
@@ -1098,7 +1094,7 @@ def plot_individual_node_comparison(model,
 
     # autmomatic cleaning
     fig.tight_layout()
-    despine()
+    sns.despine()
 
     return fig, axs
 
@@ -1663,3 +1659,224 @@ def behaviour_parameter_correlation(estimates,
     fig.tight_layout(pad=1)
 
     return fig
+
+
+def plot_posterior(samples,
+                   kind='hist',
+                   ref_val=None,
+                   precision=2,
+                   alpha=0.05,
+                   bins=20,
+                   burn=0,
+                   ax=None,
+                   fontsize=7,
+                   color='skyblue'):
+    """
+    Arviz is broken, so we do it ourselves.
+
+    Args:
+        samples (TYPE): Description
+        kind (str, optional): Description
+        ref_val (None, optional): Description
+        precision (int, optional): Description
+        alpha (float, optional): Description
+        burn (int, optional): Description
+        ax (None, optional): Description
+
+    Returns:
+        TYPE: Description
+
+    Raises:
+        ValueError: Description
+    """
+    if ax is None:
+        fig, ax = plt.subplots()
+
+    if kind == 'hist':
+        ax.hist(samples, color=color, bins=bins)
+    elif kind == 'kde':
+        sns.kdeplot(samples, color=color, ax=ax)
+    else:
+        raise ValueError("'kind' should be 'hist' or 'kde'.")
+
+    xlim = ax.get_xlim()
+    ylim = ax.get_ylim()
+
+    # Central tendency
+    ax.text(x=np.mean(xlim),
+            y=(ylim[1] - ylim[0]) * 0.95,
+            s='mean = {}'.format(np.round(samples.mean(), precision)),
+            ha='center',
+            va='center',
+            fontsize=fontsize)
+
+    # HPD
+    hpdvals = hpd(samples, alpha=alpha)
+    ax.hlines(0, *hpdvals, linewidth=15, alpha=0.5)
+    ax.text(x=np.mean(hpdvals),
+            y=(ylim[1] - ylim[0]) * 0.1,
+            s='{:.0f}% HPD'.format(100 * (1 - alpha)),
+            ha='center',
+            va='center',
+            fontweight='bold',
+            fontsize=fontsize)
+    for val in hpdvals:
+        ax.text(x=val,
+                y=(ylim[1] - ylim[0]) * 0.1,
+                s='{}'.format(np.round(val, precision)),
+                ha='center',
+                va='center',
+                fontsize=fontsize)
+
+    # Reference Value
+    if ref_val is not None:
+        ax.axvline(ref_val, color='crimson', linewidth=2)
+        less = 100 * np.mean(samples < ref_val)
+        more = 100 * np.mean(samples > ref_val)
+        ax.text(x=np.mean(xlim),
+                y=(ylim[1] - ylim[0]) * 0.5,
+                s='{:.2f}% < {} < {:.2f}%'.format(less, ref_val, more),
+                ha='center',
+                va='center',
+                fontweight='bold',
+                color='crimson',
+                fontsize=fontsize)
+
+    ax.set_xlabel('Sample value', fontsize=fontsize)
+    ax.set_yticks([])
+    sns.despine(ax=ax, left=True, top=True, right=True)
+
+    return ax
+
+
+def plot_node_hierarchical(model, parameters, comparisons=None, fontsize=7):
+    """Plot group nodes and comparisons from hierarchical model.
+
+    Args:
+        model (glambox.GLAM): GLAM model of type 'hierarchical'
+        parameters (list): List of parameter names (e.g., ['v', 'gamma'])
+        comparisons (list, optional): List of condition pairs (e.g., [('A', 'B')])
+
+    Returns:
+        fig, {axs}
+    """
+    parameter_names = {
+        'v': 'v',
+        'gamma': r'$\gamma$',
+        's': r'$\sigma$',
+        'tau': r'$\tau$'
+    }
+    parameter_precisions = {'v': 6, 'gamma': 2, 's': 4, 'tau': 2}
+
+    if comparisons is None:
+        comparisons = []
+    n_params = len(parameters)
+    n_comps = len(comparisons)
+
+    fig = plt.figure(figsize=(4 * (n_comps + 1), 2 * n_params))
+
+    axs = {}
+
+    for p, parameter in enumerate(parameters):
+
+        # Distributions
+        axs[(p, 0)] = plt.subplot2grid((n_params, n_comps + 2), (p, 0),
+                                       rowspan=1,
+                                       colspan=2)
+
+        if model.design[parameter]['dependence'] is not None:
+            for condition in model.design[parameter]['conditions']:
+                axs[(p, 0)].hist(model.trace[0].get_values(parameter + '_' +
+                                                           condition + '_mu'),
+                                 label=condition,
+                                 bins=20,
+                                 alpha=0.5)
+        else:
+            axs[(p, 0)].hist(model.trace[0].get_values(parameter + '_mu'),
+                             bins=20,
+                             alpha=0.5)
+        sns.despine(ax=axs[(p, 0)], top=True, right=True)
+
+        # Labels & Legends
+        if model.design[parameter]['dependence'] is not None:
+            axs[(p, 0)].legend(frameon=False)
+        axs[(p, 0)].set_title(parameter_names[parameter] + r'$_\mu$')
+        axs[(p, 0)].set_ylabel('Frequency')
+        axs[(p, 0)].set_xlabel('Sample value')
+
+        # Comparisons
+        for c, comparison in enumerate(comparisons):
+            axs[(p, c + 1)] = plt.subplot2grid((n_params, n_comps + 2),
+                                               (p, c + 2),
+                                               rowspan=1,
+                                               colspan=1)
+            # Check if parameter has dependence
+            if model.design[parameter]['dependence'] is not None:
+                # Then, if both conditions are present, plot posterior of the difference
+                c0_present = (
+                    comparison[0] in model.design[parameter]['conditions'])
+                c1_present = (
+                    comparison[1] in model.design[parameter]['conditions'])
+                if c0_present & c1_present:
+                    difference = (
+                        model.trace[0].get_values(parameter + '_' +
+                                                  comparison[0] + '_mu') -
+                        model.trace[0].get_values(parameter + '_' +
+                                                  comparison[1] + '_mu'))
+                    axs[(p, c + 1)] = plot_posterior(
+                        difference,
+                        ax=axs[p, c + 1],
+                        ref_val=0,
+                        precision=parameter_precisions[parameter])
+                    axs[(p, c + 1)].set_title(comparison[0] + ' - ' +
+                                              comparison[1],
+                                              fontsize=fontsize)
+                else:
+                    # Otherwise, state that at least one condition is not present.
+                    axs[p, c + 1].text(
+                        0.5,
+                        0.5,
+                        ' '.join(['Condition(s) not present:\n'] + [
+                            c for c in comparison
+                            if c not in model.design[parameter]['conditions']
+                        ]),
+                        bbox=dict(boxstyle='square',
+                                  ec='black',
+                                  fc='lightgray',
+                                  alpha=0.5),
+                        ha='center',
+                        va='center',
+                        fontsize=fontsize)
+                    axs[p, c + 1].axis('off')
+            else:
+                # Or that the parameter has no dependencies.
+                axs[(p, c + 1)].text(0.5,
+                                     0.5,
+                                     'Parameter has no dependencies.',
+                                     bbox=dict(boxstyle='square',
+                                               ec='black',
+                                               fc='lightgray',
+                                               alpha=0.5),
+                                     ha='center',
+                                     va='center',
+                                     fontsize=fontsize)
+                axs[p, c + 1].axis('off')
+            axs[(p, c + 1)].set_xlabel(
+                r'$\delta$' + parameter_names[parameter] + r'$_{\mu}$',
+                fontsize=fontsize)
+
+    # Panel Labels
+    from string import ascii_uppercase
+    for label, ax in zip(list(ascii_uppercase),
+                         [axs[(p, 0)] for p in range(n_params)]):
+        ax.text(-0.1,
+                1,
+                label,
+                transform=ax.transAxes,
+                fontsize=fontsize,
+                fontweight='bold',
+                va='top')
+
+    fig.tight_layout()
+
+    return fig, axs
