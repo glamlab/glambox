@@ -1774,7 +1774,7 @@ def plot_node_hierarchical(model, parameters, comparisons=None, fontsize=7):
     n_params = len(parameters)
     n_comps = len(comparisons)
 
-    fig = plt.figure(figsize=cm2inch(5 * (n_comps + 1), 3.5 * n_params))
+    fig = plt.figure(figsize=cm2inch(5 * (n_comps + 1), 3 * n_params))
 
     axs = {}
 
@@ -1873,7 +1873,7 @@ def plot_node_hierarchical(model, parameters, comparisons=None, fontsize=7):
                          [axs[(p, 0)] for p in range(n_params)]):
         ax.tick_params(axis='both', which='major', labelsize=fontsize)
         ax.text(-0.1,
-                1.1,
+                1.2,
                 label,
                 transform=ax.transAxes,
                 fontsize=fontsize,
