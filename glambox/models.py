@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import glam
+import glambox as gb
 import pymc3 as pm
 import theano.tensor as tt
 import numpy as np
@@ -151,7 +151,7 @@ class GLAM(object):
                 gaze = np.random.uniform(0, 1, size=(n_trials, n_items))
                 gaze = gaze / gaze.sum(axis=1, keepdims=True)
 
-                individual_data = glam.simulation.simulate_subject(
+                individual_data = gb.simulation.simulate_subject(
                     parameters_individual,
                     values,
                     gaze,
@@ -186,15 +186,15 @@ class GLAM(object):
         self.type = kind
         self.depends_on = depends_on
         self.within_dependent = within_dependent
-        self.design = glam.utils.get_design(self)
+        self.design = gb.utils.get_design(self)
         self.model = make_models(df=self.data,
                                  kind=kind,
                                  design=self.design,
                                  **kwargs)
 
     def fit(self, method='MCMC', **kwargs):
-        self.trace = glam.fit.fit_models(self.model, method=method, **kwargs)
-        self.estimates = glam.utils.get_estimates(self)
+        self.trace = gb.fit.fit_models(self.model, method=method, **kwargs)
+        self.estimates = gb.utils.get_estimates(self)
 
     def compute_dic(self):
         if not isinstance(self.model, list):
@@ -210,7 +210,7 @@ class GLAM(object):
                 boundary=1.0,
                 error_weight=0.05,
                 verbose=True):
-        self.prediction = glam.simulation.predict(self,
+        self.prediction = gb.simulation.predict(self,
                                                   n_repeats=n_repeats,
                                                   boundary=boundary,
                                                   error_weight=error_weight,
@@ -231,7 +231,7 @@ def make_models(df,
                 **kwargs):
 
     if kind == 'individual':
-        data = glam.utils.format_data(df)
+        data = gb.utils.format_data(df)
         if verbose:
             print('Generating single subject models for {} subjects...'.format(
                 data['n_subjects']))
@@ -260,7 +260,7 @@ def make_models(df,
                 len(df)))
         pooled = df.copy()
         pooled['subject'] = 0
-        data = glam.utils.format_data(pooled)
+        data = gb.utils.format_data(pooled)
         pooled_model = make_subject_model(rts=data['rts'],
                                           gaze=data['gaze'],
                                           values=data['values'],
@@ -270,7 +270,7 @@ def make_models(df,
         return pooled_model
 
     elif kind == 'hierarchical':
-        data = glam.utils.format_data(df)
+        data = gb.utils.format_data(df)
         if verbose:
             print('Generating hierarchical model for {} subjects...'.format(
                 data['n_subjects']))
@@ -436,12 +436,12 @@ def make_subject_model(rts,
                      gamma_index, s_index, t0_index, zerotol):
 
             # compute drifts
-            R = glam.components.make_R(
+            R = gb.components.make_R(
                 v[0, tt.cast(v_index, dtype='int32')][:, None],
                 tau[0, tt.cast(tau_index, dtype='int32')][:, None],
                 gamma[0, tt.cast(gamma_index, dtype='int32')][:, None], values,
                 gaze, zerotol)
-            glam_ll = glam.components.tt_wienerrace_pdf(
+            glam_ll = gb.components.tt_wienerrace_pdf(
                 rt[:, None], R,
                 s[0, tt.cast(s_index, dtype='int32')][:, None], b,
                 t0[0, tt.cast(t0_index, dtype='int32')][:, None], zerotol)
@@ -710,7 +710,7 @@ def make_hierarchical_model(rts,
                      t0_condition_index, t0_subject_index, zerotol):
 
             # compute drifts
-            R = glam.components.make_R(
+            R = gb.components.make_R(
                 v[tt.cast(v_subject_index, dtype='int32'),
                   tt.cast(v_condition_index, dtype='int32')][:, None],
                 tau[tt.cast(tau_subject_index, dtype='int32'),
@@ -718,7 +718,7 @@ def make_hierarchical_model(rts,
                 gamma[tt.cast(gamma_subject_index, dtype='int32'),
                       tt.cast(gamma_condition_index, dtype='int32')][:, None],
                 values, gaze, zerotol)
-            glam_ll = glam.components.tt_wienerrace_pdf(
+            glam_ll = gb.components.tt_wienerrace_pdf(
                 rt[:, None], R,
                 s[tt.cast(s_subject_index, dtype='int32'),
                   tt.cast(s_condition_index, dtype='int32')][:, None], b,
