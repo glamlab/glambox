@@ -23,8 +23,19 @@ def plot_aggregate(bar_data,
                    line_labels=None,
                    fontsize=7,
                    value_bins=7,
-                   gaze_bins=7):
+                   gaze_bins=7,
+                   limits={
+                   'p_choose_best': (0, 1),
+                   'rt': (0, None),
+                   'corrected_p_choose_best': (-1, 1)
+                   }):
     fig, axs = plt.subplots(1, 4, figsize=cm2inch(18, 6), dpi=330)
+
+    # add default limits
+    for key, lim in zip(['p_choose_best', 'rt', 'corrected_p_choose_best'],
+                        [(0,1), (0,None), (-1,1)]):
+        if key not in limits.keys():
+            limits[key] = lim
 
     axs[0] = plot_rt_by_difficulty(bar_data,
                                    line_data,
@@ -32,24 +43,28 @@ def plot_aggregate(bar_data,
                                    ax=axs[0],
                                    line_labels=line_labels,
                                    bins=value_bins,
-                                   fontsize=fontsize)
+                                   fontsize=fontsize,
+                                   ylims=limits['rt'])
     axs[1] = plot_pchoose_by_value_minus_mean_others(bar_data,
                                             line_data,
                                             xlabel_skip=4,
                                             xlabel_start=0,
                                             ax=axs[1],
                                             bins=value_bins,
-                                            fontsize=fontsize)
+                                            fontsize=fontsize,
+                                            ylims=limits['p_choose_best'])
     axs[2] = plot_pchoose_by_gaze_minus_mean_others(bar_data,
                                                     line_data,
                                                     ax=axs[2],
                                                     bins=gaze_bins,
-                                                    fontsize=fontsize)
+                                                    fontsize=fontsize,
+                                                    ylims=limits['p_choose_best'])
     axs[3] = plot_corp_by_gaze_advantage(bar_data,
                                          line_data,
                                          ax=axs[3],
                                          bins=gaze_bins,
-                                         fontsize=fontsize)
+                                         fontsize=fontsize,
+                                         ylims=limits['corrected_p_choose_best'])
 
     # Labels
     for label, ax in zip(list('ABCD'), axs.ravel()):
@@ -93,6 +108,7 @@ def plot_rt_by_difficulty(bar_data,
                           line_data=None,
                           ax=None,
                           xlims=None,
+                          ylims=None,
                           xlabel_skip=2,
                           bins=7,
                           fontsize=7,
@@ -198,8 +214,9 @@ def plot_rt_by_difficulty(bar_data,
                         alpha=line_alphas[i - 1],
                         lw=line_lws[i - 1])
 
-    ylim = np.mean(np.concatenate([a['rt'].ravel() for a in dataframes]))
-    ax.set_ylim(0, ylim * 2)
+    if ylims is None:
+        ylims = np.mean(np.concatenate([a['rt'].ravel() for a in dataframes])) * 2
+    ax.set_ylim(ylims)
     ax.set_xlabel('Max. value –\nmean value others', fontsize=fontsize)
     ax.set_ylabel('Response time (ms)', fontsize=fontsize)
     ax.set_xlim(xlims)
@@ -254,6 +271,7 @@ def plot_pchoose_by_value_minus_mean_others(bar_data,
                                             ax=None,
                                             bins=7,
                                             xlims=None,
+                                            ylims=None,
                                             xlabel_skip=2,
                                             xlabel_start=1,
                                             fontsize=7,
@@ -388,7 +406,10 @@ def plot_pchoose_by_value_minus_mean_others(bar_data,
 
     ax.set_xlabel('Item value –\nmean value others', fontsize=fontsize)
     ax.set_ylabel('P(choose item)', fontsize=fontsize)
-    ax.set_ylim(-0.05, 1.05)
+    if ylims is None:
+        ax.set_ylim(-0.05, 1.05)
+    else:
+        ax.set_ylim(ylims)
     ax.set_xlim(xlims)
     if add_labels:
         ax.legend(loc='upper left', fontsize=fontsize, frameon=False)
@@ -431,6 +452,7 @@ def plot_pchoose_by_gaze_minus_mean_others(bar_data,
                                            bins=7,
                                            ax=None,
                                            xlims=None,
+                                           ylims=None,
                                            xlabel_skip=2,
                                            xlabel_start=1,
                                            fontsize=7,
@@ -561,7 +583,10 @@ def plot_pchoose_by_gaze_minus_mean_others(bar_data,
 
     ax.set_xlabel('Item gaze –\nmean gaze others', fontsize=fontsize)
     ax.set_ylabel('P(choose item)', fontsize=fontsize)
-    ax.set_ylim(-0.05, 1.05)
+    if ylims is None:
+        ax.set_ylim(-0.05, 1.05)
+    else:
+        ax.set_ylim(ylims)
     if xlims is not None:
         ax.set_xlim(xlims)
     if add_labels:
@@ -637,6 +662,7 @@ def plot_corp_by_gaze_advantage(bar_data,
                                 ax=None,
                                 bins=7,
                                 xlims=None,
+                                ylims=None,
                                 xlabel_skip=2,
                                 fontsize=7,
                                 line_labels=None,
@@ -750,7 +776,10 @@ def plot_corp_by_gaze_advantage(bar_data,
     ax.set_ylabel('Corrected\nP(choose item)', fontsize=fontsize)
     ax.set_xticks([-1, -.5, 0, .5, 1.])
     ax.set_xticklabels([-1, -.5, 0, .5, 1.], fontsize=fontsize)
-    ax.set_ylim(-1.05, 1.05)
+    if ylims is None:
+        ax.set_ylim(-1.05, 1.05)
+    else:
+        ax.set_ylim(ylims)
     if xlims is not None:
         ax.set_xlim(xlims)
     if add_labels:
@@ -1153,6 +1182,12 @@ def plot_individual_differences(data,
     ax02 = plt.subplot2grid((7, 3), (0, 2), rowspan=2)
     ax12 = plt.subplot2grid((7, 3), (2, 2), rowspan=5)
 
+    # add default limits
+    for key, lim in zip(['p_choose_best', 'rt', 'gaze_influence'],
+                        [(0,1), (0,None), (None,None)]):
+        if key not in limits.keys():
+            limits[key] = lim
+
     # create subject_summary
     n_items = np.int(len([c for c in data.columns if 'item_value_' in c]))
     subject_summary = aggregate_subject_level_data(data, n_items=n_items)
@@ -1457,6 +1492,12 @@ def plot_individual(observed,
     fig, axs = plt.subplots(n_predictions, 3, figsize=figsize, dpi=330)
     if axs.ndim == 1:
         axs = axs.reshape([1, axs.size])
+
+    # add default limits
+    for key, lim in zip(['p_choose_best', 'rt', 'gaze_influence'],
+                        [(0,1), (0,None), (None,None)]):
+        if key not in limits.keys():
+            limits[key] = lim
 
     # create subject summary for observed
     n_items = np.int(len([c for c in observed.columns if 'item_value_' in c]))
