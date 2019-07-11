@@ -1454,7 +1454,7 @@ def plot_individual(observed,
     # define figre
     if figsize is None:
         figsize = cm2inch(18, 6 * n_predictions)
-    fig, axs = plt.subplots(n_predictions, 3, figsize=figsize)
+    fig, axs = plt.subplots(n_predictions, 3, figsize=figsize, dpi=330)
     if axs.ndim == 1:
         axs = axs.reshape([1, axs.size])
 
