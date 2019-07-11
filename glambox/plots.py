@@ -1927,3 +1927,68 @@ def plot_node_hierarchical(model,
     fig.tight_layout()
 
     return fig, axs
+
+
+def traceplot(trace, varnames='all', combine_chains=False,
+              ref_val={}):
+    """A traceplot replacement, because arviz is broken.
+    This is tested for traces that come out of individual
+    and hierarchical GLAM fits.
+
+    Args:
+        trace (PyMC.MultiTrace): A trace object.
+        varnames (str, optional): List of variables to include
+        combine_chains (bool, optional): Toggle concatenation of chains.
+        ref_val (dict, optional): Reference values per parameter.
+
+    Returns:
+        figure, axes
+    """
+    if varnames == 'all':
+        varnames = [var for var in trace.varnames
+                    if not var.endswith('__')]
+    nvars = len(varnames)
+    if combine_chains:
+        nchains = 1
+    else:
+        nchains = trace.nchains
+
+    fig, axs = plt.subplots(nvars, 2, figsize=(8, nvars * 2))
+
+    for v, var in enumerate(varnames):
+
+        samples = trace.get_values(var, combine=combine_chains)
+        if not isinstance(samples, list):
+            samples = [samples]
+
+        for chain in range(nchains):
+            # group level parameters are (nsamples)
+            # but subject level parameters are (nsamples x nsubjects x nconditions)
+            chain_samples = samples[chain]
+            if chain_samples.ndim == 1:
+                chain_samples = chain_samples[:, None, None]
+            nsamples, nsubjects, nconditions = chain_samples.shape
+
+            for i in range(nsubjects):
+                # Trace
+                axs[v, 0].set_xlabel('')
+                axs[v, 0].set_ylabel('Sample value')
+                axs[v, 0].set_title(var)
+                axs[v, 0].plot(chain_samples[:, i, :],
+                               alpha=0.3)
+
+                # KDE
+                sns.kdeplot(chain_samples[:, i, 0],
+                            ax=axs[v, 1])
+                axs[v, 1].set_title(var)
+                axs[v, 1].set_ylabel('Frequency')
+
+        # Reference Values
+        if ref_val.get(var, False) is not False:
+            axs[v, 0].axhline(ref_val.get(var),
+                              color='black', linewidth=2)
+            axs[v, 1].axvline(ref_val.get(var),
+                              color='black', linewidth=2)
+
+    fig.tight_layout()
+    return fig, axs
