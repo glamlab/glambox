@@ -1127,7 +1127,7 @@ def extract_range(x, extra=0.25, bound=(None, None)):
     return [xmin, xmax]
 
 
-def individual_differences(data,
+def plot_individual_differences(data,
                            nbins=20,
                            fontsize=7,
                            regression=True,
