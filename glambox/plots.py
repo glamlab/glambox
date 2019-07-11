@@ -814,7 +814,7 @@ def plot_node(model,
             raise ValueError(error_msg)
 
     # set up figure
-    fig = plt.figure(figsize=(4 * (1 + n_comparisons), 2 * n_traces), dpi=300)
+    fig = plt.figure(figsize=(4 * (1 + n_comparisons), 2 * n_traces), dpi=330)
 
     # set up dict for figure axes
     axs = dict()
@@ -1799,7 +1799,7 @@ def plot_node_hierarchical(model, parameters, comparisons=None, fontsize=7):
     n_params = len(parameters)
     n_comps = len(comparisons)
 
-    fig = plt.figure(figsize=cm2inch(5 * (n_comps + 1), 3 * n_params))
+    fig = plt.figure(figsize=cm2inch(4.5 * (n_comps + 1), 2.25 * 1.5 * n_params), dpi=330)
 
     axs = {}
 
@@ -1827,9 +1827,14 @@ def plot_node_hierarchical(model, parameters, comparisons=None, fontsize=7):
         if model.design[parameter]['dependence'] is not None:
             axs[(p, 0)].legend(frameon=False, fontsize=fontsize)
         axs[(p, 0)].set_title(parameter_names[parameter] + r'$_\mu$', fontsize=fontsize)
-        axs[(p, 0)].set_ylabel('Posterior\ndensity', fontsize=fontsize)
+        axs[(p, 0)].set_ylabel('Frequency', fontsize=fontsize)
         axs[(p, 0)].set_yticks([])
         axs[(p, 0)].set_xlabel('Sample value', fontsize=fontsize)
+
+        # temporary fix for overlapping xticklabels for v
+        if parameter == 'v':
+            for label in axs[(p, 0)].xaxis.get_ticklabels()[::2]:
+                label.set_visible(False)
 
         # Comparisons
         for c, comparison in enumerate(comparisons):
@@ -1905,6 +1910,6 @@ def plot_node_hierarchical(model, parameters, comparisons=None, fontsize=7):
                 fontweight='bold',
                 va='top')
 
-    fig.tight_layout()
+    #fig.tight_layout()
 
     return fig, axs
