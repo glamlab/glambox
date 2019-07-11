@@ -1737,7 +1737,9 @@ def plot_posterior(samples,
 
     # HPD
     hpdvals = hpd(samples, alpha=alpha)
-    ax.hlines(0, *hpdvals, linewidth=7, alpha=0.5)
+    ax.fill_between(hpdvals, y1=[0, 0], y2=2 * [(ylim[1] - ylim[0]) * 0.1],
+                    color='black', edgecolor='none', lw=0,
+                    alpha=0.5, zorder=2)
     # ax.text(x=np.mean(hpdvals),
     #         y=(ylim[1] - ylim[0]) * 0.1,
     #         s='{:.0f}% HPD'.format(100 * (1 - alpha)),
@@ -1747,7 +1749,7 @@ def plot_posterior(samples,
     #         fontsize=fontsize)
     for val in hpdvals:
         ax.text(x=val,
-                y=(ylim[1] - ylim[0]) * 0.1,
+                y=(ylim[1] - ylim[0]) * 0.2,
                 s='{}'.format(np.round(val, precision)),
                 ha='center',
                 va='center',
@@ -1775,7 +1777,18 @@ def plot_posterior(samples,
     return ax
 
 
-def plot_node_hierarchical(model, parameters, comparisons=None, fontsize=7):
+def plot_node_hierarchical(model,
+                           parameters=['v', 'gamma', 's', 'tau'],
+                           comparisons=None,
+                           xlimits=dict(v=dict(dist=(0.00001, 0.00015),
+                                               delta=(-0.00005, 0.00005)),
+                                        gamma=dict(dist=(-1, 1),
+                                                   delta=(-1, 1.5)),
+                                        s=dict(dist=(0.002, 0.014),
+                                               delta=(-0.002, 0.002)),
+                                        tau=dict(dist=(0, 3),
+                                                 delta=(-1., 1.))),
+                           fontsize=7):
     """Plot group nodes and comparisons from hierarchical model.
 
     Args:
@@ -1815,11 +1828,11 @@ def plot_node_hierarchical(model, parameters, comparisons=None, fontsize=7):
                 axs[(p, 0)].hist(model.trace[0].get_values(parameter + '_' +
                                                            condition + '_mu'),
                                  label=condition,
-                                 bins=20,
+                                 bins=np.linspace(*xlimits[parameter]['dist'], 31),
                                  alpha=0.5)
         else:
             axs[(p, 0)].hist(model.trace[0].get_values(parameter + '_mu'),
-                             bins=20,
+                             bins=np.linspace(*xlimits[parameter]['dist'], 31),
                              alpha=0.5)
         sns.despine(ax=axs[(p, 0)], top=True, right=True)
 
@@ -1830,11 +1843,6 @@ def plot_node_hierarchical(model, parameters, comparisons=None, fontsize=7):
         axs[(p, 0)].set_ylabel('Frequency', fontsize=fontsize)
         axs[(p, 0)].set_yticks([])
         axs[(p, 0)].set_xlabel('Sample value', fontsize=fontsize)
-
-        # temporary fix for overlapping xticklabels for v
-        if parameter == 'v':
-            for label in axs[(p, 0)].xaxis.get_ticklabels()[::2]:
-                label.set_visible(False)
 
         # Comparisons
         for c, comparison in enumerate(comparisons):
@@ -1859,10 +1867,12 @@ def plot_node_hierarchical(model, parameters, comparisons=None, fontsize=7):
                         difference,
                         ax=axs[p, c + 1],
                         ref_val=0,
+                        bins=np.linspace(*xlimits[parameter]['delta'], 16),
                         precision=parameter_precisions[parameter])
                     axs[(p, c + 1)].set_title(comparison[0] + ' - ' +
                                               comparison[1],
                                               fontsize=fontsize)
+                    axs[(p, c + 1)].set_xlim(xlimits[parameter]['delta'])
                 else:
                     # Otherwise, state that at least one condition is not present.
                     axs[p, c + 1].text(
@@ -1910,6 +1920,10 @@ def plot_node_hierarchical(model, parameters, comparisons=None, fontsize=7):
                 fontweight='bold',
                 va='top')
 
-    #fig.tight_layout()
+    # Temporary workaround for overlapping xticklabels
+    for label in axs[(0, 0)].get_xticklabels()[::2]:
+        label.set_visible(False)
+
+    fig.tight_layout()
 
     return fig, axs
