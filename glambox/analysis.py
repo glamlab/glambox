@@ -184,10 +184,11 @@ def aggregate_subject_level_data(data, n_items):
     return subject_summary
 
 
-def aggregate_group_level_data(subject_summary):
+def aggregate_group_level_data(data, n_items):
     """
-    Aggregates a subject summary to group level
+    Aggregates a data to group level
     """
+    subject_summary = aggregate_subject_level_data(data, n_items)
     group_summary = subject_summary.agg({
         ('rt', 'mean'): ['mean', std, 'min', 'max', se, iqr],
         ('best_chosen', 'mean'): ['mean', std, 'min', 'max', se, iqr],
