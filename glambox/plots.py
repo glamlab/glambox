@@ -29,7 +29,7 @@ def plot_aggregate(bar_data,
                    'rt': (0, None),
                    'corrected_p_choose_best': (-1, 1)
                    }):
-    fig, axs = plt.subplots(1, 4, figsize=cm2inch(18, 6), dpi=330)
+    fig, axs = plt.subplots(1, 4, figsize=cm2inch(18, 4.5), dpi=330)
 
     # add default limits
     for key, lim in zip(['p_choose_best', 'rt', 'corrected_p_choose_best'],
@@ -223,7 +223,7 @@ def plot_rt_by_difficulty(bar_data,
     ax.set_xticks(x[::xlabel_skip])
     ax.set_xticklabels(means.index.values[::xlabel_skip])
     if add_labels:
-        ax.legend(loc='upper left', fontsize=fontsize, frameon=False)
+        ax.legend(loc='upper left', fontsize=fontsize * 0.7, frameon=False)
     sns.despine(ax=ax)
 
     return ax
@@ -1908,6 +1908,7 @@ def plot_node_hierarchical(model,
                         difference,
                         ax=axs[p, c + 1],
                         ref_val=0,
+                        color='silver',
                         bins=np.linspace(*xlimits[parameter]['delta'], 16),
                         precision=parameter_precisions[parameter])
                     axs[(p, c + 1)].set_title(comparison[0] + ' - ' +
