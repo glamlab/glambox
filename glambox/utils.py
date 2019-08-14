@@ -18,7 +18,6 @@ def format_data(df):
     values = df[['item_value_{}'.format(i) for i in range(n_items)]].values
     choice = df['choice'].values.astype(int)
     rts = df['rt'].values
-    rts = rts.astype('int')
     gaze_sorted = sort_according_to_choice(gaze, choice)
     values_sorted = sort_according_to_choice(values, choice)
 
