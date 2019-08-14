@@ -32,6 +32,6 @@ for dataset in data['dataset'].unique():
             tau=summary.loc['tau__0_0', 'mean']),
                                    index=np.ones(1) * subject)
         estimates.append(estimates_s)
-        pd.concat(estimates).to_csv('individual_estimates_sec_nhb2019.csv', index=False)
+        pd.concat(estimates).to_csv('resources/individual_estimates_sec_nhb2019.csv', index=False)
 estimates = pd.concat(estimates)
-estimates.to_csv('individual_estimates_sec_nhb2019.csv', index=False)
+estimates.to_csv('resources/individual_estimates_sec_nhb2019.csv', index=False)
