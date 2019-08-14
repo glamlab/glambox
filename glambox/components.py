@@ -70,7 +70,7 @@ def make_R(v, tau, gamma, values, gaze, zerotol):
     make drift terms R
     vectorized, i.e., runs on all trials simultaneously
 
-    R = v * 10 / (1 + exp(-tau * (A_i - max(A_J))))
+    R = v / (1 + exp(-tau * (A_i - max(A_J))))
     """
 
     A = gaze * values + (1. - gaze) * gamma * values
@@ -84,6 +84,6 @@ def make_R(v, tau, gamma, values, gaze, zerotol):
     max_others = tt.max(stacked_A_reshaped * identity[None, :, :], axis=2)
 
     R_star = A - max_others
-    R = v * 10 / (1 + tt.exp(-tau * R_star))
+    R = v / (1 + tt.exp(-tau * R_star))
 
     return R
