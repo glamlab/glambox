@@ -114,7 +114,7 @@ def make_R(v, tau, gamma, values, gaze):
         others = np.arange(n_items)[np.arange(n_items) != i].astype(int)
         R_star[i] = A[i] - np.max(A[others])
 
-    R = v * 10 / (1 + np.exp(-tau * R_star))
+    R = v / (1 + np.exp(-tau * R_star))
 
     return R
 
