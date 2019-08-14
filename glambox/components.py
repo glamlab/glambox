@@ -51,7 +51,7 @@ def tt_wienerrace_pdf(t, drift, noise, boundary, t0, zerotol=1e-14):
     """
     # Nondecision time T0
     t = t - t0
-    t = tt.where(t <= 1, 1, t)
+    t = tt.where(t <= 0, 0, t)
 
     # first passage time densities, single Wiener accumulators
     f = tt_wienerpos_fpt_pdf(t, drift, noise, boundary)
