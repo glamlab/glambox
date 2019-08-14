@@ -107,10 +107,10 @@ class GLAM(object):
         # Set up parameters
         if kind == 'hierarchical':
             default_parameters = dict(
-                v=dict(mu=0.00007, sd=0.00001, bounds=(0.00003, 0.00015)),
-                s=dict(mu=0.008, sd=0.001, bounds=(0.005, 0.011)),
+                v=dict(mu=0.6, sd=0.25, bounds=(0, 2)),
+                s=dict(mu=0.25, sd=0.05, bounds=(0, 1)),
                 gamma=dict(mu=0.3, sd=0.3, bounds=(-1.0, 1.0)),
-                tau=dict(mu=0.8, sd=0.1, bounds=(0.2, 2)),
+                tau=dict(mu=1, sd=0.2, bounds=(0.2, 2)),
                 t0=dict(mu=0, sd=0, bounds=(0.0, 0.0)))  # results in no t0
 
             parameters_formatted = dict()
@@ -483,7 +483,6 @@ def generate_hierarchical_model_parameters(parameter,
                                            sd_lower,
                                            sd_upper,
                                            val,
-                                           testval,
                                            offset=True,
                                            within_dependent=False):
 
@@ -500,14 +499,14 @@ def generate_hierarchical_model_parameters(parameter,
                     bounded_mu('{}_{}_mu'.format(parameter, condition),
                                mu_mean,
                                mu_sd,
-                               testval=testval)
+                               testval=mu_mean)
                     for condition in design['conditions']
                 ])
                 sd = tt.stack([
                     bounded_sd('{}_{}_sd'.format(parameter, condition),
                                sd_mean,
                                sd_sd,
-                               testval=testval)
+                               testval=sd_mean)
                     for condition in design['conditions']
                 ])
                 parms = []
@@ -573,11 +572,11 @@ def generate_hierarchical_model_parameters(parameter,
             mu = bounded_mu('{}_mu'.format(parameter),
                             mu_mean,
                             mu_sd,
-                            testval=testval)
+                            testval=mu_mean)
             sd = bounded_sd('{}_sd'.format(parameter),
                             sd_mean,
                             sd_sd,
-                            testval=testval)
+                            testval=sd_mean)
             if offset:
                 # Escape the Funnel of Hell (cf. https://twiecki.io/blog/2017/02/08/bayesian-hierchical-non-centered/)
                 parms_offset = pm.Normal(parameter + '_offset',
@@ -639,10 +638,9 @@ def make_hierarchical_model(rts,
             mu_upper=2,
             sd_mean=0.26,
             sd_sd=f * 0.105,
-            sd_lower=0,
+            sd_lower=zerotol,
             sd_upper=1,
             val=v_val,
-            testval=0.633,
             offset=offset,
             within_dependent=design['v']['within_dependent'])
 
@@ -656,10 +654,9 @@ def make_hierarchical_model(rts,
             mu_upper=gamma_bounds[1],
             sd_mean=0.345,
             sd_sd=f * 0.098,
-            sd_lower=0,
+            sd_lower=zerotol,
             sd_upper=1,
             val=gamma_val,
-            testval=0.124,
             offset=offset,
             within_dependent=design['gamma']['within_dependent'])
 
@@ -673,10 +670,9 @@ def make_hierarchical_model(rts,
             mu_upper=1,
             sd_mean=0.047,
             sd_sd=f * 0.008,
-            sd_lower=0,
+            sd_lower=zerotol,
             sd_upper=0.2,
             val=s_val,
-            testval=0.273,
             offset=offset,
             within_dependent=design['s']['within_dependent'])
 
@@ -690,10 +686,9 @@ def make_hierarchical_model(rts,
             mu_upper=5,
             sd_mean=0.615,
             sd_sd=f * 0.259,
-            sd_lower=0,
+            sd_lower=zerotol,
             sd_upper=3,
             val=tau_val,
-            testval=1.03,
             offset=offset,
             within_dependent=design['tau']['within_dependent'])
 
