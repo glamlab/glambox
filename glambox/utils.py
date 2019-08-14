@@ -75,7 +75,7 @@ def extract_modes(traces,
                 print('/!\ Automatically setting parameter precision...')
             precision_defaults = dict(v=3, gamma=3, s=3, SNR=3, tau=3, t0=-1)
             precision = [
-                precision_defaults.get(parameter.split('_')[0], 6)
+                precision_defaults.get(parameter.split('_')[0], 3)
                 for parameter in parameters
             ]
 
