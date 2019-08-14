@@ -59,7 +59,7 @@ def simulate_trial(parameters,
                    gaze,
                    boundary=1,
                    error_weight=0.05,
-                   error_range=(0, 5000)):
+                   error_range=(0, 5)):
     """
     Simulate GLAM for a single trial.
 
@@ -94,12 +94,12 @@ def simulate_trial(parameters,
                 FPTs[i] = invgauss.rvs(mu=mu / lam, scale=lam)
             rt = np.min(FPTs)
 
-            if rt < 1 or not np.isfinite(rt):
+            if rt < 0 or not np.isfinite(rt):
                 rt = np.nan
                 choice = np.nan
             else:
                 choice = np.argmin(FPTs)
-                rt = int(rt + t0)
+                rt = rt + t0
 
     return choice, rt
 
