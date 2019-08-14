@@ -79,7 +79,7 @@ def simulate_trial(parameters,
     n_items = len(values)
 
     if np.random.uniform(0, 1) < error_weight:
-        rt = int(np.random.uniform(*error_range))
+        rt = np.random.uniform(*error_range)
         choice = np.random.choice(n_items)
 
     else:
