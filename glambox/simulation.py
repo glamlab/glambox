@@ -72,7 +72,7 @@ def simulate_trial(parameters,
         error_range (tuple, optional): range of response times used by error model
 
     Returns:
-        int, int: choice, response time
+        int, float: choice, response time
 
     """
     v, gamma, s, tau, t0 = parameters
