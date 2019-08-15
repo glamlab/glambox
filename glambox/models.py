@@ -464,7 +464,7 @@ def generate_subject_model_parameters(parameter,
 
     val : float
         if specified, parameter is model as a deterministic
-        variable and set to the specified parameter value
+        variable and set to the specified value
 
     testval : float
         PyMC3 testvalue for parameter
