@@ -744,7 +744,7 @@ def generate_hierarchical_model_parameters(parameter,
         (see utils.get_design)
 
     [mu_mean, mu_sd] : float
-        testvalue for mean / standard deviation of
+        mean / standard deviation of
         the distribution for the hierarchical mean
 
     [mu_lower, mu_upper] : float
@@ -752,7 +752,7 @@ def generate_hierarchical_model_parameters(parameter,
         distribution for the hierarchical mean
 
     [sd_mean, sd_sd] : float
-        testvalue for mean / standard deviation of
+        mean / standard deviation of
         the distribution for the hierarchical standard deviation
 
     [sd_lower, sd_upper] : float
@@ -908,6 +908,93 @@ def make_hierarchical_model(rts,
                                         s=dict(),
                                         tau=dict(),
                                         t0=dict())):
+    """
+    Create hierarchical PyMC3 model
+
+    Input
+    ---
+    rts : array_like, int or float
+        response times in seconds per trial
+
+    gaze : array_like, float 
+        gaze distribution,
+        specifying the observed gaze for
+        each choice alternative in each trial
+        shape: (trials x alternatives)
+        gaze values must be between [0,1]
+
+    values : array_like, float
+        value of each choice alternative
+        in each trial; 
+        shape: (trials x alternatives)
+
+    error_ll : array_like, floats
+        likelihood of erronous choice model
+        for each subject, between [0,1]
+
+    subject_idx : array_like, int
+        indicating for each row in 
+        [rts, gaze, values] which subject 
+        the data belongs to
+        shape: (trials)
+        subjects indexed from [0 - (n_subjects - 1)]
+
+    [v_val, gamma_val, s_val, tau_val] : float, optional
+        if specified, specified parameter is 
+        deterministically set to the specified value
+        for all subjects
+
+    t0_val : int, optional
+        if specified, t0 value is determinstically
+        set to this value for all subjects, defaults to 0
+
+    zerotol : float, optional
+        tolerance for mathematical stability,
+        defaults to 1e-6
+
+    error_weight : float, optional
+        probability with which choices are modeled
+        as resulting from errornous choice model
+        (as specified by error_ll),
+        defaults to 0.05 (5%) 
+
+    boundary : float, optional
+        decision boundary for linear
+        stochastic race, defaults to 1
+
+    gamma_bounds : tuple of floats, optional
+        bounds for gamma distribution,
+        defaults to [-10, 1]
+
+    design : dict, optional
+        dict with one entry per model parameter,
+        speciying the parameter's dependency structure
+        (see utils.get_design)
+
+    offset : bool, optional
+        if True, subject-level parameters are modeled as 
+        offset from the group mean;
+        if False, subject-level parameters are modeled as
+        distributed around the group mean,
+        defaults to True
+        For furtehr details, see: 
+        https://twiecki.io/blog/2017/02/08/bayesian-hierchical-non-centered/
+
+    f : int, optional
+        multiplying factor for the standard deviation
+        of the hiearrchical distributions,
+        higher values indicate wider prior,
+        defaults to 10
+
+    design : dict, optional
+        dict with one entry per model parameter,
+        speciying the parameter's dependency structure
+        (see utils.get_design)
+
+    Returns
+    ---
+    PyMC3 model instance
+    """
 
     n_subjects = np.unique(subject_idx).size
 
