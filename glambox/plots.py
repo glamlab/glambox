@@ -1821,14 +1821,14 @@ def plot_posterior(samples,
 def plot_node_hierarchical(model,
                            parameters=['v', 'gamma', 's', 'tau'],
                            comparisons=None,
-                           xlimits=dict(v=dict(dist=(0.00001, 0.00015),
-                                               delta=(-0.00005, 0.00005)),
+                           xlimits=dict(v=dict(dist=(0, 1),
+                                               delta=(-0.5, 0.5)),
                                         gamma=dict(dist=(-1, 1),
-                                                   delta=(-1, 1.5)),
-                                        s=dict(dist=(0.002, 0.014),
-                                               delta=(-0.002, 0.002)),
+                                                   delta=(-0.5, 1.5)),
+                                        s=dict(dist=(0, 0.5),
+                                               delta=(-0.1, 0.1)),
                                         tau=dict(dist=(0, 3),
-                                                 delta=(-1., 1.))),
+                                                 delta=(-1, 1))),
                            fontsize=7):
     """Plot group nodes and comparisons from hierarchical model.
 
@@ -1846,7 +1846,7 @@ def plot_node_hierarchical(model,
         's': r'$\sigma$',
         'tau': r'$\tau$'
     }
-    parameter_precisions = {'v': 6, 'gamma': 2, 's': 4, 'tau': 2}
+    parameter_precisions = {'v': 2, 'gamma': 2, 's': 2, 'tau': 2}
 
     if comparisons is None:
         comparisons = []
