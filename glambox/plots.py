@@ -1199,7 +1199,7 @@ def plot_individual_differences(data,
     else:
         rt_tickstep = 0.75
     rt_ticks = np.arange(rt_range[0], rt_range[1] + rt_tickstep,
-                         rt_tickstep).astype(np.int)
+                         rt_tickstep)
 
     best_chosen_range = extract_range(subject_summary['best_chosen']['mean'],
                                       bound=limits['p_choose_best'])
@@ -1614,7 +1614,7 @@ def plot_individual(observed,
     else:
         rt_tickstep = 0.75
     rt_ticks = np.arange(rt_range[0], rt_range[1] + rt_tickstep,
-                         rt_tickstep).astype(np.int)
+                         rt_tickstep)
     for ax in axs[:, 0]:
         ax.set_yticks(rt_ticks)
         ax.set_xticks(rt_ticks)
