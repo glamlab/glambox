@@ -372,6 +372,7 @@ def make_models(df,
     design : dict, optional
         Dict with one entry per model parameter,
         speciying the parameter's dependency structure
+        (see utils.get_design)
 
     Returns
     ---
@@ -451,7 +452,7 @@ def generate_subject_model_parameters(parameter,
     Input
     ---
     parameter : string
-        One of ('v', 'gamma', 's', 'tau')
+        One of ['v', 'gamma', 's', 'tau']
 
     design : dict
         dependency structure for parameter
@@ -562,7 +563,7 @@ def make_subject_model(rts,
                                    tau=dict(),
                                    t0=dict())):
     """
-    Create subject-leven PyMC3 model
+    Create subject-level PyMC3 model
 
     Input
     ---
@@ -592,10 +593,10 @@ def make_subject_model(rts,
 
     t0_val : int, optional
         if specified, t0 value is determinstically
-        set to this value, defaulst to 0
+        set to this value, defaults to 0
 
     zerotol : float, optional
-        min tolerance for mathematical stability,
+        tolerance for mathematical stability,
         defaults to 1e-6
 
     error_weitgh : float, optional
@@ -606,15 +607,16 @@ def make_subject_model(rts,
 
     boundary : float, optional
         decision boundary for linear
-        stochastic race,
-        defaults to 1
+        stochastic race, defaults to 1
 
     gamma_bounds : tuple of floats, optional
         bounds for gamma distribution,
-        defaults ot [-10, 1]
+        defaults to [-10, 1]
 
     design : dict, optional
-        dependency structure for each model parameter
+        dict with one entry per model parameter,
+        speciying the parameter's dependency structure
+        (see utils.get_design)
 
     Returns
     ---
@@ -726,6 +728,56 @@ def generate_hierarchical_model_parameters(parameter,
                                            val,
                                            offset=True,
                                            within_dependent=False):
+    """
+    Generate a hierarchical-level model parameter distribution
+
+    Input
+    ---
+    parameter : string
+        one of ['v', 'gamma', 's', 'tau']
+
+    n_subjects : int
+        number of subject parameters drawn
+        from hierarchical parameter distribution
+
+    design : dict
+        dict with one entry per model parameter,
+        speciying the parameter's dependency structure
+        (see utils.get_design)
+
+    [mu_mean, mu_sd] : float
+        testvalue for mean / standard deviation of
+        the hierarchical distribution for the mean
+
+    [mu_lower, mu_upper] : float
+        lower / upper bound of the hierarchical 
+        distribution for the mean
+
+    [sd_mean, sd_sd] : float
+        testvalue for mean / standard deviation of
+        the hierarchical distribution for the standard deviation
+
+    [sd_lower, sd_upper] : float
+        lower / upper bound of the hierarchical 
+        distribution for the standard deviation
+
+    val : float
+        if specified, parameter is deterministically set 
+        for all subejcts to this value
+
+    offset : bool, optional
+        if True, subject-level parameters are modeled as 
+        offset from the group mean,
+        if False, subject-level parameters are modeled as
+        distributed around the group mean,
+        defaults to True
+        For furtehr details, see: 
+        https://twiecki.io/blog/2017/02/08/bayesian-hierchical-non-centered/
+
+    Returns
+    ---
+    PyMC3 parameter variable
+    """
 
     if (design['conditions'] is not None):  # Parameter has dependence
         if val is None:  # Parameter is not set deterministically to some value
