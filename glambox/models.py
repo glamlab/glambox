@@ -250,7 +250,7 @@ class GLAM(object):
 
         Input
         ---
-        method : string ['MCMC', 'VI']
+        method : string ['MCMC', 'VI'], optional
             Specifies fitting method to us
             Can be either 'MCMC' for MCMC-sampling
             or 'VI' for variantional inference
@@ -264,6 +264,14 @@ class GLAM(object):
         self.estimates = gb.utils.get_estimates(self)
 
     def compute_waic(self):
+        """
+        Compute WAIC for all appended
+        PyMC3 models 
+
+        Returns
+        ---
+        Adds WAIC to GLAM model object
+        """
         if not isinstance(self.model, list):
             self.waic = pm.waic(trace=self.trace, model=self.model)
         else:
@@ -277,6 +285,32 @@ class GLAM(object):
                 boundary=1.0,
                 error_weight=0.05,
                 verbose=True):
+        """
+        Predict choices and RTs for included data
+
+        Input
+        ---
+        n_repeats : int, optional
+            Number of repeats of each trial
+            included in data during prediction
+
+        boundary : float, optional
+            Magnitude of decision boundary
+
+        error_weight : float, optional
+            Float between [0,1]
+            Defaults to 0.05
+            Determining probability that choice and
+            RT are drawn according to a unifrom
+            error distribution
+            (see manuscript)
+
+        verbose : bool, optional
+            
+        Returns
+        ---
+        Adds predicted data to GLAM model object
+        """
         self.prediction = gb.simulation.predict(self,
                                                   n_repeats=n_repeats,
                                                   boundary=boundary,
@@ -284,6 +318,21 @@ class GLAM(object):
                                                   verbose=verbose)
 
     def exchange_data(self, new_data, verbose=True):
+        """
+        Exchange GLAM model data
+
+        Input
+        ---
+        new_data : dataframe
+            New data to exchange old data with
+
+        verbose : bool, optional
+            
+        Returns
+        ---
+        New data replaces old data of GLAM model object
+        """
+        ---
         if verbose:
             print(
                 'Replaced attached data ({} trials) with new data ({} trials)...'
