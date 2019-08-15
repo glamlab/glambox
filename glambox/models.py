@@ -345,6 +345,38 @@ def make_models(df,
                 verbose=True,
                 design=dict(v=None, gamma=None, s=None, tau=None, t0=None),
                 **kwargs):
+    """
+    Create PyMC3 GLAM model instances,
+    given a response dataset
+
+    Input
+    ---
+    df : dataframe
+        Response data
+
+    kind : string
+        Specifying the assumed parameter structure:
+        'pooled':
+            one single parameter set for all
+            subjects
+        'individual': 
+            parameters are assumed to be drawn 
+            independently for each subject)
+        'hierarchical' (resulting in )
+            parameters are assumed to be drawn
+            for all subjects from shared
+            group-level distributions
+
+    verbose : bool, optional
+
+    design : dict, optional
+        Dict with one entry per model parameter,
+        speciying the parameter's dependency structure
+
+    Returns
+    ---
+    PyMC3 GLAM model instances
+    """
 
     if kind == 'individual':
         data = gb.utils.format_data(df)
@@ -413,6 +445,40 @@ def generate_subject_model_parameters(parameter,
                                       val,
                                       testval,
                                       within_dependent=False):
+    """
+    Generate a subject-level model parameter
+
+    Input
+    ---
+    parameter : string
+        One of ('v', 'gamma', 's', 'tau')
+
+    design : dict
+        dependency structure for parameter
+
+    lower : float
+        Lower bound for parameter distribution
+
+    upper : float
+        Upper bound for parameter distribution
+
+    val : float
+        If specified, parameter is model as a deterministic
+        variable and set to the specified parameter value
+
+    testval : float
+        PyMC3 testvalue for parameter
+
+    within_dependent : bool, optional
+        Whether parameters with a dependency
+        should be drawn from same meta-distribution (if True)
+        or independently (if False),
+        defaults to False
+
+    Returns
+    ---
+    PyMC3 parameter variable
+    """
 
     if design['conditions'] is not None:
         if val is None:
