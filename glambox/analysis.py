@@ -17,8 +17,11 @@ def compute_gaze_influence_score(data, n_items=None):
 
     Input
     ---
-    data (dataframe):
-            aggregate response data
+    data : dataframe
+        aggregate response data
+
+    n_items : int, optional
+        Number of choice alternatives in data
 
     Returns
     ---
@@ -97,7 +100,7 @@ def compute_mean_rt(df):
 
     Input
     ---
-    df (dataframe)
+    df : dataframe
         aggregate response data
 
     Returns
@@ -113,7 +116,7 @@ def compute_p_choose_best(df):
 
     Input
     ---
-    df (dataframe)
+    df : dataframe
         aggregate response data
 
     Returns
@@ -133,7 +136,7 @@ def add_best_chosen(df):
 
     Input
     ---
-    df (dataframe)
+    df : dataframe
         aggregate response data
 
     Returns
@@ -156,13 +159,13 @@ def run_linear_model(x, y, verbose=True):
 
     Input
     ---
-    x (ndarray)
+    x : ndarray
         independent variable data
 
-    y (array)
+    y : array
         dependent variable data
 
-    verbose (bool)
+    verbose : bool, optional
         whether to print results of
         linear model fit
 
@@ -189,7 +192,7 @@ def q1(series):
 
     Input
     ---
-        series (pd.Series)
+        series : pandas series
 
     Returns
     ---
@@ -206,7 +209,7 @@ def q3(series):
 
     Input
     ---
-        series (pd.Series)
+        series : pandas series
 
     Returns
     ---
@@ -223,7 +226,7 @@ def iqr(series):
 
     Input
     ---
-        series (pd.Series)
+        series : pandas series
 
     Returns
     ---
@@ -242,7 +245,7 @@ def std(series):
 
     Input
     ---
-        series (pd.Series)
+        series : pandas series
 
     Returns
     ---
@@ -258,7 +261,7 @@ def se(series):
 
     Input
     ---
-        series (pd.Series)
+        series : pandas series
 
     Returns
     ---
@@ -282,15 +285,15 @@ def aggregate_subject_level_data(data, n_items):
 
     Input
     ---
-    df (dataframe)
+    df : dataframe
         aggregate response data
 
-    n_items (int)
+    n_items : int
         number of choice alternatives in the data
 
     Returns
     ---
-    df(dataframe)
+    df : dataframe
         df of subject-level response characteristics
     """
     data = data.copy()
@@ -326,15 +329,15 @@ def aggregate_group_level_data(data, n_items):
 
     Input
     ---
-    df (dataframe)
+    df : dataframe
         aggregate response data
 
-    n_items (int)
+    n_items : int
         number of choice alternatives in the data
 
     Returns
     ---
-    df(dataframe)
+    df : dataframe
         df of group-level response characteristics
     """
     subject_summary = aggregate_subject_level_data(data, n_items)
