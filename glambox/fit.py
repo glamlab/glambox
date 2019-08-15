@@ -17,28 +17,28 @@ def fit_models(models,
     Input
     ---
     models : PyMC3 model instance(s)
-        Sinlgle GLAM model instance
+        sinlgle GLAM model instance
         or list of multiple models
 
     method : string, optional
-        Whether to fit the models by means
+        whether to fit the models by means
         of MCMC sampling ('MCMC') or
         variational inference ('VI')
 
     verbose : bool, optional
-        Whether to print updates on
+        whether to print updates on
         fitting progress
 
     draws : int, optional
-        Number of posterior samples to draw; 
+        number of posterior samples to draw; 
         only if, method = 'MCMC'
 
     n_vi : int, optional
-        Number of VI samples
+        number of VI samples
         only if, method = 'VI'
 
     step : PyMC3 step method, optional
-        Step method to use for MCMC sampling
+        step method to use for MCMC sampling
         only if, method = 'MCMC'
         E.g. [pm.Metropolis, pm.NUTS]
         See PyMC3 documentation for a complete
@@ -47,7 +47,7 @@ def fit_models(models,
     Returns
     ---
     traces : PyMC3 trace(s)
-        List of resulting PyMC3 model traces
+        list of resulting PyMC3 model traces
 
     """
     if isinstance(models, pm.model.Model):

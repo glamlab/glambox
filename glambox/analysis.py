@@ -21,7 +21,7 @@ def compute_gaze_influence_score(data, n_items=None):
         aggregate response data
 
     n_items : int, optional
-        Number of choice alternatives in data
+        number of choice alternatives in data
 
     Returns
     ---
