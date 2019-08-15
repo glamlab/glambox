@@ -218,7 +218,7 @@ def plot_rt_by_difficulty(bar_data,
         ylims = np.mean(np.concatenate([a['rt'].ravel() for a in dataframes])) * 2
     ax.set_ylim(ylims)
     ax.set_xlabel('Max. value –\nmean value others', fontsize=fontsize)
-    ax.set_ylabel('Response time (ms)', fontsize=fontsize)
+    ax.set_ylabel('Response time (s)', fontsize=fontsize)
     ax.set_xlim(xlims)
     ax.set_xticks(x[::xlabel_skip])
     ax.set_xticklabels(means.index.values[::xlabel_skip])
@@ -1194,10 +1194,10 @@ def plot_individual_differences(data,
 
     # extract plotting ranges
     rt_range = extract_range(subject_summary['rt']['mean'], bound=limits['rt'])
-    if (rt_range[1] - rt_range[0]) > 3000:
-        rt_tickstep = 1500
+    if (rt_range[1] - rt_range[0]) > 3:
+        rt_tickstep = 1.5
     else:
-        rt_tickstep = 750
+        rt_tickstep = 0.75
     rt_ticks = np.arange(rt_range[0], rt_range[1] + rt_tickstep,
                          rt_tickstep).astype(np.int)
 
@@ -1217,7 +1217,7 @@ def plot_individual_differences(data,
                      regression=regression,
                      annotate=annotate,
                      annotation_pos=(0.1, 0.01),
-                     xlabel='Mean RT (ms)',
+                     xlabel='Mean RT (s)',
                      ylabel='P(choose best)',
                      xlim=rt_range,
                      xticks=rt_ticks,
@@ -1236,7 +1236,7 @@ def plot_individual_differences(data,
                      regression=regression,
                      annotate=annotate,
                      annotation_pos=(0.1, 0.01),
-                     ylabel='Mean RT (ms)',
+                     ylabel='Mean RT (s)',
                      xlabel='Gaze influence\non P(choice | value)',
                      ylim=rt_range,
                      yticks=rt_ticks,
@@ -1597,10 +1597,10 @@ def plot_individual(observed,
             gaze_influence_range[1] = gaze_influence_range_prediction[1]
 
         # label axes
-        axs[m, 0].set_ylabel('{}\n\nPredicted Mean RT (ms)'.format(
+        axs[m, 0].set_ylabel('{}\n\nPredicted Mean RT (s)'.format(
             prediction_labels[m]),
                              fontsize=fontsize)
-        axs[m, 0].set_xlabel('Observed Mean RT (ms)', fontsize=fontsize)
+        axs[m, 0].set_xlabel('Observed Mean RT (s)', fontsize=fontsize)
         axs[m, 1].set_ylabel('Predicted P(choose best)', fontsize=fontsize)
         axs[m, 1].set_xlabel('Observed P(choose best)', fontsize=fontsize)
         axs[m, 2].set_ylabel('Predicted Gaze Influence\non P(choice | value)',
@@ -1609,10 +1609,10 @@ def plot_individual(observed,
                              fontsize=fontsize)
 
     # update axes limits and ticks
-    if (rt_range[1] - rt_range[0]) > 3000:
-        rt_tickstep = 1500
+    if (rt_range[1] - rt_range[0]) > 3:
+        rt_tickstep = 1.5
     else:
-        rt_tickstep = 750
+        rt_tickstep = 0.75
     rt_ticks = np.arange(rt_range[0], rt_range[1] + rt_tickstep,
                          rt_tickstep).astype(np.int)
     for ax in axs[:, 0]:
@@ -1678,7 +1678,7 @@ def behaviour_parameter_correlation(estimates,
                      regression=True,
                      color='gray',
                      xlabel=r'$\hat{v}$',
-                     ylabel='Mean RT (ms)',
+                     ylabel='Mean RT (s)',
                      xlim=v_range,
                      ax=axs[0])
 
