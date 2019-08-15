@@ -263,12 +263,12 @@ class GLAM(object):
         self.trace = gb.fit.fit_models(self.model, method=method, **kwargs)
         self.estimates = gb.utils.get_estimates(self)
 
-    def compute_dic(self):
+    def compute_waic(self):
         if not isinstance(self.model, list):
-            self.dic = pm.dic(trace=self.trace, model=self.model)
+            self.waic = pm.waic(trace=self.trace, model=self.model)
         else:
-            self.dic = np.array([
-                pm.dic(trace=trace, model=model)
+            self.waic = np.array([
+                pm.waic(trace=trace, model=model)
                 for (trace, model) in zip(self.trace, self.model)
             ])
 
