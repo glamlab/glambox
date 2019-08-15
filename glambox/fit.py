@@ -11,6 +11,45 @@ def fit_models(models,
                n_vi=200000,
                step=pm.Metropolis,
                **kwargs):
+    """
+    Fit GLAM model instance(s)
+
+    Input
+    ---
+    models (PyMC3 model(s))
+        Sinlgle GLAM model instance
+        or list of multiple models
+
+    method (string)
+        Whether to fit the models by means
+        of MCMC sampling ('MCMC') or
+        variational inference ('VI')
+
+    verbose (bool)
+        Whether to print updates on
+        fitting progress
+
+    draws (int)
+        Number of posterior samples to draw; 
+        only if, method = 'MCMC'
+
+    n_vi (int)
+        Number of VI samples
+        only if, method = 'VI'
+
+    step (PyMC3 step method)
+        Step method to use for MCMC sampling
+        only if, method = 'MCMC'
+        E.g. [pm.Metropolis, pm.NUTS]
+        See PyMC3 documentation for a complete
+        overview of available step methods
+
+    Returns
+    ---
+    traces (PyMC3 trace instance(s))
+        List of resulting PyMC3 model traces
+
+    """
     if isinstance(models, pm.model.Model):
         models = [models]
     elif isinstance(models, list) and np.alltrue(
