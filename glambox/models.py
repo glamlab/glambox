@@ -46,7 +46,7 @@ class GLAM(object):
         Input
         ---
         kind : string, optional
-            Should be one of ['individual', 'hierarchical'],
+            Should be one of ['individual', 'hierarchical', 'pooled'],
             defaults to 'hierarchical'
         
         n_individuals : integer, optional
@@ -210,7 +210,7 @@ class GLAM(object):
         Input
         ---
         kind : string
-            Should be one of ['individual', 'hierarchical'],
+            Should be one of ['individual', 'hierarchical', 'pooled'],
             defaults to 'hierarchical'
 
         depends_on : dict, optional
@@ -357,14 +357,14 @@ def make_models(df,
     kind : string
         Specifying the assumed parameter structure:
         'pooled':
-            one single parameter set for all
+            one single parameter set across all
             subjects
         'individual': 
             parameters are assumed to be drawn 
-            independently for each subject)
+            independently for each subject
         'hierarchical' (resulting in )
-            parameters are assumed to be drawn
-            for all subjects from shared
+            subject-level parameters are assumed
+            to be drawn from shared
             group-level distributions
 
     verbose : bool, optional
@@ -561,6 +561,65 @@ def make_subject_model(rts,
                                    s=dict(),
                                    tau=dict(),
                                    t0=dict())):
+    """
+    Create subject-leven PyMC3 model
+
+    Input
+    ---
+    rts : array_like, float
+        response times per trial
+
+    gaze : array_like, float 
+        gaze distribution,
+        specifying the observed gaze for
+        each choice alternative in each trial
+        shape: (trials x alternatives)
+        gaze values must be between [0,1]
+
+    values : array_like, float
+        values of choice alternatives, 
+        specifying one value observed per
+        choice alternative in each trial; 
+        shape: (trials x alternatives)
+
+    error_ll : float
+        likelihood of erronous choice model, 
+        between [0,1]
+
+    [v_val, gamma_val, s_val, tau_val] : float, optional
+        if specified, respective parameter is 
+        deterministically set to the specified value
+
+    t0_val : int, optional
+        if specified, t0 value is determinstically
+        set to this value, defaulst to 0
+
+    zerotol : float, optional
+        min tolerance for mathematical stability,
+        defaults to 1e-6
+
+    error_weitgh : float, optional
+        probability with which choices are modeled
+        as resulting from errornous choice model
+        (as specified by error_ll),
+        defaults to 0.05 (5%) 
+
+    boundary : float, optional
+        decision boundary for linear
+        stochastic race,
+        defaults to 1
+
+    gamma_bounds : tuple of floats, optional
+        bounds for gamma distribution,
+        defaults ot [-10, 1]
+
+    design : dict, optional
+        dependency structure for each model parameter
+
+    Returns
+    ---
+    PyMC3 model instance
+    """
     with pm.Model() as glam_individual:
 
         # Mechanics
