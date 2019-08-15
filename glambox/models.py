@@ -63,13 +63,13 @@ class GLAM(object):
             defaults to continuous participant numbering across conditions
         
         stimuli : DataFrame, optional
-            Instead of simulating item_value and gaze data for the given number
+            instead of simulating item_value and gaze data for the given number
             of individuals and trials, a DataFrame containing item_values, gaze_data
             and participant indices can be supplied.
             This overrides n_individuals and n_trials arguments.
         
         parameters : dict, optional
-            Dict with keys: 'v', 'gamma', 's', 't0', 'tau'
+            dict with keys: 'v', 'gamma', 's', 't0', 'tau'
             if kind is individual:
                 values: arrays of length n_individual
             if kind is hierarchical:
@@ -77,15 +77,15 @@ class GLAM(object):
                                    values: floats for mu, sd, tuple for bounds
         
         error_weight : float, optional
-            Range: [0, 1]
-            Probability of simulating error trial
+            range: [0, 1],
+            probability of simulating error trial
             with random chocie and uniform RT
         
         error_range : int tuple of length 2, optional
-            Range of error RTs
+            range of error RTs
         
         value_range : tuple of length 2, optional
-            Range of item value ratings to be simulated
+            range of item value ratings to be simulated
         
         label : string, optional
             condition label. defaults "to condition_n"
@@ -210,24 +210,23 @@ class GLAM(object):
         Input
         ---
         kind : string
-            Should be one of ['individual', 'hierarchical', 'pooled'],
+            should be one of ['individual', 'hierarchical', 'pooled'],
             defaults to 'hierarchical'
 
         depends_on : dict, optional
             dictionary specifying for each GLAM model parameter
             whether the parameter is dependent on any levels
             of the data
-            E.g. {'v': 'speed'}, here the v parameter is 
-            modeled as being dependent on the 'speed' 
-            indicator in the response data (must be encoded
-            in data)
+            e.g. {'v': 'speed'}, here one v parameter is created 
+            for each level of the 'speed' factor in the response data
+            (factor must be encoded in data)
 
         within_dependent : list, optional
-            List of parameter names ('v', 'gamma', 's', 'tau')
-            Each included parameter is modeled as 
+            list of parameter names ('v', 'gamma', 's', 'tau')
+            each included parameter is modeled as 
             dependent within a subject (i.e., as drawn
             from the same meta-distribution)
-            Only, if parameter dependency-structure specified
+            only, if parameter dependency-structure specified
             in depends_on
 
         Returns
@@ -251,8 +250,8 @@ class GLAM(object):
         Input
         ---
         method : string ['MCMC', 'VI'], optional
-            Specifies fitting method to us
-            Can be either 'MCMC' for MCMC-sampling
+            specifies fitting method to use,
+            can be either 'MCMC' for MCMC-sampling
             or 'VI' for variantional inference
 
         Returns
@@ -291,16 +290,16 @@ class GLAM(object):
         Input
         ---
         n_repeats : int, optional
-            Number of repeats of each trial
+            number of repeats of each trial
             included in data during prediction
 
         boundary : float, optional
-            Magnitude of decision boundary
+            magnitude of decision boundary
 
         error_weight : float, optional
-            Float between [0,1]
-            Defaults to 0.05
-            Determining probability that choice and
+            float between [0,1],
+            defaults to 0.05
+            determining probability that choice and
             RT are drawn according to a unifrom
             error distribution
             (see manuscript)
@@ -324,13 +323,13 @@ class GLAM(object):
         Input
         ---
         new_data : dataframe
-            New data to exchange old data with
+            new data to exchange old data with
 
         verbose : bool, optional
             
         Returns
         ---
-        New data replaces old data of GLAM model object
+        new_data replaces data attribute of GLAM model object
         """
         ---
         if verbose:
@@ -352,25 +351,25 @@ def make_models(df,
     Input
     ---
     df : dataframe
-        Response data
+        response data
 
     kind : string
-        Specifying the assumed parameter structure:
+        specifying the assumed parameter structure:
         'pooled':
-            one single parameter set across all
+            one single parameter set for all
             subjects
         'individual': 
             parameters are assumed to be drawn 
             independently for each subject
         'hierarchical' (resulting in )
-            subject-level parameters are assumed
+            subject parameters are assumed
             to be drawn from shared
             group-level distributions
 
     verbose : bool, optional
 
     design : dict, optional
-        Dict with one entry per model parameter,
+        dict with one entry per model parameter,
         speciying the parameter's dependency structure
         (see utils.get_design)
 
@@ -452,28 +451,28 @@ def generate_subject_model_parameters(parameter,
     Input
     ---
     parameter : string
-        One of ['v', 'gamma', 's', 'tau']
+        one of ['v', 'gamma', 's', 'tau']
 
     design : dict
         dependency structure for parameter
 
     lower : float
-        Lower bound for parameter distribution
+        lower bound for parameter distribution
 
     upper : float
-        Upper bound for parameter distribution
+        upper bound for parameter distribution
 
     val : float
-        If specified, parameter is model as a deterministic
+        if specified, parameter is model as a deterministic
         variable and set to the specified parameter value
 
     testval : float
         PyMC3 testvalue for parameter
 
     within_dependent : bool, optional
-        Whether parameters with a dependency
-        should be drawn from same meta-distribution (if True)
-        or independently (if False),
+        whether parameters with a dependency
+        should be drawn from a shared meta-distribution (if True)
+        or independently of one another (if False),
         defaults to False
 
     Returns
@@ -567,8 +566,8 @@ def make_subject_model(rts,
 
     Input
     ---
-    rts : array_like, float
-        response times per trial
+    rts : array_like, int or float
+        response times in seconds per trial
 
     gaze : array_like, float 
         gaze distribution,
@@ -578,9 +577,8 @@ def make_subject_model(rts,
         gaze values must be between [0,1]
 
     values : array_like, float
-        values of choice alternatives, 
-        specifying one value observed per
-        choice alternative in each trial; 
+        value of each choice alternative
+        in each trial; 
         shape: (trials x alternatives)
 
     error_ll : float
@@ -588,7 +586,7 @@ def make_subject_model(rts,
         between [0,1]
 
     [v_val, gamma_val, s_val, tau_val] : float, optional
-        if specified, respective parameter is 
+        if specified, specified parameter is 
         deterministically set to the specified value
 
     t0_val : int, optional
@@ -738,7 +736,7 @@ def generate_hierarchical_model_parameters(parameter,
 
     n_subjects : int
         number of subject parameters drawn
-        from hierarchical parameter distribution
+        from hierarchical distribution
 
     design : dict
         dict with one entry per model parameter,
@@ -747,27 +745,27 @@ def generate_hierarchical_model_parameters(parameter,
 
     [mu_mean, mu_sd] : float
         testvalue for mean / standard deviation of
-        the hierarchical distribution for the mean
+        the distribution for the hierarchical mean
 
     [mu_lower, mu_upper] : float
-        lower / upper bound of the hierarchical 
-        distribution for the mean
+        lower / upper bound of the  
+        distribution for the hierarchical mean
 
     [sd_mean, sd_sd] : float
         testvalue for mean / standard deviation of
-        the hierarchical distribution for the standard deviation
+        the distribution for the hierarchical standard deviation
 
     [sd_lower, sd_upper] : float
-        lower / upper bound of the hierarchical 
-        distribution for the standard deviation
+        lower / upper bound of the 
+        distribution for the hierarchical standard deviation
 
     val : float
         if specified, parameter is deterministically set 
-        for all subejcts to this value
+        to this value for all subejcts 
 
     offset : bool, optional
         if True, subject-level parameters are modeled as 
-        offset from the group mean,
+        offset from the group mean;
         if False, subject-level parameters are modeled as
         distributed around the group mean,
         defaults to True
