@@ -43,36 +43,59 @@ class GLAM(object):
         Data is added to any existing attached dataframes,
         which allows blockwise simulation of multiple groups.
 
-        Parameters:
-        -----------
-        kind should be one of ['individual', 'hierarchical']
+        Input
+        ---
+        kind : string, optional
+            Should be one of ['individual', 'hierarchical'],
             defaults to 'hierarchical'
-        n_individuals: integer, number of individuals to be added for this condition
-        n_trials: integer, number of trials per individual
-        n_items: integer, number of items per trial
-        individual_idx: array of integers
+        
+        n_individuals : integer, optional
+            number of individuals to be added for this condition
+        
+        n_trials : integer, optional
+            number of trials per individual
+        
+        n_items : integer, optional
+            number of items per trial
+        
+        individual_idx : array of integers, optional
             individual indices to use (for within individual design simulation)
             defaults to continuous participant numbering across conditions
-        stimuli: pandas DataFrame
+        
+        stimuli : DataFrame, optional
             Instead of simulating item_value and gaze data for the given number
             of individuals and trials, a DataFrame containing item_values, gaze_data
             and participant indices can be supplied.
             This overrides n_individuals and n_trials arguments.
-        parameters: dict with keys: 'v', 'gamma', 's', 't0', 'tau'
+        
+        parameters : dict, optional
+            Dict with keys: 'v', 'gamma', 's', 't0', 'tau'
             if kind is individual:
                 values: arrays of length n_individual
             if kind is hierarchical:
                 values: dicts with keys: mu, sd, bounds
                                    values: floats for mu, sd, tuple for bounds
-        error_weight: float in (0, 1)
-            Probability of simulating error trial with random chocie and uniform RT
-        error_range: int tuple of length 2
+        
+        error_weight : float, optional
+            Range: [0, 1]
+            Probability of simulating error trial
+            with random chocie and uniform RT
+        
+        error_range : int tuple of length 2, optional
             Range of error RTs
-        value_range: tuple of length 2
+        
+        value_range : tuple of length 2, optional
             Range of item value ratings to be simulated
-        label: string
+        
+        label : string, optional
             condition label. defaults "to condition_n"
-        seed: integer, np.random.seed(argument)
+        
+        seed : integer, optional
+            np.random.seed(argument)
+
+        Returns 
+        ---
+        Adds data to GLAM model instance
         """
 
         # Set random seed
@@ -182,6 +205,35 @@ class GLAM(object):
                    within_dependent=[],
                    **kwargs):
         """
+        Create GLAM PyMC3 model
+
+        Input
+        ---
+        kind : string
+            Should be one of ['individual', 'hierarchical'],
+            defaults to 'hierarchical'
+
+        depends_on : dict, optional
+            dictionary specifying for each GLAM model parameter
+            whether the parameter is dependent on any levels
+            of the data
+            E.g. {'v': 'speed'}, here the v parameter is 
+            modeled as being dependent on the 'speed' 
+            indicator in the response data (must be encoded
+            in data)
+
+        within_dependent : list, optional
+            List of parameter names ('v', 'gamma', 's', 'tau')
+            Each included parameter is modeled as 
+            dependent within a subject (i.e., as drawn
+            from the same meta-distribution)
+            Only, if parameter dependency-structure specified
+            in depends_on
+
+        Returns
+        ---
+        Adds PyMC3 model, depends_on, within_dependent and design
+        to GLAM model object
         """
         self.type = kind
         self.depends_on = depends_on
@@ -193,6 +245,21 @@ class GLAM(object):
                                  **kwargs)
 
     def fit(self, method='MCMC', **kwargs):
+        """
+        Fit GLAM models
+
+        Input
+        ---
+        method : string ['MCMC', 'VI']
+            Specifies fitting method to us
+            Can be either 'MCMC' for MCMC-sampling
+            or 'VI' for variantional inference
+
+        Returns
+        ---
+        Adds estimated parameter trace as well as estimates
+        to GLAM model object
+        """
         self.trace = gb.fit.fit_models(self.model, method=method, **kwargs)
         self.estimates = gb.utils.get_estimates(self)
 
