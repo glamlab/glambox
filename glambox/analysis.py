@@ -14,10 +14,12 @@ def compute_gaze_influence_score(data, n_items=None):
     the corrected choice probability
     of all positive and negative relative gaze values
     (see manuscript).
+
     Input
     ---
     data (dataframe):
             aggregate response data
+
     Returns
     ---
     array of single-subject gaze influence scores
@@ -91,14 +93,32 @@ def compute_gaze_influence_score(data, n_items=None):
 
 def compute_mean_rt(df):
     """
-    Computes subject wise mean RT
+    Computes subject-wise mean RT
+
+    Input
+    ---
+    df (dataframe)
+        aggregate response data
+
+    Returns
+    ---
+        array of subject-wise mean RTs
     """
     return df.groupby('subject').rt.mean().values
 
 
 def compute_p_choose_best(df):
     """
-    Computes subject wise P(choose best)
+    Computes subject-wise P(choose best)
+
+    Input
+    ---
+    df (dataframe)
+        aggregate response data
+
+    Returns
+    ---
+        array of subject-wise P(choose best)
     """
     if 'best_chosen' not in df.columns:
         df = add_best_chosen(df)
@@ -108,7 +128,17 @@ def compute_p_choose_best(df):
 def add_best_chosen(df):
     """
     Adds 'best_chosen' variable to DataFrame,
-    independent of number of items (works with nan columns)
+    independent of number of items
+    (works with nan columns)
+
+    Input
+    ---
+    df (dataframe)
+        aggregate response data
+
+    Returns
+    ---
+        copy of df with 'best chosen' indicator 
     """
     df = df.copy()
     values = df[[c for c in df.columns if c.startswith('item_value_')]].values
@@ -120,6 +150,26 @@ def add_best_chosen(df):
 
 
 def run_linear_model(x, y, verbose=True):
+    """
+    Compute a linear regression model, 
+    regressing y onto x
+
+    Input
+    ---
+    x (ndarray)
+        independent variable data
+
+    y (array)
+        dependent variable data
+
+    verbose (bool)
+        whether to print results of
+        linear model fit
+
+    Returns
+    ---
+        fitted statsmodels OLS object 
+    """
 
     X = sm.add_constant(x)
     lm = sm.OLS(y, X).fit()
@@ -133,16 +183,53 @@ def run_linear_model(x, y, verbose=True):
 
 
 def q1(series):
+    """
+    Extract 25% quantile from 
+    pandas series
+
+    Input
+    ---
+        series (pd.Series)
+
+    Returns
+    ---
+        25% quantile
+    """
     q1 = series.quantile(0.25)
     return q1
 
 
 def q3(series):
+    """
+    Extract 75% quantile from 
+    pandas series
+
+    Input
+    ---
+        series (pd.Series)
+
+    Returns
+    ---
+        27% quantile
+    """
     q3 = series.quantile(0.75)
     return q3
 
 
 def iqr(series):
+    """
+    Extract inter-quantile range
+    (25%-75%)
+
+    Input
+    ---
+        series (pd.Series)
+
+    Returns
+    ---
+        inter-quantile range
+        (25-75%)
+    """
     Q1 = series.quantile(0.25)
     Q3 = series.quantile(0.75)
     IQR = Q3 - Q1
@@ -150,11 +237,33 @@ def iqr(series):
 
 
 def std(series):
+    """
+    Extract standar deviation (SD)
+
+    Input
+    ---
+        series (pd.Series)
+
+    Returns
+    ---
+        SD
+    """
     sd = series.std(ddof=0)
     return sd
 
 
 def se(series):
+    """
+    Extract standar error (SE)
+
+    Input
+    ---
+        series (pd.Series)
+
+    Returns
+    ---
+        SE
+    """
     n = len(series)
     se = series.std() / np.sqrt(n)
     return se
@@ -162,7 +271,27 @@ def se(series):
 
 def aggregate_subject_level_data(data, n_items):
     """
-    Aggregates a single dataset to subject level
+    Compute subject-level response characteristics on:
+    RT, P(choose best), gaze influence score
+
+    The gaze influence score is defined
+    as the average difference between
+    the corrected choice probability
+    of all positive and negative relative gaze values
+    (see manuscript)
+
+    Input
+    ---
+    df (dataframe)
+        aggregate response data
+
+    n_items (int)
+        number of choice alternatives in the data
+
+    Returns
+    ---
+    df(dataframe)
+        df of subject-level response characteristics
     """
     data = data.copy()
 
@@ -186,7 +315,27 @@ def aggregate_subject_level_data(data, n_items):
 
 def aggregate_group_level_data(data, n_items):
     """
-    Aggregates a data to group level
+    Compute group-level response characteristics on:
+    RT, P(choose best), gaze influence score
+
+    The gaze influence score is defined
+    as the average difference between
+    the corrected choice probability
+    of all positive and negative relative gaze values
+    (see manuscript)
+
+    Input
+    ---
+    df (dataframe)
+        aggregate response data
+
+    n_items (int)
+        number of choice alternatives in the data
+
+    Returns
+    ---
+    df(dataframe)
+        df of group-level response characteristics
     """
     subject_summary = aggregate_subject_level_data(data, n_items)
     group_summary = subject_summary.agg({
