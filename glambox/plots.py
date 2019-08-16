@@ -41,10 +41,10 @@ def plot_aggregate(bar_data,
     Input
     ---
     bar_data : dataframe
-        aggregate response data to plot as bars
+        response data to plot as bars
 
     line_data : list of dataframes, optional
-        aggregate response data to plot as colored lines
+        response data to plot as colored lines
 
     line_labels : array_like, strings, optional
         legend labels for line_data
@@ -135,7 +135,7 @@ def add_difficulty(df, bins=7, return_bins=False):
     Input
     ---
     df : dataframe
-        aggregate response data
+        response data
 
     bins : int or array_like, optional
         defining the bins to use when computing
@@ -191,10 +191,10 @@ def plot_rt_by_difficulty(bar_data,
     Input
     ---
     bar_data : dataframe
-        aggregate response data to plot as bars
+        response data to plot as bars
 
     line_data : list of dataframes, optional
-        aggregate response data to plot as colored lines
+        response data to plot as colored lines
 
     ax : matplotlib axis, optional
         matplotlib axis object to use for plottig,
@@ -367,7 +367,7 @@ def add_value_minus_mean_others(df, bins=7, return_bins=False):
     Input
     ---
     df : dataframe
-        aggregate response data
+        response data
 
     bins : int or array_like, optional
         defining the bins to use when computing
@@ -439,10 +439,10 @@ def plot_pchoose_by_value_minus_mean_others(bar_data,
     Input
     ---
     bar_data : dataframe
-        aggregate response data to plot as bars
+        response data to plot as bars
 
     line_data : list of dataframes, optional
-        aggregate response data to plot as colored lines
+        response data to plot as colored lines
 
     ax : matplotlib axis, optional
         matplotlib axis object to use for plottig,
@@ -641,7 +641,7 @@ def add_gaze_advantage(df, bins=7, return_bins=False):
     Input
     ---
     df : dataframe
-        aggregate response data
+        response data
 
     bins : int or array_like, optional
         defining the bins to use when computing
@@ -705,10 +705,10 @@ def plot_pchoose_by_gaze_minus_mean_others(bar_data,
     Input
     ---
     bar_data : dataframe
-        aggregate response data to plot as bars
+        response data to plot as bars
 
     line_data : list of dataframes, optional
-        aggregate response data to plot as colored lines
+        response data to plot as colored lines
 
     bins : int or array_like, optional
         x-bins to use for plotting,
@@ -896,6 +896,19 @@ def plot_pchoose_by_gaze_minus_mean_others(bar_data,
 
 
 def compute_corrected_choice(df):
+    """
+    Compute and add corrected choice probability
+    to response data; (see manuscript for details)
+
+    Input
+    ---
+    df : dataframe
+        response data
+
+    Returns
+    ---
+    Copy of df, including corrected_choice column
+    """
 
     # recode choice
     n_items = len([
