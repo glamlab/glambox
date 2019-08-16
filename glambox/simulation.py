@@ -167,7 +167,7 @@ def simulate_trial(parameters,
 
 def make_R(v, tau, gamma, values, gaze):
     """
-    Create drift terms for linera stochastic race
+    Compute drift terms for linera stochastic race
     """
     n_items = len(values)
 
