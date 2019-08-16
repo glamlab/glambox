@@ -11,6 +11,21 @@ import seaborn as sns
 
 
 def cm2inch(*tupl):
+    """
+    Convert a value or tuple of values from cm
+    to inches.
+
+    Source: https://stackoverflow.com/a/22787457
+
+    Input
+    ---
+    tupl : float, int or tuple of arbitrary size
+        Values to convert
+
+    Returns
+    ---
+    Converted values in inches.
+    """
     inch = 2.54
     if isinstance(tupl[0], tuple):
         return tuple(i / inch for i in tupl[0])
