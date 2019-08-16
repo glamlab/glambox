@@ -1417,15 +1417,41 @@ def plot_node(model,
 
 def plot_individual_node_comparison(model,
                                     parameter,
-                                    comparisons,
+                                    comparisons=None,
                                     fontsize=7,
                                     hpd_alpha=0.05):
+    """
+    Plot a single node and comparisons
+    between its levels for individual models.
 
+    Input
+    ---
+    model : glambox.GLAM)
+        GLAM model of type 'hierarchical'
+    
+    parameter : string
+        parameter name (e.g., 'v')
+    
+    comparisons : list, optional
+        list of condition pairs (e.g., [('A', 'B')])
+
+    fontsize : int, optional
+        Plotting fontsize.
+        Defaults to 7.
+
+    hpd_alpha : float, optional
+        alpha-level determining HPD width.
+        Defaults to 0.05 (i.e., 95% HPD)
+
+    Returns
+    ---
+        matplotlib fig and {axs}
+    """
     # determine model type
     model_type = model.type
     if model_type != 'individual':
         error_msg = 'plot_individual_node_comparison requires model of "' "individual" '" type.'
-        raise
+        raise ValueError(error_msg)
 
     # make sure comparisons specified correctly
     if comparisons is not None:
