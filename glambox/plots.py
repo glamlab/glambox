@@ -633,6 +633,30 @@ def plot_pchoose_by_value_minus_mean_others(bar_data,
 
 
 def add_gaze_advantage(df, bins=7, return_bins=False):
+    """
+    Add gaze advantage (defined as the difference
+    between an item's gaze and the mean gaze of all other)
+    to response data
+
+    Input
+    ---
+    df : dataframe
+        aggregate response data
+
+    bins : int or array_like, optional
+        defining the bins to use when computing
+        the gaze difference,
+        if an int is given, this many bins will be
+        created,
+        defaults to 7
+
+    return_bins : bool, optional
+        whether or not to return the bins
+
+    Returns
+    ---
+    copy of df (and bins if return_bins=True)
+    """
 
     # infer number of items
     gaze_cols = ([col for col in df.columns if col.startswith('gaze_')])
@@ -675,6 +699,68 @@ def plot_pchoose_by_gaze_minus_mean_others(bar_data,
                                            line_ls=None,
                                            line_alphas=None,
                                            line_markers=None):
+    """
+    Plot: P(choose best) ~ (item gaze - mean gaze othres)
+
+    Input
+    ---
+    bar_data : dataframe
+        aggregate response data to plot as bars
+
+    line_data : list of dataframes, optional
+        aggregate response data to plot as colored lines
+
+    bins : int or array_like, optional
+        x-bins to use for plotting,
+        if an int is given, this many 
+        bins will be created,
+        defaults to 7
+
+    ax : matplotlib axis, optional
+        matplotlib axis object to use for plottig,
+        if None, new axis is created,
+        defaults to None
+
+    xlims : tuple, optional
+        limits for x-axis
+
+    ylims : tuple, optional
+        limits for y-axis
+
+    x_label_skip : int, optional
+        how many x-ticklabels to skip,
+        defaults to 2 (indicating that every
+        second x-ticklabel is plotted)
+
+    fontsize : int, optional
+        fontsize for plotting,
+        defaults to 7
+
+    line_labels : array_like, strings, optional
+        legend labels for line_data
+
+    line_colors : array_like, strings, optional
+        line colors to use for line_data
+        (see matplotlib documentation)
+
+    line_lws : array_like, floats, optional
+        width of lines of line_data
+
+    line_ls : array_like, strings, optional
+        line styles to use for line_data
+        (see matplotlib documentation)
+
+    line_alphas : array_like, floats, optional
+        alpha levels to use for lines of line_data
+
+    line_markers : array_like, strings, optional
+        line markers to use for line_data
+        (see matplotlib documentation)
+
+    Returns
+    ---
+    matplotlib axis object
+    """
 
     if ax is None:
         fig, ax = plt.subplots(figsize=(4, 3))
