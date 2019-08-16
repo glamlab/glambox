@@ -2163,6 +2163,36 @@ def behaviour_parameter_correlation(estimates,
                                     figsize=cm2inch(18., 6),
                                     alpha=0.5,
                                     fontsize=7):
+    """
+    Correlation plot between [v, gamma] and 
+    behavioral metrics ['rt', 'p(choose best)', 'gaze influence score']
+    For details on the metrics, see the manuscript
+
+    Input
+    ---
+    estimates : dict
+        dict with array_like parameter estimates
+        for 'v' and 'gamma'
+
+    subject_summary : dataframe
+        subject-level summary dataframe for subjects
+        whose estimates are given,
+        can be computed with analysis.aggregate_subject_level_data
+
+    figsize : tuple, optional
+        matplotlib figure size
+
+    alpha : float, optional
+        alpha level for scatter plots and
+        regression line
+
+    fontsize : int, optional
+        plotting fontsize, defaults to 7
+
+    Returns
+    ---
+    matplotlib figure object
+    """
 
     # create figure
     fig, axs = plt.subplots(1, 3, figsize=figsize)
