@@ -983,6 +983,68 @@ def plot_corp_by_gaze_advantage(bar_data,
                                 line_ls=None,
                                 line_alphas=None,
                                 line_markers=None):
+    """
+    Plot: Corrected p(choose best) ~ (item gaze - mean gaze othres)
+
+    Input
+    ---
+    bar_data : dataframe
+        response data to plot as bars
+
+    line_data : list of dataframes, optional
+        response data to plot as colored lines
+
+    ax : matplotlib axis, optional
+        matplotlib axis object to use for plottig,
+        if None, new axis is created,
+        defaults to None
+
+    bins : int or array_like, optional
+        x-bins to use for plotting,
+        if an int is given, this many 
+        bins will be created,
+        defaults to 7
+
+    xlims : tuple, optional
+        limits for x-axis
+
+    ylims : tuple, optional
+        limits for y-axis
+
+    x_label_skip : int, optional
+        how many x-ticklabels to skip,
+        defaults to 2 (indicating that every
+        second x-ticklabel is plotted)
+
+    fontsize : int, optional
+        fontsize for plotting,
+        defaults to 7
+
+    line_labels : array_like, strings, optional
+        legend labels for line_data
+
+    line_colors : array_like, strings, optional
+        line colors to use for line_data
+        (see matplotlib documentation)
+
+    line_lws : array_like, floats, optional
+        width of lines of line_data
+
+    line_ls : array_like, strings, optional
+        line styles to use for line_data
+        (see matplotlib documentation)
+
+    line_alphas : array_like, floats, optional
+        alpha levels to use for lines of line_data
+
+    line_markers : array_like, strings, optional
+        line markers to use for line_data
+        (see matplotlib documentation)
+
+    Returns
+    ---
+    matplotlib axis object
+    """
 
     if ax is None:
         fig, ax = plt.subplots(figsize=(4, 3))
