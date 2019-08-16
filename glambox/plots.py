@@ -1514,6 +1514,27 @@ def plot_individual_node_comparison(model,
 
 
 def extract_range(x, extra=0.25, bound=(None, None)):
+    """
+    Extract range of x-data
+
+    Input 
+    ---
+    x : array_like
+        x-data
+
+    extra : float, optional
+        should be between [0,1],
+        defining percentage of x-mean to add / subtract
+        to min / max, when copmuting bounds
+        e.g. upper bound = np.max(x) + extra * np.mean(x)
+
+    bound : tuple, optional
+        if given, these bounds are used
+
+    Returns
+    ---
+    tuple of bounds
+    """
 
     if bound[0] != None:
         xmin = bound[0]
@@ -1531,16 +1552,68 @@ def extract_range(x, extra=0.25, bound=(None, None)):
 
 
 def plot_individual_differences(data,
-                           nbins=20,
-                           fontsize=7,
-                           regression=True,
-                           annotate=True,
-                           figsize=cm2inch(18, 7),
-                           limits={
-                               'p_choose_best': (0, 1),
-                               'rt': (0, None),
-                               'gaze_influence': (None, None)
-                           }):
+                                nbins=20,
+                                fontsize=7,
+                                regression=True,
+                                annotate=True,
+                                figsize=cm2inch(18, 7),
+                                limits={
+                                    'p_choose_best': (0, 1),
+                                    'rt': (0, None),
+                                    'gaze_influence': (None, None)
+                                }):
+    """
+    Plot individual differences on
+    the following three panels:
+    A) p(choose best) ~ response time
+    B) response time ~ gaze influence score
+    C) gaze influence score ~ p(choose best)
+
+    In addition to each correlation plot,
+    marginal distributions of the values on the 
+    x-axis are gvien
+
+    For further details on these measures,
+    see the manuscript
+
+    Input
+    ---
+    data : dataframe
+        response data
+
+    nbins : int, optional
+        defining the number of bins to
+        use for the marginal histograms
+
+    fontsize : int, optional
+        defining the plotting fontsize,
+        defaults to 7
+
+    regression : bool, optional
+        whether to compute and plot
+        a linear regression fit,
+        defaults to True
+
+    annotate : bool, optional
+        whether to add pearson's r
+        correlation coefficient and p-value
+        to plot,
+        defaults to True
+
+    figsize : tuple, optional
+        size of of plotting figure
+
+    limits : dict, optional
+        dict containing one entry for:
+        ['rt', 'p_choose_best', 'corrected_p_choose_best']
+        each entry is a tuple, defining the y-limits for
+        the respective metrics
+
+    Returns
+    ---
+    matplotlib figure object
+
+    """
 
     if (regression == False) & (annotate == True):
         print('annotate only possible, if regression = True.')
