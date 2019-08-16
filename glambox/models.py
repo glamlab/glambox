@@ -331,7 +331,6 @@ class GLAM(object):
         ---
         new_data replaces data attribute of GLAM model object
         """
-        ---
         if verbose:
             print(
                 'Replaced attached data ({} trials) with new data ({} trials)...'
