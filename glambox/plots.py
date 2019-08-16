@@ -29,6 +29,50 @@ def plot_aggregate(bar_data,
                    'rt': (0, None),
                    'corrected_p_choose_best': (-1, 1)
                    }):
+    """
+    Create a group-level aggregate plot with 
+    the following four metrics:
+    A) RT ~ (max value - mean value othres)
+    B) P(choose best) ~ (item value - mean value others)
+    C) P(choose best) ~ (item gaze - mean gaze others)
+    D) Corrected P(choose best) ~ (item gaze - mean gaze others)
+    For further details on these measures, see the manuscript
+
+    Input
+    ---
+    bar_data : dataframe
+        aggregate response data to plot as bars
+
+    line_data : list of dataframes, optional
+        aggregate response data to plot as colored lines
+
+    line_labels : array_like, strings, optional
+        legend labels for line_data
+
+    fontsize : int, optional
+        fontsize for plotting,
+        defaults to 7
+
+    value_bins : int or array_like, optional
+        x-axis bins for panels A - B
+        if an int is given, this many bins will be created,
+        defaults to 7
+
+    gaze_bins :  int or array_like, optional
+        x-axis bins for panels A - B
+        if an int is given, this many bins will be created,
+        defaults to 7
+
+    limits : dict, optional
+        dict containing one entry for:
+        ['rt', 'p_choose_best', 'corrected_p_choose_best']
+        each entry is a tuple, defining the y-limits for
+        the respective metrics
+
+    Returns
+    ---
+    matplotlib figure and axes object
+    """
     fig, axs = plt.subplots(1, 4, figsize=cm2inch(18, 4.5), dpi=330)
 
     # add default limits
