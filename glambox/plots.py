@@ -1807,6 +1807,10 @@ def plot_correlation(x,
                      plot_diagonal=False,
                      return_correlation=False,
                      ax=None):
+    """
+    Plot correlation between x and y; 
+    (scatter-plot and regression line)
+    """
 
     # Defaults
     if ax is None:
@@ -1904,6 +1908,10 @@ def plot_correlation(x,
 
 
 def add_regression_line(ax, intercept, slope, color='darkgray', **kwargs):
+    """
+    Add a regression line to an axis,
+    given its intercept and slope
+    """
 
     xs = np.linspace(*ax.get_xlim(), 100)
 
@@ -1924,6 +1932,49 @@ def plot_individual(observed,
                                'rt': (0, None),
                                'gaze_influence': (None, None)
                            }):
+    """
+    Plot individual observed vs predicted data
+    on three metrics:
+    A) response time
+    B) p(choose best)
+    C) gaze influence score
+    For details on these measures, 
+    see the manuscript
+
+    Input
+    ---
+    observed : dataframe
+        observed response data
+
+    predictions : list of dataframe
+        predicted response datasets
+
+    prediction_labels : array_like, strings, optional
+        legend labels for predictions
+
+    colors : array_like, strings, optional
+        colors to use for predictions
+
+    fontsize : int, optional
+        plotting fontsize
+
+    alpha : float, optional
+        alpha level for predictions
+        should be between [0,1]
+
+    figsize : tuple, optional
+        matplotlib figure size
+
+    limits : dict, optional
+        dict containing one entry for:
+        ['rt', 'p_choose_best', 'corrected_p_choose_best']
+        each entry is a tuple, defining the y-limits for
+        the respective metrics
+
+    Returns
+    ---
+    matplotlib figure object
+    """
 
     # count number of predictions
     n_predictions = len(predictions)
@@ -2187,7 +2238,7 @@ def plot_posterior(samples,
     """
     Arviz is broken, so we do it ourselves.
 
-    Args:
+    Input:
         samples (TYPE): Description
         kind (str, optional): Description
         ref_val (None, optional): Description
@@ -2277,15 +2328,23 @@ def plot_node_hierarchical(model,
                                         tau=dict(dist=(0, 3),
                                                  delta=(-1, 1))),
                            fontsize=7):
-    """Plot group nodes and comparisons from hierarchical model.
+    """
+    Plot group nodes and comparisons from hierarchical model.
 
-    Args:
-        model (glambox.GLAM): GLAM model of type 'hierarchical'
-        parameters (list): List of parameter names (e.g., ['v', 'gamma'])
-        comparisons (list, optional): List of condition pairs (e.g., [('A', 'B')])
+    Input
+    ---
+    model : glambox.GLAM)
+        GLAM model of type 'hierarchical'
+    
+    parameters : list
+        list of parameter names (e.g., ['v', 'gamma'])
+    
+    comparisons : list, optional
+        list of condition pairs (e.g., [('A', 'B')])
 
-    Returns:
-        fig, {axs}
+    Returns
+    ---
+        matplotlib fig and {axs}
     """
     parameter_names = {
         'v': 'v',
@@ -2420,18 +2479,28 @@ def plot_node_hierarchical(model,
 
 def traceplot(trace, varnames='all', combine_chains=False,
               ref_val={}):
-    """A traceplot replacement, because arviz is broken.
+    """
+    A traceplot replacement, because arviz is broken.
     This is tested for traces that come out of individual
     and hierarchical GLAM fits.
 
-    Args:
-        trace (PyMC.MultiTrace): A trace object.
-        varnames (str, optional): List of variables to include
-        combine_chains (bool, optional): Toggle concatenation of chains.
-        ref_val (dict, optional): Reference values per parameter.
+    Input
+    ---
+    trace : PyMC.MultiTrace)
+        a trace object.
+    
+    varnames : str, optional
+        list of variables to include
+        
+    combine_chains : bool, optional
+        toggle concatenation of chains.
+    
+    ref_val : dict, optional)
+        reference values per parameter.
 
-    Returns:
-        figure, axes
+    Returns
+    ---
+        matplotlib figure and axes objects
     """
     if varnames == 'all':
         varnames = [var for var in trace.varnames
