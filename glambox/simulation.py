@@ -13,7 +13,48 @@ def simulate_subject(parameters,
                      subject=0,
                      boundary=1,
                      error_weight=0.05,
-                     error_range=(0, 5000)):
+                     error_range=(0, 5)):
+    """
+    Simulate choices and resonse times with the GLAM
+    for a subject, ǵiven a set of parameter estimates,
+    trial values, and gazes
+
+    Input
+    ---
+    parameters : array_like
+        set of parameter estimates to use
+
+    values : array_like
+        values of choice alternatives for each trial
+        shape: (trials x alternatives)
+
+    gaze : array_like
+        gazes of choice alternatives in each trial
+        shape: (trials x alternatives)
+
+    subject : int, optional
+        subject index to use in output dataframe,
+        defaults to 0
+
+    n_repeats : int, optional
+        how often to repeat each trial
+        during the simulation,
+        defaults to 1
+
+    error_weight : float, optional
+        probability that choice and RT are
+        simulated according to an errornous response model,
+        which makes a random choice at a random time point,
+        defaults to 0.05 (5%)
+    
+    error_range : tuple, optional
+        time range (in seconds) for errornous response model,
+        defaults to (0,5)
+
+    Returns
+    ---
+    dataframe
+    """
     n_trials, n_items = values.shape
 
     rts = np.zeros(n_trials * n_repeats) * np.nan
@@ -61,20 +102,40 @@ def simulate_trial(parameters,
                    error_weight=0.05,
                    error_range=(0, 5)):
     """
-    Simulate GLAM for a single trial.
+    Predict choice and resonse time with the GLAM
+    for a trial, ǵiven a set of parameter estimates,
+    trial values, and gazes
 
-    Args:
-        parameters (tuple): v, gamma, s, tau and t0 parameters
-        values (np.ndarray): array of item values
-        gaze (np.ndarray): array of gaze towards items (should sum to 1)
-        boundary (float, optional): decision boundary, defaults to 1.0
-        error_weight (float, optional): probability of simulating random choice from error model
-        error_range (tuple, optional): range of response times used by error model
+    Input
+    ---
+    parameters : array_like
+        set of parameter estimates to use
 
-    Returns:
-        int, float: choice, response time
+    values : array_like
+        value of each choice alternative
 
+    gaze : array_like
+        gaze of each choice alternative
+
+    boundary : float
+        decision boundary in linear stochastic race,
+        defaults to 1
+
+    error_weight : float, optional
+        probability that choice and RT are
+        simulated according to an errornous response model,
+        which makes a random choice at a random time point,
+        defaults to 0.05 (5%)
+    
+    error_range : tuple, optional
+        time range (in seconds) for errornous response model,
+        defaults to (0,5)
+
+    Returns
+    ---
+    choice and RT
     """
+
     v, gamma, s, tau, t0 = parameters
     n_items = len(values)
 
@@ -105,6 +166,9 @@ def simulate_trial(parameters,
 
 
 def make_R(v, tau, gamma, values, gaze):
+    """
+    Compute drift terms for linera stochastic race
+    """
     n_items = len(values)
 
     A = gaze * values + (1. - gaze) * gamma * values
@@ -126,6 +190,32 @@ def predict(model, n_repeats=1, boundary=1., error_weight=0.05, verbose=True):
     The generating model is a mixture between an error model
     and GLAM. `error_weight` determines the mixture weight of
     the error component.
+
+    Input
+    ---
+    model : GLAM model instance
+
+    n_repeats : int, optional
+        how often to repeat each trial during prediction,
+        defaults to 1
+
+    boundary : float, optional
+        decision boundary for linear stochastic race,
+        defaults to 1
+
+    error_weight : float, optional
+        probability that choice and RT are
+        simulated according to an errornous response model,
+        which makes a random choice at a random time point,
+        defaults to 0.05 (5%)
+
+    verbose : bool, optional
+        whether to print update statements during prediction,
+        defaults to True
+
+    Returns
+    ---
+    dataframe
     """
 
     prediction = pd.DataFrame()

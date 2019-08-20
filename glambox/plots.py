@@ -11,6 +11,21 @@ import seaborn as sns
 
 
 def cm2inch(*tupl):
+    """
+    Convert a value or tuple of values from cm
+    to inches.
+
+    Source: https://stackoverflow.com/a/22787457
+
+    Input
+    ---
+    tupl : float, int or tuple of arbitrary size
+        Values to convert
+
+    Returns
+    ---
+    Converted values in inches.
+    """
     inch = 2.54
     if isinstance(tupl[0], tuple):
         return tuple(i / inch for i in tupl[0])
@@ -29,6 +44,50 @@ def plot_behaviour_aggregate(bar_data,
                    'rt': (0, None),
                    'corrected_p_choose_best': (-1, 1)
                    }):
+    """
+    Create a group-level aggregate plot with 
+    the following four metrics:
+    A) RT ~ (max value - mean value othres)
+    B) P(choose best) ~ (item value - mean value others)
+    C) P(choose best) ~ (item gaze - mean gaze others)
+    D) Corrected P(choose best) ~ (item gaze - mean gaze others)
+    For further details on these measures, see the manuscript
+
+    Input
+    ---
+    bar_data : dataframe
+        response data to plot as bars
+
+    line_data : list of dataframes, optional
+        response data to plot as colored lines
+
+    line_labels : array_like, strings, optional
+        legend labels for line_data
+
+    fontsize : int, optional
+        fontsize for plotting,
+        defaults to 7
+
+    value_bins : int or array_like, optional
+        x-axis bins for panels A - B
+        if an int is given, this many bins will be created,
+        defaults to 7
+
+    gaze_bins :  int or array_like, optional
+        x-axis bins for panels A - B
+        if an int is given, this many bins will be created,
+        defaults to 7
+
+    limits : dict, optional
+        dict containing one entry for:
+        ['rt', 'p_choose_best', 'corrected_p_choose_best']
+        each entry is a tuple, defining the y-limits for
+        the respective metrics
+
+    Returns
+    ---
+    matplotlib figure and axes object
+    """
     fig, axs = plt.subplots(1, 4, figsize=cm2inch(18, 4.5), dpi=330)
 
     # add default limits
@@ -48,7 +107,6 @@ def plot_behaviour_aggregate(bar_data,
     axs[1] = plot_pchoose_by_value_minus_mean_others(bar_data,
                                             line_data,
                                             xlabel_skip=4,
-                                            xlabel_start=0,
                                             ax=axs[1],
                                             bins=value_bins,
                                             fontsize=fontsize,
@@ -84,6 +142,30 @@ def plot_behaviour_aggregate(bar_data,
 
 
 def add_difficulty(df, bins=7, return_bins=False):
+    """
+    Add trial difficulty (defined as the difference 
+    between the maximum trial value and the mean of all 
+    others) to a response dataframe
+
+    Input
+    ---
+    df : dataframe
+        response data
+
+    bins : int or array_like, optional
+        defining the bins to use when computing
+        the value difference,
+        if an int is given, this many bins will be
+        created,
+        defaults to 7
+
+    return_bins : bool, optional
+        whether or not to return the bins
+
+    Returns
+    ---
+    copy of df (and bins if return_bins=True)
+    """
 
     # infer number of items
     value_cols = ([col for col in df.columns if col.startswith('item_value_')])
@@ -118,6 +200,68 @@ def plot_rt_by_difficulty(bar_data,
                           line_ls=None,
                           line_alphas=None,
                           line_lws=None):
+    """
+    Plot: RT ~ (max value - mean value othres)
+
+    Input
+    ---
+    bar_data : dataframe
+        response data to plot as bars
+
+    line_data : list of dataframes, optional
+        response data to plot as colored lines
+
+    ax : matplotlib axis, optional
+        matplotlib axis object to use for plottig,
+        if None, new axis is created,
+        defaults to None
+
+    xlims : tuple, optional
+        limits for x-axis
+
+    ylims : tuple, optional
+        limits for y-axis
+
+    x_label_skip : int, optional
+        how many x-ticklabels to skip,
+        defaults to 2 (indicating that every
+        second x-ticklabel is plotted)
+
+    bins : int or array_like, optional
+        x-bins to use for plotting,
+        if an int is given, this many 
+        bins will be created,
+        defaults to 7
+
+    fontsize : int, optional
+        fontsize for plotting,
+        defaults to 7
+
+    line_labels : array_like, strings, optional
+        legend labels for line_data
+
+    line_colors : array_like, strings, optional
+        line colors to use for line_data
+        (see matplotlib documentation)
+
+    line_markers : array_like, strings, optional
+        line markers to use for line_data
+        (see matplotlib documentation)
+
+    line_ls : array_like, strings, optional
+        line styles to use for line_data
+        (see matplotlib documentation)
+
+    line_alphas : array_like, floats, optional
+        alpha levels to use for lines of line_data
+
+    line_lws : array_like, floats, optional
+        width of lines of line_data
+
+    Returns
+    ---
+    matplotlib axis object
+    """
 
     if ax is None:
         fig, ax = plt.subplots(figsize=(4, 3))
@@ -230,6 +374,30 @@ def plot_rt_by_difficulty(bar_data,
 
 
 def add_value_minus_mean_others(df, bins=7, return_bins=False):
+    """
+    Add trial difference between item's value
+    and value of all other items in a trial
+    to response data
+
+    Input
+    ---
+    df : dataframe
+        response data
+
+    bins : int or array_like, optional
+        defining the bins to use when computing
+        the value difference,
+        if an int is given, this many bins will be
+        created,
+        defaults to 7
+
+    return_bins : bool, optional
+        whether or not to return the bins
+
+    Returns
+    ---
+    copy of df (and bins if return_bins=True)
+    """
 
     # infer number of items
     value_cols = ([col for col in df.columns if col.startswith('item_value_')])
@@ -273,7 +441,6 @@ def plot_pchoose_by_value_minus_mean_others(bar_data,
                                             xlims=None,
                                             ylims=None,
                                             xlabel_skip=2,
-                                            xlabel_start=1,
                                             fontsize=7,
                                             line_labels=None,
                                             line_colors=None,
@@ -281,6 +448,68 @@ def plot_pchoose_by_value_minus_mean_others(bar_data,
                                             line_ls=None,
                                             line_alphas=None,
                                             line_markers=None):
+    """
+    Plot: P(choose best) ~ (item value - mean value othres)
+
+    Input
+    ---
+    bar_data : dataframe
+        response data to plot as bars
+
+    line_data : list of dataframes, optional
+        response data to plot as colored lines
+
+    ax : matplotlib axis, optional
+        matplotlib axis object to use for plottig,
+        if None, new axis is created,
+        defaults to None
+
+    bins : int or array_like, optional
+        x-bins to use for plotting,
+        if an int is given, this many 
+        bins will be created,
+        defaults to 7
+
+    xlims : tuple, optional
+        limits for x-axis
+
+    ylims : tuple, optional
+        limits for y-axis
+
+    x_label_skip : int, optional
+        how many x-ticklabels to skip,
+        defaults to 2 (indicating that every
+        second x-ticklabel is plotted)
+
+    fontsize : int, optional
+        fontsize for plotting,
+        defaults to 7
+
+    line_labels : array_like, strings, optional
+        legend labels for line_data
+
+    line_colors : array_like, strings, optional
+        line colors to use for line_data
+        (see matplotlib documentation)
+
+    line_lws : array_like, floats, optional
+        width of lines of line_data
+
+    line_ls : array_like, strings, optional
+        line styles to use for line_data
+        (see matplotlib documentation)
+
+    line_alphas : array_like, floats, optional
+        alpha levels to use for lines of line_data
+
+    line_markers : array_like, strings, optional
+        line markers to use for line_data
+        (see matplotlib documentation)
+
+    Returns
+    ---
+    matplotlib axis object
+    """
 
     if ax is None:
         fig, ax = plt.subplots(figsize=(4, 3))
@@ -419,6 +648,30 @@ def plot_pchoose_by_value_minus_mean_others(bar_data,
 
 
 def add_gaze_advantage(df, bins=7, return_bins=False):
+    """
+    Add gaze advantage (defined as the difference
+    between an item's gaze and the mean gaze of all other)
+    to response data
+
+    Input
+    ---
+    df : dataframe
+        response data
+
+    bins : int or array_like, optional
+        defining the bins to use when computing
+        the gaze difference,
+        if an int is given, this many bins will be
+        created,
+        defaults to 7
+
+    return_bins : bool, optional
+        whether or not to return the bins
+
+    Returns
+    ---
+    copy of df (and bins if return_bins=True)
+    """
 
     # infer number of items
     gaze_cols = ([col for col in df.columns if col.startswith('gaze_')])
@@ -454,7 +707,6 @@ def plot_pchoose_by_gaze_minus_mean_others(bar_data,
                                            xlims=None,
                                            ylims=None,
                                            xlabel_skip=2,
-                                           xlabel_start=1,
                                            fontsize=7,
                                            line_labels=None,
                                            line_colors=None,
@@ -462,6 +714,68 @@ def plot_pchoose_by_gaze_minus_mean_others(bar_data,
                                            line_ls=None,
                                            line_alphas=None,
                                            line_markers=None):
+    """
+    Plot: P(choose best) ~ (item gaze - mean gaze othres)
+
+    Input
+    ---
+    bar_data : dataframe
+        response data to plot as bars
+
+    line_data : list of dataframes, optional
+        response data to plot as colored lines
+
+    bins : int or array_like, optional
+        x-bins to use for plotting,
+        if an int is given, this many 
+        bins will be created,
+        defaults to 7
+
+    ax : matplotlib axis, optional
+        matplotlib axis object to use for plottig,
+        if None, new axis is created,
+        defaults to None
+
+    xlims : tuple, optional
+        limits for x-axis
+
+    ylims : tuple, optional
+        limits for y-axis
+
+    x_label_skip : int, optional
+        how many x-ticklabels to skip,
+        defaults to 2 (indicating that every
+        second x-ticklabel is plotted)
+
+    fontsize : int, optional
+        fontsize for plotting,
+        defaults to 7
+
+    line_labels : array_like, strings, optional
+        legend labels for line_data
+
+    line_colors : array_like, strings, optional
+        line colors to use for line_data
+        (see matplotlib documentation)
+
+    line_lws : array_like, floats, optional
+        width of lines of line_data
+
+    line_ls : array_like, strings, optional
+        line styles to use for line_data
+        (see matplotlib documentation)
+
+    line_alphas : array_like, floats, optional
+        alpha levels to use for lines of line_data
+
+    line_markers : array_like, strings, optional
+        line markers to use for line_data
+        (see matplotlib documentation)
+
+    Returns
+    ---
+    matplotlib axis object
+    """
 
     if ax is None:
         fig, ax = plt.subplots(figsize=(4, 3))
@@ -597,6 +911,19 @@ def plot_pchoose_by_gaze_minus_mean_others(bar_data,
 
 
 def compute_corrected_choice(df):
+    """
+    Compute and add corrected choice probability
+    to response data; (see manuscript for details)
+
+    Input
+    ---
+    df : dataframe
+        response data
+
+    Returns
+    ---
+    Copy of df, including corrected_choice column
+    """
 
     # recode choice
     n_items = len([
@@ -671,6 +998,68 @@ def plot_corp_by_gaze_advantage(bar_data,
                                 line_ls=None,
                                 line_alphas=None,
                                 line_markers=None):
+    """
+    Plot: Corrected p(choose best) ~ (item gaze - mean gaze othres)
+
+    Input
+    ---
+    bar_data : dataframe
+        response data to plot as bars
+
+    line_data : list of dataframes, optional
+        response data to plot as colored lines
+
+    ax : matplotlib axis, optional
+        matplotlib axis object to use for plottig,
+        if None, new axis is created,
+        defaults to None
+
+    bins : int or array_like, optional
+        x-bins to use for plotting,
+        if an int is given, this many 
+        bins will be created,
+        defaults to 7
+
+    xlims : tuple, optional
+        limits for x-axis
+
+    ylims : tuple, optional
+        limits for y-axis
+
+    x_label_skip : int, optional
+        how many x-ticklabels to skip,
+        defaults to 2 (indicating that every
+        second x-ticklabel is plotted)
+
+    fontsize : int, optional
+        fontsize for plotting,
+        defaults to 7
+
+    line_labels : array_like, strings, optional
+        legend labels for line_data
+
+    line_colors : array_like, strings, optional
+        line colors to use for line_data
+        (see matplotlib documentation)
+
+    line_lws : array_like, floats, optional
+        width of lines of line_data
+
+    line_ls : array_like, strings, optional
+        line styles to use for line_data
+        (see matplotlib documentation)
+
+    line_alphas : array_like, floats, optional
+        alpha levels to use for lines of line_data
+
+    line_markers : array_like, strings, optional
+        line markers to use for line_data
+        (see matplotlib documentation)
+
+    Returns
+    ---
+    matplotlib axis object
+    """
 
     if ax is None:
         fig, ax = plt.subplots(figsize=(4, 3))
@@ -1028,15 +1417,41 @@ def plot_node(model,
 
 def plot_individual_node_comparison(model,
                                     parameter,
-                                    comparisons,
+                                    comparisons=None,
                                     fontsize=7,
                                     hpd_alpha=0.05):
+    """
+    Plot a single node and comparisons
+    between its levels for individual models.
 
+    Input
+    ---
+    model : glambox.GLAM)
+        GLAM model of type 'hierarchical'
+    
+    parameter : string
+        parameter name (e.g., 'v')
+    
+    comparisons : list, optional
+        list of condition pairs (e.g., [('A', 'B')])
+
+    fontsize : int, optional
+        Plotting fontsize.
+        Defaults to 7.
+
+    hpd_alpha : float, optional
+        alpha-level determining HPD width.
+        Defaults to 0.05 (i.e., 95% HPD)
+
+    Returns
+    ---
+        matplotlib fig and {axs}
+    """
     # determine model type
     model_type = model.type
     if model_type != 'individual':
         error_msg = 'plot_individual_node_comparison requires model of "' "individual" '" type.'
-        raise
+        raise ValueError(error_msg)
 
     # make sure comparisons specified correctly
     if comparisons is not None:
@@ -1140,6 +1555,27 @@ def plot_individual_node_comparison(model,
 
 
 def extract_range(x, extra=0.25, bound=(None, None)):
+    """
+    Extract range of x-data
+
+    Input 
+    ---
+    x : array_like
+        x-data
+
+    extra : float, optional
+        should be between [0,1],
+        defining percentage of x-mean to add / subtract
+        to min / max, when copmuting bounds
+        e.g. upper bound = np.max(x) + extra * np.mean(x)
+
+    bound : tuple, optional
+        if given, these bounds are used
+
+    Returns
+    ---
+    tuple of bounds
+    """
 
     if bound[0] != None:
         xmin = bound[0]
@@ -1157,16 +1593,68 @@ def extract_range(x, extra=0.25, bound=(None, None)):
 
 
 def plot_behaviour_associations(data,
-                           nbins=20,
-                           fontsize=7,
-                           regression=True,
-                           annotate=True,
-                           figsize=cm2inch(18, 7),
-                           limits={
-                               'p_choose_best': (0, 1),
-                               'rt': (0, None),
-                               'gaze_influence': (None, None)
-                           }):
+                                nbins=20,
+                                fontsize=7,
+                                regression=True,
+                                annotate=True,
+                                figsize=cm2inch(18, 7),
+                                limits={
+                                    'p_choose_best': (0, 1),
+                                    'rt': (0, None),
+                                    'gaze_influence': (None, None)
+                                }):
+    """
+    Plot individual differences on
+    the following three panels:
+    A) p(choose best) ~ response time
+    B) response time ~ gaze influence score
+    C) gaze influence score ~ p(choose best)
+
+    In addition to each correlation plot,
+    marginal distributions of the values on the 
+    x-axis are gvien
+
+    For further details on these measures,
+    see the manuscript
+
+    Input
+    ---
+    data : dataframe
+        response data
+
+    nbins : int, optional
+        defining the number of bins to
+        use for the marginal histograms
+
+    fontsize : int, optional
+        defining the plotting fontsize,
+        defaults to 7
+
+    regression : bool, optional
+        whether to compute and plot
+        a linear regression fit,
+        defaults to True
+
+    annotate : bool, optional
+        whether to add pearson's r
+        correlation coefficient and p-value
+        to plot,
+        defaults to True
+
+    figsize : tuple, optional
+        size of of plotting figure
+
+    limits : dict, optional
+        dict containing one entry for:
+        ['rt', 'p_choose_best', 'corrected_p_choose_best']
+        each entry is a tuple, defining the y-limits for
+        the respective metrics
+
+    Returns
+    ---
+    matplotlib figure object
+
+    """
 
     if (regression == False) & (annotate == True):
         print('annotate only possible, if regression = True.')
@@ -1360,6 +1848,10 @@ def plot_correlation(x,
                      plot_diagonal=False,
                      return_correlation=False,
                      ax=None):
+    """
+    Plot correlation between x and y; 
+    (scatter-plot and regression line)
+    """
 
     # Defaults
     if ax is None:
@@ -1457,6 +1949,10 @@ def plot_correlation(x,
 
 
 def add_regression_line(ax, intercept, slope, color='darkgray', **kwargs):
+    """
+    Add a regression line to an axis,
+    given its intercept and slope
+    """
 
     xs = np.linspace(*ax.get_xlim(), 100)
 
@@ -1477,6 +1973,49 @@ def plot_individual_fit(observed,
                                'rt': (0, None),
                                'gaze_influence': (None, None)
                            }):
+    """
+    Plot individual observed vs predicted data
+    on three metrics:
+    A) response time
+    B) p(choose best)
+    C) gaze influence score
+    For details on these measures, 
+    see the manuscript
+
+    Input
+    ---
+    observed : dataframe
+        observed response data
+
+    predictions : list of dataframe
+        predicted response datasets
+
+    prediction_labels : array_like, strings, optional
+        legend labels for predictions
+
+    colors : array_like, strings, optional
+        colors to use for predictions
+
+    fontsize : int, optional
+        plotting fontsize
+
+    alpha : float, optional
+        alpha level for predictions
+        should be between [0,1]
+
+    figsize : tuple, optional
+        matplotlib figure size
+
+    limits : dict, optional
+        dict containing one entry for:
+        ['rt', 'p_choose_best', 'corrected_p_choose_best']
+        each entry is a tuple, defining the y-limits for
+        the respective metrics
+
+    Returns
+    ---
+    matplotlib figure object
+    """
 
     # count number of predictions
     n_predictions = len(predictions)
@@ -1665,6 +2204,36 @@ def behaviour_parameter_correlation(estimates,
                                     figsize=cm2inch(18., 6),
                                     alpha=0.5,
                                     fontsize=7):
+    """
+    Correlation plot between [v, gamma] and 
+    behavioral metrics ['rt', 'p(choose best)', 'gaze influence score']
+    For details on the metrics, see the manuscript
+
+    Input
+    ---
+    estimates : dict
+        dict with array_like parameter estimates
+        for 'v' and 'gamma'
+
+    subject_summary : dataframe
+        subject-level summary dataframe for subjects
+        whose estimates are given,
+        can be computed with analysis.aggregate_subject_level_data
+
+    figsize : tuple, optional
+        matplotlib figure size
+
+    alpha : float, optional
+        alpha level for scatter plots and
+        regression line
+
+    fontsize : int, optional
+        plotting fontsize, defaults to 7
+
+    Returns
+    ---
+    matplotlib figure object
+    """
 
     # create figure
     fig, axs = plt.subplots(1, 3, figsize=figsize)
@@ -1740,7 +2309,7 @@ def plot_posterior(samples,
     """
     Arviz is broken, so we do it ourselves.
 
-    Args:
+    Input:
         samples (TYPE): Description
         kind (str, optional): Description
         ref_val (None, optional): Description
@@ -1830,15 +2399,23 @@ def plot_node_hierarchical(model,
                                         tau=dict(dist=(0, 3),
                                                  delta=(-1, 1))),
                            fontsize=7):
-    """Plot group nodes and comparisons from hierarchical model.
+    """
+    Plot group nodes and comparisons from hierarchical model.
 
-    Args:
-        model (glambox.GLAM): GLAM model of type 'hierarchical'
-        parameters (list): List of parameter names (e.g., ['v', 'gamma'])
-        comparisons (list, optional): List of condition pairs (e.g., [('A', 'B')])
+    Input
+    ---
+    model : glambox.GLAM)
+        GLAM model of type 'hierarchical'
+    
+    parameters : list
+        list of parameter names (e.g., ['v', 'gamma'])
+    
+    comparisons : list, optional
+        list of condition pairs (e.g., [('A', 'B')])
 
-    Returns:
-        fig, {axs}
+    Returns
+    ---
+        matplotlib fig and {axs}
     """
     parameter_names = {
         'v': 'v',
@@ -1973,18 +2550,28 @@ def plot_node_hierarchical(model,
 
 def traceplot(trace, varnames='all', combine_chains=False,
               ref_val={}):
-    """A traceplot replacement, because arviz is broken.
+    """
+    A traceplot replacement, because arviz is broken.
     This is tested for traces that come out of individual
     and hierarchical GLAM fits.
 
-    Args:
-        trace (PyMC.MultiTrace): A trace object.
-        varnames (str, optional): List of variables to include
-        combine_chains (bool, optional): Toggle concatenation of chains.
-        ref_val (dict, optional): Reference values per parameter.
+    Input
+    ---
+    trace : PyMC.MultiTrace)
+        a trace object.
+    
+    varnames : str, optional
+        list of variables to include
+        
+    combine_chains : bool, optional
+        toggle concatenation of chains.
+    
+    ref_val : dict, optional)
+        reference values per parameter.
 
-    Returns:
-        figure, axes
+    Returns
+    ---
+        matplotlib figure and axes objects
     """
     if varnames == 'all':
         varnames = [var for var in trace.varnames

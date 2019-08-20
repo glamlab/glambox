@@ -58,6 +58,33 @@ def extract_modes(traces,
                   precision=None,
                   f_burn=0,
                   verbose=True):
+    """
+    Extract modes from PyMC3 traces
+
+    Input
+    ---
+    traces : list of PyMC3 trace objects
+
+    parameters : array_like, strings, optional
+        parameters for which to extract modes
+
+    precision : dict, optional
+        dict defining numerical precision
+        for each parameter,
+        defaults to:
+        dict(v=3, gamma=3, s=3, tau=3, t0=-1)
+    
+    f_burn : float, optoinal
+        should be between [0,1]
+        fraction of samples to discard as burn_in,
+        defaults to 0
+
+    verbose : bool, optional
+
+    Returns
+    ---
+    list of extracted modes per trace
+    """
 
     if not isinstance(traces, list):
         traces = [traces]
@@ -99,11 +126,13 @@ def get_design(model):
     This information is used to map parameter estimates
     back to subjects, etc.
 
-    Parameters:
-    model: GLAM object
+    Input
+    ---
+    model : GLAM object
 
-    Returns:
-    dict
+    Returns
+    ---
+    design dict
     """
     parameters = ['v', 'gamma', 's', 'tau', 't0']
 
@@ -205,11 +234,13 @@ def get_estimates(model):
     and summary statistics. Each row corresponds to one
     participant in one condition.
 
-    Parameters:
-    model: GLAM object
+    Input
+    ---
+    model : GLAM object
 
-    Returns:
-    DataFrame
+    Returns
+    ---
+    DataFrame of parameter estimates
     """
     from itertools import product
     from pymc3 import summary

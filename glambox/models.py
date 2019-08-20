@@ -331,7 +331,6 @@ class GLAM(object):
         ---
         new_data replaces data attribute of GLAM model object
         """
-        ---
         if verbose:
             print(
                 'Replaced attached data ({} trials) with new data ({} trials)...'
@@ -464,7 +463,7 @@ def generate_subject_model_parameters(parameter,
 
     val : float
         if specified, parameter is model as a deterministic
-        variable and set to the specified parameter value
+        variable and set to the specified value
 
     testval : float
         PyMC3 testvalue for parameter
@@ -597,7 +596,7 @@ def make_subject_model(rts,
         tolerance for mathematical stability,
         defaults to 1e-6
 
-    error_weitgh : float, optional
+    error_weight : float, optional
         probability with which choices are modeled
         as resulting from errornous choice model
         (as specified by error_ll),
