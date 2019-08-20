@@ -18,7 +18,7 @@ def cm2inch(*tupl):
         return tuple(i / inch for i in tupl)
 
 
-def plot_aggregate(bar_data,
+def plot_behaviour_aggregate(bar_data,
                    line_data=None,
                    line_labels=None,
                    fontsize=7,
@@ -1156,7 +1156,7 @@ def extract_range(x, extra=0.25, bound=(None, None)):
     return [xmin, xmax]
 
 
-def plot_individual_differences(data,
+def plot_behaviour_associations(data,
                            nbins=20,
                            fontsize=7,
                            regression=True,
@@ -1465,7 +1465,7 @@ def add_regression_line(ax, intercept, slope, color='darkgray', **kwargs):
     return ax
 
 
-def plot_individual(observed,
+def plot_individual_fit(observed,
                     predictions,
                     prediction_labels=None,
                     colors=None,
