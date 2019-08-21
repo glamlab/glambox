@@ -4,6 +4,10 @@ GLAMbox is a Python toolbox for investigating the association between gaze alloc
 
 See the [BioRxiv preprint](https://www.biorxiv.org/content/10.1101/741678v1) for detailed background, model description and example applications.
 
+## Dependencies
+
+GLAMbox is written for Python 3.7. It further requires the following packages to be installed: numpy, scipy, pandas, statsmodels, pymc3, theano, matplotlib, seaborn.
+
 ## Basic usage
 
 ### Data format, the `GLAM` class
