@@ -26,6 +26,8 @@ GLAMbox is written for Python 3.7. It further requires the following packages to
    examples/example2
    examples/example3
 
+.. automodule:: glambox
+
 Indices and tables
 ==================
 
