@@ -19,13 +19,12 @@ GLAMbox is written for Python 3.7. It further requires the following packages to
    license
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
    :caption: Examples
 
-   example1
-   example2
-   example3
-
+   examples/example1
+   examples/example2
+   examples/example3
 
 Indices and tables
 ==================
