@@ -104,14 +104,14 @@ def plot_behaviour_aggregate(bar_data,
                                    bins=value_bins,
                                    fontsize=fontsize,
                                    ylims=limits['rt'])
-    axs[1] = plot_pchoose_by_value_minus_mean_others(bar_data,
+    axs[1] = plot_pchoose_by_value_minus_max_others(bar_data,
                                             line_data,
                                             xlabel_skip=4,
                                             ax=axs[1],
                                             bins=value_bins,
                                             fontsize=fontsize,
                                             ylims=limits['p_choose_best'])
-    axs[2] = plot_pchoose_by_gaze_minus_mean_others(bar_data,
+    axs[2] = plot_pchoose_by_gaze_minus_max_others(bar_data,
                                                     line_data,
                                                     ax=axs[2],
                                                     bins=gaze_bins,
@@ -144,8 +144,8 @@ def plot_behaviour_aggregate(bar_data,
 def add_difficulty(df, bins=7, return_bins=False):
     """
     Add trial difficulty (defined as the difference 
-    between the maximum trial value and the mean of all 
-    others) to a response dataframe
+    between the maximum trial value and the maximum
+    of all others) to a response dataframe
 
     Input
     ---
@@ -172,7 +172,7 @@ def add_difficulty(df, bins=7, return_bins=False):
 
     values = df[value_cols].values
     values_sorted = np.sort(values, axis=1)
-    difficulty = values_sorted[:, -1] - np.mean(values_sorted[:, :-1], axis=1)
+    difficulty = values_sorted[:, -1] - np.max(values_sorted[:, :-1], axis=1)
 
     if isinstance(bins, (int, float)):
         bins = np.linspace(np.min(difficulty), np.max(difficulty), bins)
@@ -201,7 +201,7 @@ def plot_rt_by_difficulty(bar_data,
                           line_alphas=None,
                           line_lws=None):
     """
-    Plot: RT ~ (max value - mean value othres)
+    Plot: RT ~ (max value - max value othres)
 
     Input
     ---
@@ -361,7 +361,7 @@ def plot_rt_by_difficulty(bar_data,
     if ylims is None:
         ylims = np.mean(np.concatenate([a['rt'].ravel() for a in dataframes])) * 2
     ax.set_ylim(ylims)
-    ax.set_xlabel('Max. value –\nmean value others', fontsize=fontsize)
+    ax.set_xlabel('Max. value –\nmax. value others', fontsize=fontsize)
     ax.set_ylabel('Response time (s)', fontsize=fontsize)
     ax.set_xlim(xlims)
     ax.set_xticks(x[::xlabel_skip])
@@ -373,10 +373,10 @@ def plot_rt_by_difficulty(bar_data,
     return ax
 
 
-def add_value_minus_mean_others(df, bins=7, return_bins=False):
+def add_value_minus_max_others(df, bins=7, return_bins=False):
     """
     Add trial difference between item's value
-    and value of all other items in a trial
+    and maximum value of all other items in a trial
     to response data
 
     Input
@@ -404,29 +404,29 @@ def add_value_minus_mean_others(df, bins=7, return_bins=False):
     n_items = len(value_cols)
 
     values = df[value_cols].values
-    values_minus_mean_others = np.zeros_like(values)
+    values_minus_max_others = np.zeros_like(values)
 
     for t in np.arange(values.shape[0]):
         for i in np.arange(n_items):
-            values_minus_mean_others[t, i] = values[t, i] - \
-                np.mean(values[t, np.arange(n_items) != i])
+            values_minus_max_others[t, i] = values[t, i] - \
+                np.max(values[t, np.arange(n_items) != i])
 
     if isinstance(bins, (int, float)):
         # n_bins = np.min(
-        #     [np.unique(values_minus_mean_others.ravel()).size, bins])
-        bins = np.linspace(np.min(values_minus_mean_others.ravel()),
-                           np.max(values_minus_mean_others.ravel()), bins)
+        #     [np.unique(values_minus_max_others.ravel()).size, bins])
+        bins = np.linspace(np.min(values_minus_max_others.ravel()),
+                           np.max(values_minus_max_others.ravel()), bins)
         bins = np.round(bins, 2)
-    values_minus_mean_others_binned = pd.cut(values_minus_mean_others.ravel(),
+    values_minus_max_others_binned = pd.cut(values_minus_max_others.ravel(),
                                              bins)
-    values_minus_mean_others_binned = bins[
-        values_minus_mean_others_binned.codes]
-    values_minus_mean_others_binned = values_minus_mean_others_binned.reshape(
-        values_minus_mean_others.shape)
+    values_minus_max_others_binned = bins[
+        values_minus_max_others_binned.codes]
+    values_minus_max_others_binned = values_minus_max_others_binned.reshape(
+        values_minus_max_others.shape)
 
     for i in np.arange(n_items):
-        df['value_minus_mean_others_{}'.format(
-            i)] = values_minus_mean_others_binned[:, i]
+        df['value_minus_max_others_{}'.format(
+            i)] = values_minus_max_others_binned[:, i]
 
     if not return_bins:
         return df.copy()
@@ -434,22 +434,22 @@ def add_value_minus_mean_others(df, bins=7, return_bins=False):
         return df.copy(), bins
 
 
-def plot_pchoose_by_value_minus_mean_others(bar_data,
-                                            line_data=None,
-                                            ax=None,
-                                            bins=7,
-                                            xlims=None,
-                                            ylims=None,
-                                            xlabel_skip=2,
-                                            fontsize=7,
-                                            line_labels=None,
-                                            line_colors=None,
-                                            line_lws=None,
-                                            line_ls=None,
-                                            line_alphas=None,
-                                            line_markers=None):
+def plot_pchoose_by_value_minus_max_others(bar_data,
+                                           line_data=None,
+                                           ax=None,
+                                           bins=7,
+                                           xlims=None,
+                                           ylims=None,
+                                           xlabel_skip=2,
+                                           fontsize=7,
+                                           line_labels=None,
+                                           line_colors=None,
+                                           line_lws=None,
+                                           line_ls=None,
+                                           line_alphas=None,
+                                           line_markers=None):
     """
-    Plot: P(choose best) ~ (item value - mean value othres)
+    Plot: P(choose best) ~ (item value - max. value othres)
 
     Input
     ---
@@ -554,16 +554,16 @@ def plot_pchoose_by_value_minus_mean_others(bar_data,
 
         # Compute relevant variables
         if i == 0:
-            df, bins = add_value_minus_mean_others(df,
+            df, bins = add_value_minus_max_others(df,
                                                    bins=bins,
                                                    return_bins=True)
         else:
-            df = add_value_minus_mean_others(df, bins=bins)
+            df = add_value_minus_max_others(df, bins=bins)
 
         # create temporary dataframe
         subjects = df['subject'].values
         value_minus_mean_others = df[[
-            'value_minus_mean_others_{}'.format(ii) for ii in range(n_items)
+            'value_minus_max_others_{}'.format(ii) for ii in range(n_items)
         ]].values
         is_choice = np.zeros_like(value_minus_mean_others)
         is_choice[np.arange(is_choice.shape[0]), df['choice'].values.
@@ -572,17 +572,17 @@ def plot_pchoose_by_value_minus_mean_others(bar_data,
         df_tmp = pd.DataFrame({
             'subject':
             np.repeat(subjects, n_items),
-            'value_minus_mean_others':
+            'value_minus_max_others':
             value_minus_mean_others.ravel(),
             'is_choice':
             is_choice.ravel()
         })
 
         # Compute summary statistics
-        subject_means = df_tmp.groupby(['subject', 'value_minus_mean_others'
+        subject_means = df_tmp.groupby(['subject', 'value_minus_max_others'
                                         ]).is_choice.mean()
-        means = subject_means.groupby('value_minus_mean_others').mean()
-        sems = subject_means.groupby('value_minus_mean_others').sem()
+        means = subject_means.groupby('value_minus_max_others').mean()
+        sems = subject_means.groupby('value_minus_max_others').sem()
 
         x = means.index
         if xlims is None:
@@ -633,7 +633,7 @@ def plot_pchoose_by_value_minus_mean_others(bar_data,
 
     ax.axhline(1 / n_items, linestyle='--', color='k', linewidth=1, alpha=0.75)
 
-    ax.set_xlabel('Item value –\nmean value others', fontsize=fontsize)
+    ax.set_xlabel('Item value –\nmax. value others', fontsize=fontsize)
     ax.set_ylabel('P(choose item)', fontsize=fontsize)
     if ylims is None:
         ax.set_ylim(-0.05, 1.05)
@@ -650,8 +650,8 @@ def plot_pchoose_by_value_minus_mean_others(bar_data,
 def add_gaze_advantage(df, bins=7, return_bins=False):
     """
     Add gaze advantage (defined as the difference
-    between an item's gaze and the mean gaze of all other)
-    to response data
+    between an item's gaze and the maximum gaze
+    of all other) to response data
 
     Input
     ---
@@ -682,7 +682,7 @@ def add_gaze_advantage(df, bins=7, return_bins=False):
     for t in np.arange(gaze.shape[0]):
         for i in range(n_items):
             gaze_advantage[t, i] = gaze[t, i] - \
-                np.mean(gaze[t, np.arange(n_items) != i])
+                np.max(gaze[t, np.arange(n_items) != i])
 
     if isinstance(bins, (int, float)):
         bins = np.round(np.linspace(-1, 1, bins), 2)
@@ -700,7 +700,7 @@ def add_gaze_advantage(df, bins=7, return_bins=False):
         return df.copy(), bins
 
 
-def plot_pchoose_by_gaze_minus_mean_others(bar_data,
+def plot_pchoose_by_gaze_minus_max_others(bar_data,
                                            line_data=None,
                                            bins=7,
                                            ax=None,
@@ -715,7 +715,7 @@ def plot_pchoose_by_gaze_minus_mean_others(bar_data,
                                            line_alphas=None,
                                            line_markers=None):
     """
-    Plot: P(choose best) ~ (item gaze - mean gaze othres)
+    Plot: P(choose best) ~ (item gaze - max. gaze othres)
 
     Input
     ---
@@ -895,7 +895,7 @@ def plot_pchoose_by_gaze_minus_mean_others(bar_data,
 
     ax.axhline(1 / n_items, linestyle='--', color='k', linewidth=1, alpha=0.75)
 
-    ax.set_xlabel('Item gaze –\nmean gaze others', fontsize=fontsize)
+    ax.set_xlabel('Item gaze –\nmax. gaze others', fontsize=fontsize)
     ax.set_ylabel('P(choose item)', fontsize=fontsize)
     if ylims is None:
         ax.set_ylim(-0.05, 1.05)
@@ -999,7 +999,7 @@ def plot_corp_by_gaze_advantage(bar_data,
                                 line_alphas=None,
                                 line_markers=None):
     """
-    Plot: Corrected p(choose best) ~ (item gaze - mean gaze othres)
+    Plot: Corrected p(choose best) ~ (item gaze - max. gaze othres)
 
     Input
     ---
@@ -1161,7 +1161,7 @@ def plot_corp_by_gaze_advantage(bar_data,
                         ls=line_ls[i - 1],
                         color=line_colors[i - 1])
 
-    ax.set_xlabel('Item gaze –\nmean gaze others', fontsize=fontsize)
+    ax.set_xlabel('Item gaze –\nmax. gaze others', fontsize=fontsize)
     ax.set_ylabel('Corrected\nP(choose item)', fontsize=fontsize)
     ax.set_xticks([-1, -.5, 0, .5, 1.])
     ax.set_xticklabels([-1, -.5, 0, .5, 1.], fontsize=fontsize)
