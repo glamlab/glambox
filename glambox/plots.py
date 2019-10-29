@@ -1606,13 +1606,17 @@ def plot_behaviour_associations(data,
     """
     Plot individual differences on
     the following three panels:
-    A) p(choose best) ~ response time
-    B) response time ~ gaze influence score
-    C) gaze influence score ~ p(choose best)
+    D) p(choose best) ~ response time
+    E) gaze influence score ~ response time
+    F) gaze influence score ~ p(choose best)
 
     In addition to each correlation plot,
-    marginal distributions of the values on the 
-    x-axis are gvien
+    distributions of the three underlying 
+    behavioural measures are given in
+    panels A-C:
+    A) Response time
+    B) P(choose best)
+    C) Gaze influence score
 
     For further details on these measures,
     see the manuscript
@@ -1661,14 +1665,14 @@ def plot_behaviour_associations(data,
 
     fig = plt.figure(figsize=figsize, dpi=330)
 
-    ax00 = plt.subplot2grid((7, 3), (0, 0), rowspan=2)
-    ax10 = plt.subplot2grid((7, 3), (2, 0), rowspan=5)
+    ax00 = plt.subplot2grid((8, 3), (0, 0), rowspan=3)
+    ax10 = plt.subplot2grid((8, 3), (2, 0), rowspan=5)
 
-    ax01 = plt.subplot2grid((7, 3), (0, 1), rowspan=2)
-    ax11 = plt.subplot2grid((7, 3), (2, 1), rowspan=5)
+    ax01 = plt.subplot2grid((8, 3), (0, 1), rowspan=3)
+    ax11 = plt.subplot2grid((8, 3), (2, 1), rowspan=5)
 
-    ax02 = plt.subplot2grid((7, 3), (0, 2), rowspan=2)
-    ax12 = plt.subplot2grid((7, 3), (2, 2), rowspan=5)
+    ax02 = plt.subplot2grid((8, 3), (0, 2), rowspan=3)
+    ax12 = plt.subplot2grid((8, 3), (2, 2), rowspan=5)
 
     # add default limits
     for key, lim in zip(['p_choose_best', 'rt', 'gaze_influence'],
@@ -1698,19 +1702,19 @@ def plot_behaviour_associations(data,
     gaze_influence_ticks = np.arange(-1, 1.1, 0.2)
 
     # Scatter plots
-    plot_correlation(subject_summary['rt']['mean'],
-                     subject_summary['best_chosen']['mean'],
+    plot_correlation(subject_summary['best_chosen']['mean'],
+                     subject_summary['rt']['mean'],
                      marker='o',
                      markercolor='C0',
                      regression=regression,
                      annotate=annotate,
                      annotation_pos=(0.1, 0.01),
-                     xlabel='Mean RT (s)',
-                     ylabel='P(choose best)',
-                     xlim=rt_range,
-                     xticks=rt_ticks,
-                     ylim=best_chosen_range,
-                     yticks=best_chosen_ticks,
+                     ylabel='Mean RT (s)',
+                     xlabel='P(choose best)',
+                     ylim=rt_range,
+                     yticks=rt_ticks,
+                     xlim=best_chosen_range,
+                     xticks=best_chosen_ticks,
                      fontsize_title=fontsize,
                      fontsize_axeslabel=fontsize,
                      fontsize_ticklabels=fontsize,
@@ -1736,19 +1740,19 @@ def plot_behaviour_associations(data,
                      fontsize_annotation=fontsize,
                      ax=ax11)
 
-    plot_correlation(subject_summary['best_chosen']['mean'],
-                     subject_summary['gaze_influence'],
+    plot_correlation(subject_summary['gaze_influence'],
+                     subject_summary['best_chosen']['mean'],
                      marker='o',
                      markercolor='C0',
                      regression=regression,
                      annotate=annotate,
                      annotation_pos=(0.1, 0.01),
-                     ylabel='Gaze influence\non P(choice | value)',
-                     xlabel='P(choose best)',
-                     ylim=gaze_influence_range,
-                     yticks=gaze_influence_ticks,
-                     xlim=best_chosen_range,
-                     xticks=best_chosen_ticks,
+                     xlabel='Gaze influence\non P(choice | value)',
+                     ylabel='P(choose best)',
+                     xlim=gaze_influence_range,
+                     xticks=gaze_influence_ticks,
+                     ylim=best_chosen_range,
+                     yticks=best_chosen_ticks,
                      fontsize_title=fontsize,
                      fontsize_axeslabel=fontsize,
                      fontsize_ticklabels=fontsize,
@@ -1760,14 +1764,14 @@ def plot_behaviour_associations(data,
               bins=np.linspace(rt_range[0], rt_range[1], nbins + 1),
               color='C0')
 
-    ax01.hist(subject_summary['gaze_influence'],
-              bins=np.linspace(gaze_influence_range[0],
-                               gaze_influence_range[1], nbins + 1),
-              color='C0')
-
-    ax02.hist(subject_summary['best_chosen']['mean'],
+    ax01.hist(subject_summary['best_chosen']['mean'],
               bins=np.linspace(best_chosen_range[0], best_chosen_range[1],
                                nbins + 1),
+              color='C0')
+
+    ax02.hist(subject_summary['gaze_influence'],
+              bins=np.linspace(gaze_influence_range[0],
+                               gaze_influence_range[1], nbins + 1),
               color='C0')
 
     hist_lim = np.max(
@@ -1794,23 +1798,18 @@ def plot_behaviour_associations(data,
                 va='top')
 
     # Fine-tune marginal histograms
-    for ax in np.array([ax00, ax01, ax02]):
-        ax.set_xticks([])
+    for ax, ax_xticks, ax_xlabel, ax_xlim in zip(np.array([ax00, ax01, ax02]),
+                                                 [rt_ticks, best_chosen_ticks, gaze_influence_ticks],
+                                                 ['Mean RT (s)', 'P(choose best)', 'Gaze influence\non P(choice | value)'],
+                                                 [rt_range, best_chosen_range, gaze_influence_range]) :
+        ax.set_xticks(ax_xticks)
+        ax.set_xticklabels(ax_xticks)
+        ax.set_xlim(ax_xlim)
         ax.set_ylim([0, hist_lim])
         ax.set_yticks([0, hist_lim])
         ax.set_yticklabels([0, hist_lim], fontsize=fontsize)
         ax.set_ylabel('Frequency', fontsize=fontsize)
-
-    ax00.set_xticks(rt_ticks)
-    ax00.set_xticklabels([])
-    ax01.set_xticks(gaze_influence_ticks)
-    ax01.set_xticklabels([])
-    ax02.set_xticks(best_chosen_ticks)
-    ax02.set_xticklabels([])
-
-    ax00.set_xlim(rt_range)
-    ax01.set_xlim(gaze_influence_range)
-    ax02.set_xlim(best_chosen_range)
+        ax.set_xlabel(ax_xlabel, fontsize=fontsize)
 
     for ax in [ax00, ax01, ax02, ax10, ax11, ax12]:
         sns.despine(ax=ax)
