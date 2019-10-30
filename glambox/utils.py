@@ -3,6 +3,53 @@
 import numpy as np
 import pandas as pd
 from scipy.stats import mode
+import pymc3 as pm
+
+
+def compare(models, **kwargs):
+    """Compares multiple models.
+    
+    Args:
+        models (list): List of fitted GLAM model instances.
+    
+    Returns:
+        pandas.DataFrame containing information criteria for each model.
+    """
+    
+    # Check model labels, create some if there are none
+    for m, model in enumerate(models):
+        if model.label is None:
+            model.label = 'model_{}'.format(m)
+    
+    # Check that all models have the same type:
+    assert all([model.type == models[0].type for model in models]), "Models have different types and cannot be compared."
+
+    # Check that all models have the same number of PyMC3 models and traces:
+    assert all([len(model.trace) == len(models[0].trace) for model in models]), "Model instances have different numbers of subjects and cannot be compared."
+
+    if models[0].type == 'hierarchical':
+        comparison_df = pm.compare(model_dict={model.model:model.trace[0]
+                                               for model in models},
+                                   **kwargs)
+        df = pd.DataFrame(dict(model=[model.label for model in models],
+                               waic=comparison_df.sort_index()['WAIC'].values,
+                               se=comparison_df.sort_index()['SE'].values))
+    elif models[0].type == 'individual':
+        df = []
+        for s in range(len(models[0].trace)):
+            comparison_df = pm.compare(model_dict={model.model[s]:model.trace[s]
+                                                   for model in models},
+                                    **kwargs)
+            df_s = pd.DataFrame(dict(subject=s,
+                                     model=[model.label for model in models],
+                                     waic=comparison_df.sort_index()['WAIC'].values,
+                                     se=comparison_df.sort_index()['SE'].values),
+                                index=s * np.ones(len(models)))
+            df.append(df_s)
+        df = pd.concat(df).reset_index(drop=True)
+
+    return df
+    
 
 
 def format_data(df):

@@ -7,3 +7,4 @@ from . import plots
 from . import analysis
 from .models import make_models, GLAM
 from .fit import fit_models
+from .utils import compare

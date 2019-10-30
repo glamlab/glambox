@@ -15,13 +15,14 @@ class GLAM(object):
     fit indices and predictions.
     """
 
-    def __init__(self, data=None):
+    def __init__(self, data=None, label=None):
         self.data = data
         if self.data is not None:
             self.n_items = len(
                 [col for col in data.columns if col.startswith('item_value_')])
         else:
             self.n_items = None
+        self.label = label
 
         self.parameters = dict()
 
