@@ -2195,7 +2195,7 @@ def plot_individual_fit(observed,
 
     fig.tight_layout()
 
-    return fig
+    return fig, axs
 
 
 def behaviour_parameter_correlation(estimates,
