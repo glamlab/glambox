@@ -434,6 +434,67 @@ def add_value_minus_max_others(df, bins=7, return_bins=False):
         return df.copy(), bins
 
 
+def add_value_minus_mean_others(df, bins=7, return_bins=False):
+    """
+    Add trial difference between item's value
+    and mean value of all other items in a trial
+    to response data
+
+    Input
+    ---
+    df : dataframe
+        response data
+
+    bins : int or array_like, optional
+        defining the bins to use when computing
+        the value difference,
+        if an int is given, this many bins will be
+        created,
+        defaults to 7
+
+    return_bins : bool, optional
+        whether or not to return the bins
+
+    Returns
+    ---
+    copy of df (and bins if return_bins=True)
+    """
+
+    # infer number of items
+    value_cols = ([col for col in df.columns if col.startswith('item_value_')])
+    n_items = len(value_cols)
+
+    values = df[value_cols].values
+    values_minus_mean_others = np.zeros_like(values)
+
+    for t in np.arange(values.shape[0]):
+        for i in np.arange(n_items):
+            values_minus_mean_others[t, i] = values[t, i] - \
+                np.mean(values[t, np.arange(n_items) != i])
+
+    if isinstance(bins, (int, float)):
+        # n_bins = np.min(
+        #     [np.unique(values_minus_mean_others.ravel()).size, bins])
+        bins = np.linspace(np.min(values_minus_mean_others.ravel()),
+                           np.max(values_minus_mean_others.ravel()), bins)
+        bins = np.round(bins, 2)
+    values_minus_mean_others_binned = pd.cut(values_minus_mean_others.ravel(),
+                                             bins)
+    values_minus_mean_others_binned = bins[
+        values_minus_mean_others_binned.codes]
+    values_minus_mean_others_binned = values_minus_mean_others_binned.reshape(
+        values_minus_mean_others.shape)
+
+    for i in np.arange(n_items):
+        df['value_minus_mean_others_{}'.format(
+            i)] = values_minus_mean_others_binned[:, i]
+
+    if not return_bins:
+        return df.copy()
+    else:
+        return df.copy(), bins
+
+
 def plot_pchoose_by_value_minus_max_others(bar_data,
                                            line_data=None,
                                            ax=None,
@@ -1665,14 +1726,14 @@ def plot_behaviour_associations(data,
 
     fig = plt.figure(figsize=figsize, dpi=330)
 
-    ax00 = plt.subplot2grid((8, 3), (0, 0), rowspan=3)
-    ax10 = plt.subplot2grid((8, 3), (2, 0), rowspan=5)
+    ax00 = plt.subplot2grid((7, 3), (0, 0), rowspan=2)
+    ax10 = plt.subplot2grid((7, 3), (2, 0), rowspan=5)
 
-    ax01 = plt.subplot2grid((8, 3), (0, 1), rowspan=3)
-    ax11 = plt.subplot2grid((8, 3), (2, 1), rowspan=5)
+    ax01 = plt.subplot2grid((7, 3), (0, 1), rowspan=2)
+    ax11 = plt.subplot2grid((7, 3), (2, 1), rowspan=5)
 
-    ax02 = plt.subplot2grid((8, 3), (0, 2), rowspan=3)
-    ax12 = plt.subplot2grid((8, 3), (2, 2), rowspan=5)
+    ax02 = plt.subplot2grid((7, 3), (0, 2), rowspan=2)
+    ax12 = plt.subplot2grid((7, 3), (2, 2), rowspan=5)
 
     # add default limits
     for key, lim in zip(['p_choose_best', 'rt', 'gaze_influence'],
