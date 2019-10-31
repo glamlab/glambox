@@ -3,7 +3,7 @@
 from .analysis import aggregate_subject_level_data
 import numpy as np
 import pandas as pd
-from pymc3.stats import hpd
+from pymc3.stats import hpd, summary
 import statsmodels.api as sm
 from statsmodels.stats.outliers_influence import summary_table
 import matplotlib.pyplot as plt
@@ -427,67 +427,6 @@ def add_value_minus_max_others(df, bins=7, return_bins=False):
     for i in np.arange(n_items):
         df['value_minus_max_others_{}'.format(
             i)] = values_minus_max_others_binned[:, i]
-
-    if not return_bins:
-        return df.copy()
-    else:
-        return df.copy(), bins
-
-
-def add_value_minus_mean_others(df, bins=7, return_bins=False):
-    """
-    Add trial difference between item's value
-    and mean value of all other items in a trial
-    to response data
-
-    Input
-    ---
-    df : dataframe
-        response data
-
-    bins : int or array_like, optional
-        defining the bins to use when computing
-        the value difference,
-        if an int is given, this many bins will be
-        created,
-        defaults to 7
-
-    return_bins : bool, optional
-        whether or not to return the bins
-
-    Returns
-    ---
-    copy of df (and bins if return_bins=True)
-    """
-
-    # infer number of items
-    value_cols = ([col for col in df.columns if col.startswith('item_value_')])
-    n_items = len(value_cols)
-
-    values = df[value_cols].values
-    values_minus_mean_others = np.zeros_like(values)
-
-    for t in np.arange(values.shape[0]):
-        for i in np.arange(n_items):
-            values_minus_mean_others[t, i] = values[t, i] - \
-                np.mean(values[t, np.arange(n_items) != i])
-
-    if isinstance(bins, (int, float)):
-        # n_bins = np.min(
-        #     [np.unique(values_minus_mean_others.ravel()).size, bins])
-        bins = np.linspace(np.min(values_minus_mean_others.ravel()),
-                           np.max(values_minus_mean_others.ravel()), bins)
-        bins = np.round(bins, 2)
-    values_minus_mean_others_binned = pd.cut(values_minus_mean_others.ravel(),
-                                             bins)
-    values_minus_mean_others_binned = bins[
-        values_minus_mean_others_binned.codes]
-    values_minus_mean_others_binned = values_minus_mean_others_binned.reshape(
-        values_minus_mean_others.shape)
-
-    for i in np.arange(n_items):
-        df['value_minus_mean_others_{}'.format(
-            i)] = values_minus_mean_others_binned[:, i]
 
     if not return_bins:
         return df.copy()
@@ -1239,382 +1178,6 @@ def plot_corp_by_gaze_advantage(bar_data,
     return ax
 
 
-def plot_node(model,
-              parameter,
-              comparisons=None,
-              fontsize=12,
-              alpha=0.5,
-              hpd_alpha=0.05,
-              plot_histogram=True):
-
-    # determine model type
-    model_type = model.type
-
-    # make sure comparisons specified correctly
-    if comparisons is not None:
-        if not getattr(comparisons, '__iter__', False):
-            error_msg = 'comparisons must be iterable (e.g.[(condition(A), condition(B))]).'
-            raise ValueError(error_msg)
-        else:
-            if not np.all([len(c) == 2 for c in comparisons]):
-                error_msg = 'Each comparison must be of length 2 (e.g.[(condition(A), condition(B))]).'
-                raise ValueError(error_msg)
-            else:
-                n_comparisons = len(comparisons)
-
-    # extract design for parameter
-    if parameter not in model.design.keys():
-        error_msg = '"' "{}" '" not part of model parameters.'.format(
-            parameter)
-        raise ValueError(error_msg)
-    parameter_design = model.design[parameter]
-    conditions = parameter_design['conditions']
-    if conditions is not None:
-        n_conditions = len(conditions)
-    else:
-        n_conditions = 1
-
-    # extract subjects
-    subjects = parameter_design[conditions[0]]['subjects']
-    try:
-        subjects = subjects.astype(np.int)
-    except:
-        None
-
-    # read out number of traces
-    if not getattr(model.trace, '__iter__', False):
-        model_traces = [model.trace]
-    else:
-        model_traces = model.trace
-    n_traces = len(model_traces)
-    if model_type == 'individual':
-        if subjects.size != n_traces:
-            error_msg = 'Number of subjects contained in model does not match number of traces.'
-            raise ValueError(error_msg)
-
-    # set up figure
-    fig = plt.figure(figsize=(4 * (1 + n_comparisons), 2 * n_traces), dpi=330)
-
-    # set up dict for figure axes
-    axs = dict()
-    for c in range(1 + n_comparisons):
-        axs[c] = np.array([])
-
-    # set up array to store [min, max] x-lims per figure column
-    xlims = np.zeros((1 + n_comparisons, 2)) * np.nan
-
-    # plot
-    for r in range(n_traces):
-
-        # extract trace
-        trace = model_traces[r]
-
-        # create & collect axis
-        ax = plt.subplot2grid((n_traces, n_comparisons + 2), (r, 0), colspan=2)
-        axs[0] = np.append(axs[0], ax)
-
-        # add y-label
-        if model_type == 'individual':
-            axs[0][-1].set_ylabel('Subject {}'.format(subjects[r], parameter),
-                                  fontsize=fontsize)
-
-        # plot condition traces
-        for ci, condition in enumerate(conditions):
-
-            # extract trace
-            if model_type == 'hierarchical':
-                condition_trace = trace['{}_{}_mu'.format(
-                    parameter, condition)].ravel()
-            else:
-                condition_trace = trace['{}_{}'.format(parameter,
-                                                       condition)].ravel()
-
-            # update x-lims
-            if np.isnan(xlims[0, 0]):
-                xlims[0, 0] = np.min(condition_trace)
-                xlims[0, 1] = np.max(condition_trace)
-            else:
-                if np.min(condition_trace) < xlims[0, 0]:
-                    xlims[0, 0] = np.min(condition_trace)
-                if np.max(condition_trace) > xlims[0, 1]:
-                    xlims[0, 1] = np.max(condition_trace)
-
-            # plot trace
-            if not plot_histogram:
-                trace_hpd = hpd(condition_trace, alpha=hpd_alpha)
-                trace_mean = np.mean(condition_trace)
-                axs[0][-1].plot(trace_hpd, [ci, ci],
-                                lw=3,
-                                color='C{}'.format(ci))
-                axs[0][-1].scatter(x=trace_mean,
-                                   y=ci,
-                                   color='C{}'.format(ci),
-                                   s=100)
-            else:
-                if r == 0:
-                    contition_label = condition
-                else:
-                    contition_label = ''
-                axs[0][-1].hist(condition_trace,
-                                histtype='stepfilled',
-                                bins=50,
-                                alpha=alpha,
-                                label=contition_label)
-
-        # set y-lim
-        if not plot_histogram:
-            axs[0][-1].set_ylim(-1, n_conditions)
-            axs[0][-1].set_yticks(np.arange(n_conditions))
-            axs[0][-1].set_yticklabels(conditions, fontsize=fontsize)
-
-        # plot comparisons
-        for c, comparison in enumerate(comparisons):
-
-            # create & collect axis
-            ax = plt.subplot2grid((n_traces, n_comparisons + 2), (r, 2 + c))
-            axs[c + 1] = np.append(axs[c + 1], ax)
-
-            # compute trace difference
-            if model_type == 'hierarchical':
-                trace_diff = (
-                    trace['{}_{}_mu'.format(parameter,
-                                            comparison[0])].ravel() -
-                    trace['{}_{}_mu'.format(parameter, comparison[1])].ravel())
-            else:
-                trace_diff = (
-                    trace['{}_{}'.format(parameter, comparison[0])].ravel() -
-                    trace['{}_{}'.format(parameter, comparison[1])].ravel())
-
-            # update x-lims
-            if np.isnan(xlims[c + 1, 0]):
-                xlims[c + 1, 0] = np.min(trace_diff)
-                xlims[c + 1, 1] = np.max(trace_diff)
-            else:
-                if np.min(trace_diff) < xlims[c + 1, 0]:
-                    xlims[c + 1, 0] = np.min(trace_diff)
-                if np.max(trace_diff) > xlims[c + 1, 1]:
-                    xlims[c + 1, 1] = np.max(trace_diff)
-
-            # plot trace difference
-            if not plot_histogram:
-                trace_diff_hpd = hpd(trace_diff, alpha=hpd_alpha)
-                trace_diff_mean = np.mean(trace_diff)
-                axs[c + 1][-1].plot(trace_diff_hpd, [0, 0], lw=3, color='gray')
-                axs[c + 1][-1].scatter(x=trace_diff_mean,
-                                       y=0,
-                                       color='gray',
-                                       s=100)
-                hpd_string = '95% HPD:\n[{}, {}]'.format(
-                    np.round(trace_diff_hpd[0], 2),
-                    np.round(trace_diff_hpd[1], 2))
-                axs[c + 1][-1].text(0.5,
-                                    0.7,
-                                    hpd_string,
-                                    horizontalalignment='center',
-                                    verticalalignment='center',
-                                    transform=axs[c + 1][-1].transAxes,
-                                    fontsize=fontsize)
-                axs[c + 1][-1].set_ylim(-1, n_conditions)
-            else:
-                plot_posterior(trace_diff,
-                               color='gray',
-                               histtype='stepfilled',
-                               alpha=alpha,
-                               alpha_level=hpd_alpha,
-                               bins=50,
-                               ref_val=0,
-                               ax=axs[c + 1][-1])
-
-            # set title
-            if r == 0:
-                axs[c + 1][-1].set_title('{} - {}'.format(*comparison),
-                                         fontsize=fontsize)
-
-    # label x-axis
-    if parameter in ['sigma', 'gamma', 'tau']:
-        for i in range(1 + n_comparisons):
-            if model_type == 'hierarchical':
-                axs[i][-1].set_xlabel(r'$\delta$' +
-                                      r'$\{}$'.format(parameter) + r'$_{mu}$',
-                                      fontsize=fontsize * 1.2)
-            else:
-                axs[i][-1].set_xlabel(r'$\delta$' + r'$\{}$'.format(parameter),
-                                      fontsize=fontsize * 1.2)
-    else:
-        for i in range(1 + n_comparisons):
-            if model_type == 'hierarchical':
-                axs[i][-1].set_xlabel(r'$\delta$' + r'${}$'.format(parameter) +
-                                      r'$_{mu}$',
-                                      fontsize=fontsize)
-            else:
-                axs[i][-1].set_xlabel(r'$\delta$' + r'${}$'.format(parameter),
-                                      fontsize=fontsize)
-
-    # set x-lims
-    for i in range(1 + n_comparisons):
-        for ax in axs[i]:
-            ax.set_xlim(xlims[i, 0], xlims[i, 1])
-            ax.tick_params(axis='both', which='major', labelsize=fontsize)
-            if (model_type != 'individual') or (i > 0):
-                ax.set_yticks([])
-                ax.set_yticklabels([])
-            sns.despine(ax=ax)
-
-    # add legend
-    axs[0][0].legend(loc='upper center',
-                     frameon=False,
-                     fontsize=fontsize,
-                     ncol=len(conditions))
-
-    # re-shape axs
-    axs = np.concatenate([axs[i][None] for i in range(1 + n_comparisons)],
-                         axis=1)
-
-    # autmomatic cleaning
-    fig.tight_layout()
-
-    return fig, axs
-
-
-def plot_individual_node_comparison(model,
-                                    parameter,
-                                    comparisons=None,
-                                    fontsize=7,
-                                    hpd_alpha=0.05):
-    """
-    Plot a single node and comparisons
-    between its levels for individual models.
-
-    Input
-    ---
-    model : glambox.GLAM)
-        GLAM model of type 'hierarchical'
-    
-    parameter : string
-        parameter name (e.g., 'v')
-    
-    comparisons : list, optional
-        list of condition pairs (e.g., [('A', 'B')])
-
-    fontsize : int, optional
-        Plotting fontsize.
-        Defaults to 7.
-
-    hpd_alpha : float, optional
-        alpha-level determining HPD width.
-        Defaults to 0.05 (i.e., 95% HPD)
-
-    Returns
-    ---
-        matplotlib fig and {axs}
-    """
-    # determine model type
-    model_type = model.type
-    if model_type != 'individual':
-        error_msg = 'plot_individual_node_comparison requires model of "' "individual" '" type.'
-        raise ValueError(error_msg)
-
-    # make sure comparisons specified correctly
-    if comparisons is not None:
-        if not getattr(comparisons, '__iter__', False):
-            error_msg = 'comparisons must be iterable (e.g.[(condition(A), condition(B))]).'
-            raise ValueError(error_msg)
-        else:
-            if not np.all([len(c) == 2 for c in comparisons]):
-                error_msg = 'Each comparison must be of length 2 (e.g.[(condition(A), condition(B))]).'
-                raise ValueError(error_msg)
-            else:
-                n_comparisons = len(comparisons)
-
-    # extract design for parameter
-    if parameter not in model.design.keys():
-        error_msg = '"' "{}" '" not part of model parameters.'.format(
-            parameter)
-        raise ValueError(error_msg)
-    parameter_design = model.design[parameter]
-    conditions = parameter_design['conditions']
-
-    # extract subjects
-    subjects = parameter_design[conditions[0]]['subjects']
-    try:
-        subjects = subjects.astype(np.int)
-    except:
-        None
-    n_subjects = subjects.size
-
-    # read out number of traces
-    if not getattr(model.trace, '__iter__', False):
-        model_traces = [model.trace]
-    else:
-        model_traces = model.trace
-    n_traces = len(model_traces)
-    if n_subjects != n_traces:
-        error_msg = 'Number of subjects contained in model does not match number of traces.'
-        raise ValueError(error_msg)
-
-    # set up figure
-    fig, axs = plt.subplots(1,
-                            n_comparisons,
-                            figsize=cm2inch(18,9*n_comparisons),
-                            dpi=300,
-                            sharey=True,
-                            sharex=True)
-
-    # plot
-    for r in range(n_subjects):
-
-        # extract trace
-        trace = model_traces[r]
-
-        # plot comparisons
-        for c, comparison in enumerate(comparisons):
-
-            if n_comparisons > 1:
-                ax = axs[c]
-            else:
-                ax = axs
-
-            # compute trace difference
-            trace_diff = (
-                trace['{}_{}'.format(parameter, comparison[0])].ravel() -
-                trace['{}_{}'.format(parameter, comparison[1])].ravel())
-
-            # plot trace difference
-            trace_diff_hpd = hpd(trace_diff, alpha=hpd_alpha)
-            trace_diff_mean = np.mean(trace_diff)
-            if (trace_diff_hpd[0] < 0) & (trace_diff_hpd[1] > 0):
-                ax.plot(trace_diff_hpd, [r, r], lw=3, color='red')
-                ax.scatter(x=trace_diff_mean, y=r, color='red', s=100)
-            else:
-                ax.plot(trace_diff_hpd, [r, r], lw=3, color='k')
-                ax.scatter(x=trace_diff_mean, y=r, color='k', s=100)
-
-            # set title
-            ax.set_title('{} - {}'.format(*comparison), fontsize=fontsize)
-
-            # add 0-line
-            ax.axvline(0, color='red', ls='--', alpha=0.5)
-
-            # set y-labels
-            ax.set_ylim(-1, n_subjects)
-            ax.set_yticks(np.arange(n_subjects))
-            if c == 0:
-                ax.set_yticklabels(subjects, fontsize=fontsize)
-                ax.set_ylabel('Subject', fontsize=fontsize)
-
-            # set x-label
-            if parameter in ['sigma', 'gamma', 'tau']:
-                ax.set_xlabel(r'$\{}$'.format(parameter),
-                              fontsize=fontsize * 1.2)
-            else:
-                ax.set_xlabel(r'${}$'.format(parameter), fontsize=fontsize)
-
-    # autmomatic cleaning
-    fig.tight_layout()
-
-    return fig, axs
-
-
 def extract_range(x, extra=0.25, bound=(None, None)):
     """
     Extract range of x-data
@@ -1658,7 +1221,7 @@ def plot_behaviour_associations(data,
                                 fontsize=7,
                                 regression=True,
                                 annotate=True,
-                                figsize=cm2inch(18, 10),
+                                figsize=cm2inch(18, 7),
                                 limits={
                                     'p_choose_best': (0, 1),
                                     'rt': (0, None),
@@ -1726,14 +1289,14 @@ def plot_behaviour_associations(data,
 
     fig = plt.figure(figsize=figsize, dpi=330)
 
-    ax00 = plt.subplot2grid((3, 3), (0, 0), rowspan=1)
-    ax10 = plt.subplot2grid((3, 3), (1, 0), rowspan=2)
+    ax00 = plt.subplot2grid((8, 3), (0, 0), rowspan=3)
+    ax10 = plt.subplot2grid((8, 3), (2, 0), rowspan=5)
 
-    ax01 = plt.subplot2grid((3, 3), (0, 1), rowspan=1)
-    ax11 = plt.subplot2grid((3, 3), (1, 1), rowspan=2)
+    ax01 = plt.subplot2grid((8, 3), (0, 1), rowspan=3)
+    ax11 = plt.subplot2grid((8, 3), (2, 1), rowspan=5)
 
-    ax02 = plt.subplot2grid((3, 3), (0, 2), rowspan=1)
-    ax12 = plt.subplot2grid((3, 3), (1, 2), rowspan=2)
+    ax02 = plt.subplot2grid((8, 3), (0, 2), rowspan=3)
+    ax12 = plt.subplot2grid((8, 3), (2, 2), rowspan=5)
 
     # add default limits
     for key, lim in zip(['p_choose_best', 'rt', 'gaze_influence'],
@@ -1823,17 +1386,17 @@ def plot_behaviour_associations(data,
     # Marginal histograms
     ax00.hist(subject_summary['rt']['mean'],
               bins=np.linspace(rt_range[0], rt_range[1], nbins + 1),
-              color='k')
+              color='C0')
 
     ax01.hist(subject_summary['best_chosen']['mean'],
               bins=np.linspace(best_chosen_range[0], best_chosen_range[1],
                                nbins + 1),
-              color='k')
+              color='C0')
 
     ax02.hist(subject_summary['gaze_influence'],
               bins=np.linspace(gaze_influence_range[0],
                                gaze_influence_range[1], nbins + 1),
-              color='k')
+              color='C0')
 
     hist_lim = np.max(
         [ax00.get_ylim()[1],
@@ -1842,16 +1405,16 @@ def plot_behaviour_associations(data,
 
     # Labels
     for label, ax in zip(list('ABC'), [ax00, ax01, ax02]):
-        ax.text(-0.35,
-                1.05,
+        ax.text(-0.45,
+                1.1,
                 label,
                 transform=ax.transAxes,
                 fontsize=fontsize,
                 fontweight='bold',
                 va='top')
     for label, ax in zip(list('DEF'), [ax10, ax11, ax12]):
-        ax.text(-0.35,
-                1.05,
+        ax.text(-0.45,
+                1.025,
                 label,
                 transform=ax.transAxes,
                 fontsize=fontsize,
@@ -1864,7 +1427,7 @@ def plot_behaviour_associations(data,
                                                  ['Mean RT (s)', 'P(choose best)', 'Gaze influence\non P(choice | value)'],
                                                  [rt_range, best_chosen_range, gaze_influence_range]) :
         ax.set_xticks(ax_xticks)
-        ax.set_xticklabels(np.round(ax_xticks, 1), fontsize=fontsize)
+        ax.set_xticklabels(ax_xticks)
         ax.set_xlim(ax_xlim)
         ax.set_ylim([0, hist_lim])
         ax.set_yticks([0, hist_lim])
@@ -2256,7 +1819,7 @@ def plot_individual_fit(observed,
 
     fig.tight_layout()
 
-    return fig, axs
+    return fig
 
 
 def behaviour_parameter_correlation(estimates,
@@ -2447,13 +2010,13 @@ def plot_posterior(samples,
     return ax
 
 
-def plot_node_hierarchical(model,
+def compare_parameters_hierarchical(model,
                            parameters=['v', 'gamma', 's', 'tau'],
                            comparisons=None,
                            xlimits=dict(v=dict(dist=(0, 1),
                                                delta=(-0.5, 0.5)),
                                         gamma=dict(dist=(-1, 1),
-                                                   delta=(-0.5, 1.5)),
+                                                   delta=(-1.5, 1.5)),
                                         s=dict(dist=(0, 0.5),
                                                delta=(-0.1, 0.1)),
                                         tau=dict(dist=(0, 3),
@@ -2608,6 +2171,175 @@ def plot_node_hierarchical(model,
     return fig, axs
 
 
+def compare_parameters_individual(model,
+                         parameters,
+                         comparisons=None,
+                         xlimits=dict(v=dict(dist=(0, 1),
+                                             delta=(-0.5, 0.5)),
+                                      gamma=dict(dist=(-1, 1),
+                                                 delta=(-1.5, 1.5)),
+                                      s=dict(dist=(0, 0.5),
+                                             delta=(-0.1, 0.1)),
+                                      tau=dict(dist=(0, 3),
+                                               delta=(-1, 1))),
+                         fontsize=7):
+    """Summary
+
+    Args:
+        model (TYPE): Description
+        parameters (TYPE): Description
+        comparisons (None, optional): Description
+
+    Returns:
+        TYPE: Description
+    """
+    parameter_names = {'v': 'v',
+                       'gamma': r'$\gamma$',
+                       's': r'$\sigma$',
+                       'tau': r'$\tau$'}
+
+    if comparisons is None:
+        comparisons = []
+    n_params = len(parameters)
+    n_comps = len(comparisons)
+
+    subjects = model.data['subject'].unique().astype(int)
+    summaries = [summary(trace) for trace in model.trace]
+
+    fig = plt.figure(figsize=cm2inch(
+        4.5 * (n_comps + 1), 2.25 * 1.5 * n_params), dpi=330)
+
+    axs = {}
+
+    for p, parameter in enumerate(parameters):
+
+        # Distributions
+        axs[(p, 0)] = plt.subplot2grid(
+            (n_params, n_comps + 2), (p, 0), rowspan=1, colspan=2)
+
+        if model.design[parameter]['dependence'] is not None:
+            for c, condition in enumerate(model.design[parameter]['conditions']):
+                means = [summaries[i].loc[parameter + '_' + condition + '__0_0', 'mean']
+                         for i in subjects]
+                hpdlower = [summaries[i].loc[parameter + '_' + condition + '__0_0', 'hpd_2.5']
+                            for i in subjects]
+                hpdupper = [summaries[i].loc[parameter + '_' + condition + '__0_0', 'hpd_97.5']
+                            for i in subjects]
+                axs[(p, 0)].scatter(means,
+                                    subjects,
+                                    #'o',
+                                    s=fontsize,
+                                    color='C{}'.format(c),
+                                    label=condition)
+                axs[(p, 0)].hlines(y=subjects, xmin=hpdlower,
+                                   xmax=hpdupper, alpha=0.75, zorder=-2)
+        else:
+            means = [summaries[i].loc[parameter + '__0_0', 'mean']
+                     for i in subjects]
+            hpdlower = [summaries[i].loc[parameter + '__0_0', 'hpd_2.5']
+                        for i in subjects]
+            hpdupper = [summaries[i].loc[parameter + '__0_0', 'hpd_97.5']
+                        for i in subjects]
+            plt.scatter(means,
+                        subjects,
+                        #'o',
+                        s=fontsize)
+            axs[(p, 0)].hlines(y=subjects, xmin=hpdlower,
+                               xmax=hpdupper, alpha=0.75, zorder=-2)
+
+        sns.despine(ax=axs[(p, 0)], top=True, right=True)
+
+        # Labels & Legends
+        if model.design[parameter]['dependence'] is not None:
+            axs[(p, 0)].legend(frameon=False,
+                               fontsize=fontsize, handletextpad=-0.5, borderpad=-0.5)
+        axs[(p, 0)].set_title(parameter_names[parameter], fontsize=fontsize)
+        axs[(p, 0)].set_ylabel('Subject', fontsize=fontsize)
+        axs[(p, 0)].set_yticks([])
+        axs[(p, 0)].set_xlabel('Sample value', fontsize=fontsize)
+        axs[(p, 0)].set_xlim(xlimits[parameter]['dist'])
+
+        # Comparisons
+        for c, comparison in enumerate(comparisons):
+            axs[(p, c + 1)] = plt.subplot2grid((n_params, n_comps + 2),
+                                               (p, c + 2), rowspan=1, colspan=1)
+            # Check if parameter has dependence
+            if model.design[parameter]['dependence'] is not None:
+                # Then, if both conditions are present, plot posterior of the difference
+                c0_present = (
+                    comparison[0] in model.design[parameter]['conditions'])
+                c1_present = (
+                    comparison[1] in model.design[parameter]['conditions'])
+                if c0_present & c1_present:
+                    differences = np.array([(model.trace[i].get_values(parameter + '_' + comparison[0]) -
+                                             model.trace[i].get_values(parameter + '_' + comparison[1]))
+                                            for i in subjects])[:, :, 0, 0]
+
+                    means = np.mean(differences, axis=1)
+                    hpdlower, hpdupper = hpd(differences.T).T
+
+                    zero_excluded = np.array([(low > 0) or (high < 0)
+                                              for low, high in zip(hpdlower, hpdupper)]).astype(int)
+                    colors = np.array(['red', 'green'])[zero_excluded]
+                    axs[(p, c + 1)].scatter(means,
+                                            subjects,
+                                            color=colors,
+                                            s=fontsize)
+                    axs[(p, c + 1)].hlines(y=subjects,
+                                           xmin=hpdlower,
+                                           xmax=hpdupper,
+                                           alpha=0.75,
+                                           zorder=-2)
+                    axs[(p, c + 1)].set_title(comparison[0] +
+                                              ' - ' + comparison[1], fontsize=fontsize)
+                    axs[(p, c + 1)].set_ylabel('Subject', fontsize=fontsize)
+                    axs[(p, c + 1)].set_yticks([])
+
+                    axs[(p, c + 1)].axvline(0, color='crimson',
+                                            linewidth=1, alpha=0.5)
+                    sns.despine(ax=axs[(p, c + 1)], top=True, right=True)
+                    axs[(p, c + 1)].tick_params(axis='both', which='major',
+                                                labelsize=fontsize)
+                    axs[(p, c + 1)].set_xlim(xlimits[parameter]['delta'])
+                else:
+                    # Otherwise, state that at least one condition is not present.
+                    axs[p, c + 1].text(0.5, 0.5, ' '.join(['Condition(s) not present:\n'] +
+                                                          [c for c in comparison
+                                                           if c not in model.design[parameter]['conditions']]),
+                                       fontsize=fontsize,
+                                       bbox=dict(boxstyle='square',
+                                                 ec='black',
+                                                 fc='lightgray',
+                                                 alpha=0.5),
+                                       ha='center', va='center')
+                    axs[p, c + 1].axis('off')
+            else:
+                # Or that the parameter has no dependencies.
+                axs[(p, c + 1)].text(0.5, 0.5, 'Parameter has no dependencies.',
+                                     fontsize=fontsize,
+                                     bbox=dict(boxstyle='square',
+                                               ec='black',
+                                               fc='lightgray',
+                                               alpha=0.5),
+                                     ha='center', va='center')
+                axs[p, c + 1].axis('off')
+            axs[(p, c + 1)].set_xlabel(r'$\delta$' +
+                                       parameter_names[parameter], fontsize=fontsize)
+            
+
+    # Panel Labels
+    from string import ascii_uppercase
+    for label, ax in zip(list(ascii_uppercase), [axs[(p, 0)] for p in range(n_params)]):
+        ax.text(-0.1, 1.2, label, transform=ax.transAxes,
+                fontsize=fontsize, fontweight='bold', va='top')
+        ax.tick_params(axis='both', which='major', labelsize=fontsize)   
+
+    fig.tight_layout()
+
+    return fig, axs
+
+
+
 def traceplot(trace, varnames='all', combine_chains=False,
               ref_val={}):
     """
@@ -2680,4 +2412,29 @@ def traceplot(trace, varnames='all', combine_chains=False,
                               color='black', linewidth=2)
 
     fig.tight_layout()
+    return fig, axs
+
+
+def compare_parameters(model, parameters, comparisons=None, **kwargs):
+    """[summary]
+    
+    Args:
+        model ([type]): [description]
+        parameters ([type]): [description]
+        comparisons ([type], optional): [description]. Defaults to None.
+    
+    Raises:
+        ValueError: [description]
+    
+    Returns:
+        [type]: [description]
+    """
+    if model.type == 'individual':
+        fig, axs = compare_parameters_individual(
+            model=model, parameters=parameters, comparisons=comparisons, **kwargs)
+    elif model.type == 'hierarchical':
+        fig, axs = compare_parameters_hierarchical(
+            model=model, parameters=parameters, comparisons=comparisons, **kwargs)
+    else:
+        raise ValueError('Model type not understood.')
     return fig, axs
