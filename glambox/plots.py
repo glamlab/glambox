@@ -1658,7 +1658,7 @@ def plot_behaviour_associations(data,
                                 fontsize=7,
                                 regression=True,
                                 annotate=True,
-                                figsize=cm2inch(18, 7),
+                                figsize=cm2inch(18, 10),
                                 limits={
                                     'p_choose_best': (0, 1),
                                     'rt': (0, None),
@@ -1726,14 +1726,14 @@ def plot_behaviour_associations(data,
 
     fig = plt.figure(figsize=figsize, dpi=330)
 
-    ax00 = plt.subplot2grid((7, 3), (0, 0), rowspan=2)
-    ax10 = plt.subplot2grid((7, 3), (2, 0), rowspan=5)
+    ax00 = plt.subplot2grid((3, 3), (0, 0), rowspan=1)
+    ax10 = plt.subplot2grid((3, 3), (1, 0), rowspan=2)
 
-    ax01 = plt.subplot2grid((7, 3), (0, 1), rowspan=2)
-    ax11 = plt.subplot2grid((7, 3), (2, 1), rowspan=5)
+    ax01 = plt.subplot2grid((3, 3), (0, 1), rowspan=1)
+    ax11 = plt.subplot2grid((3, 3), (1, 1), rowspan=2)
 
-    ax02 = plt.subplot2grid((7, 3), (0, 2), rowspan=2)
-    ax12 = plt.subplot2grid((7, 3), (2, 2), rowspan=5)
+    ax02 = plt.subplot2grid((3, 3), (0, 2), rowspan=1)
+    ax12 = plt.subplot2grid((3, 3), (1, 2), rowspan=2)
 
     # add default limits
     for key, lim in zip(['p_choose_best', 'rt', 'gaze_influence'],
@@ -1823,17 +1823,17 @@ def plot_behaviour_associations(data,
     # Marginal histograms
     ax00.hist(subject_summary['rt']['mean'],
               bins=np.linspace(rt_range[0], rt_range[1], nbins + 1),
-              color='C0')
+              color='k')
 
     ax01.hist(subject_summary['best_chosen']['mean'],
               bins=np.linspace(best_chosen_range[0], best_chosen_range[1],
                                nbins + 1),
-              color='C0')
+              color='k')
 
     ax02.hist(subject_summary['gaze_influence'],
               bins=np.linspace(gaze_influence_range[0],
                                gaze_influence_range[1], nbins + 1),
-              color='C0')
+              color='k')
 
     hist_lim = np.max(
         [ax00.get_ylim()[1],
@@ -1842,16 +1842,16 @@ def plot_behaviour_associations(data,
 
     # Labels
     for label, ax in zip(list('ABC'), [ax00, ax01, ax02]):
-        ax.text(-0.45,
-                1.1,
+        ax.text(-0.35,
+                1.05,
                 label,
                 transform=ax.transAxes,
                 fontsize=fontsize,
                 fontweight='bold',
                 va='top')
     for label, ax in zip(list('DEF'), [ax10, ax11, ax12]):
-        ax.text(-0.45,
-                1.025,
+        ax.text(-0.35,
+                1.05,
                 label,
                 transform=ax.transAxes,
                 fontsize=fontsize,
@@ -1864,7 +1864,7 @@ def plot_behaviour_associations(data,
                                                  ['Mean RT (s)', 'P(choose best)', 'Gaze influence\non P(choice | value)'],
                                                  [rt_range, best_chosen_range, gaze_influence_range]) :
         ax.set_xticks(ax_xticks)
-        ax.set_xticklabels(ax_xticks)
+        ax.set_xticklabels(np.round(ax_xticks, 1), fontsize=fontsize)
         ax.set_xlim(ax_xlim)
         ax.set_ylim([0, hist_lim])
         ax.set_yticks([0, hist_lim])
