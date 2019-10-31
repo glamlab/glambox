@@ -15,14 +15,14 @@ class GLAM(object):
     fit indices and predictions.
     """
 
-    def __init__(self, data=None, label=None):
+    def __init__(self, data=None, name=None):
         self.data = data
         if self.data is not None:
             self.n_items = len(
                 [col for col in data.columns if col.startswith('item_value_')])
         else:
             self.n_items = None
-        self.label = label
+        self.name = name
 
         self.parameters = dict()
 
@@ -243,6 +243,11 @@ class GLAM(object):
                                  kind=kind,
                                  design=self.design,
                                  **kwargs)
+        if kind == 'hierarchical':
+            self.model.name = self.name
+        else:
+            for model in self.model:
+                model.name = self.name
 
     def fit(self, method='MCMC', **kwargs):
         """
