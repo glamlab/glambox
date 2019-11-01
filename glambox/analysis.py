@@ -3,6 +3,7 @@
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
+from pymc3 import hpd, summary
 
 
 def compute_gaze_influence_score(data, n_items=None):
@@ -350,3 +351,144 @@ def aggregate_group_level_data(data, n_items):
                                    ('gaze_influence')]].copy()
     group_summary.columns = ['Mean RT', 'P(choose best)', 'Gaze Influence']
     return group_summary.T
+
+
+
+def compare_parameters(model, parameters, comparisons=None, **kwargs):
+    """Perform comparisons between parameters and return statistics as DataFrame
+    
+    Args:
+        model ([type]): [description]
+        parameters ([type]): [description]
+        comparisons ([type], optional): [description]. Defaults to None.
+    
+    Raises:
+        ValueError: [description]
+    
+    Returns:
+        pandas.DataFrame: Distribution statistics of parameter differences.
+    """
+    if model.type == 'individual':
+        comparison_df = compare_parameters_individual(
+            model=model, parameters=parameters, comparisons=comparisons)
+    elif model.type == 'hierarchical':
+        comparison_df = compare_parameters_hierarchical(
+            model=model, parameters=parameters, comparisons=comparisons)
+    else:
+        raise ValueError('Model type not understood.')
+    return comparison_df
+
+
+def compare_parameters_hierarchical(model,
+                           parameters=['v', 'gamma', 's', 'tau'],
+                           comparisons=None):
+    """Compute comparisons of group level parameters between groups / conditions.
+    
+    Args:
+        model (glambox.GLAM): Fitted GLAM instance
+        parameters (list, optional): List of parameters. Defaults to ['v', 'gamma', 's', 'tau'].
+        comparisons (list of tuples, optional): List of comparisons to perform. Must be a list of tuples, e.g., `[('A', 'B'), ('A', 'C')]`. Defaults to None.
+    
+    Returns:
+        pandas.DataFrame: Distribution statistics of group level parameter differences.
+    """
+
+    if comparisons is None:
+        comparisons = []
+    n_params = len(parameters)
+    n_comps = len(comparisons)
+
+    comparison_df = []
+
+    for p, parameter in enumerate(parameters):
+
+        # Comparisons
+        for c, comparison in enumerate(comparisons):
+            comparison_string = '{}-{}'.format(*comparison)
+            df_pc = pd.DataFrame(dict(parameter=parameter, comparison=comparison_string),
+                                      index=[0])
+            # Check if parameter has dependence
+            if model.design[parameter]['dependence'] is not None:
+                # Then, if both conditions are present, compute posterior of the difference
+                c0_present = (comparison[0] in model.design[parameter]['conditions'])
+                c1_present = (comparison[1] in model.design[parameter]['conditions'])
+                if c0_present & c1_present:
+                    difference = (
+                        model.trace[0].get_values(parameter + '_' +
+                                                  comparison[0] + '_mu') -
+                        model.trace[0].get_values(parameter + '_' +
+                                                  comparison[1] + '_mu'))
+                    
+                    hpd_lower, hpd_upper = hpd(difference, alpha=0.05)
+                    df_pc['hpd_2.5'] = hpd_lower
+                    df_pc['hpd_97.5'] = hpd_upper
+                    df_pc['mean'] = np.mean(difference)
+                    df_pc['p>0'] = np.mean(difference > 0)
+                else:
+                    # Otherwise, state that at least one condition is not present.
+                    df_pc['warning'] = 'At least one condition is missing.'
+            else:
+                # Or that the parameter has no dependencies.
+                df_pc['warning'] = 'Parameter has no dependencies.'
+            
+            comparison_df.append(df_pc)
+    
+    comparison_df = pd.concat(comparison_df, sort=False).reset_index(drop=True)
+
+    return comparison_df
+
+
+def compare_parameters_individual(model,
+                                  parameters,
+                                  comparisons=None):
+
+    if comparisons is None:
+        comparisons = []
+    n_params = len(parameters)
+    n_comps = len(comparisons)
+
+    subjects = model.data['subject'].unique().astype(int)
+    summaries = [summary(trace) for trace in model.trace]
+
+    comparison_df = []
+    
+    for p, parameter in enumerate(parameters):
+
+        # Comparisons
+        for c, comparison in enumerate(comparisons):
+            comparison_string = '{}-{}'.format(*comparison)
+            df_pc = pd.DataFrame(dict(subject=subjects, parameter=parameter, comparison=comparison_string),
+                                 index=subjects)
+
+            # Check if parameter has dependence
+            if model.design[parameter]['dependence'] is not None:
+                # Then, if both conditions are present, plot posterior of the difference
+                c0_present = (
+                    comparison[0] in model.design[parameter]['conditions'])
+                c1_present = (
+                    comparison[1] in model.design[parameter]['conditions'])
+                if c0_present & c1_present:
+                    differences = np.array([(model.trace[i].get_values(parameter + '_' + comparison[0]) -
+                                             model.trace[i].get_values(parameter + '_' + comparison[1]))
+                                            for i in subjects])[:, :, 0, 0]
+
+                    means = np.mean(differences, axis=1)
+                    hpdlower, hpdupper = hpd(differences.T, alpha=0.05).T
+                    plarger0 = np.mean(differences > 0, axis=1)
+                    df_pc['mean'] = means
+                    df_pc['hpd_2.5'] = hpdlower
+                    df_pc['hpd_97.5'] = hpdupper
+                    df_pc['p>0'] = plarger0
+
+                else:
+                    # Otherwise, state that at least one condition is not present.
+                    df_pc['warning'] = 'At least one condition is missing.'
+            else:
+                # Or that the parameter has no dependencies.
+                df_pc['warning'] = 'Parameter has no dependencies.'
+
+            comparison_df.append(df_pc)
+    
+    comparison_df = pd.concat(comparison_df, sort=False).sort_values('subject').reset_index(drop=True)
+
+    return comparison_df
