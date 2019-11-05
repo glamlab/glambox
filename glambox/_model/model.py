@@ -59,22 +59,22 @@ class GLAM(object):
         Data is added to any existing attached dataframes,
         which allows blockwise simulation of multiple groups.
 
-        Input
-        ---
-        kind : string, optional
+        Parameters
+        ----------
+        kind : str, optional
             Should be one of ['individual', 'hierarchical', 'pooled'],
             defaults to 'hierarchical'
         
-        n_individuals : integer, optional
+        n_individuals : int, optional
             number of individuals to be added for this condition
         
-        n_trials : integer, optional
+        n_trials : int, optional
             number of trials per individual
         
-        n_items : integer, optional
+        n_items : int, optional
             number of items per trial
         
-        individual_idx : array of integers, optional
+        individual_idx : array of ints, optional
             individual indices to use (for within individual design simulation)
             defaults to continuous participant numbering across conditions
         
@@ -95,7 +95,7 @@ class GLAM(object):
         error_weight : float, optional
             range: [0, 1],
             probability of simulating error trial
-            with random chocie and uniform RT
+            with random choice and uniform RT
         
         error_range : int tuple of length 2, optional
             range of error RTs
@@ -103,15 +103,16 @@ class GLAM(object):
         value_range : tuple of length 2, optional
             range of item value ratings to be simulated
         
-        label : string, optional
+        label : str, optional
             condition label. defaults "to condition_n"
         
-        seed : integer, optional
+        seed : int, optional
             np.random.seed(argument)
 
         Returns 
-        ---
-        Adds data to GLAM model instance
+        -------
+        None 
+            Adds data to GLAM model instance
         """
 
         # Set random seed
