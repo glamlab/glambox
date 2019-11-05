@@ -6,65 +6,7 @@ from scipy.stats import mode
 import pymc3 as pm
 
 
-def compare(models, **kwargs):
-    """Compares multiple models.
-    
-    Args:
-        models (list): List of fitted GLAM model instances.
-        **kwargs (optionsl): Additional keyword arguments to be passed to pymc3.compare
-    
-    Returns:
-        pandas.DataFrame containing information criteria for each model.
-    """
 
-    # Check that more than one model is entered
-    assert len(models) > 1, "Must enter at least two models."
-
-    # Check model names, create some if there are none
-    for m, model in enumerate(models):
-        if model.name is None:
-            model.name = 'model_{}'.format(m)
-
-    # Check that all models have the same type:
-    assert all([model.type == models[0].type for model in models]
-               ), "Models have different types and cannot be compared."
-
-    # Check that all models have the same number of PyMC3 models and traces:
-    assert all([len(model.trace) == len(models[0].trace) for model in models]
-               ), "Model instances have different numbers of subjects and cannot be compared."
-
-    if models[0].type == 'hierarchical':
-        df = pm.compare(model_dict={model.model: model.trace[0]
-                                    for model in models},
-                        **kwargs)
-        # read out column names
-        cols = df.columns.tolist()
-        # include model column
-        df.index.name = 'model'
-        df = df.reset_index()
-        # reorder columns so that model comes first
-        df = df[['model'] + cols]
-
-    elif models[0].type == 'individual':
-        df = []
-        for s in range(len(models[0].trace)):
-            compare_df_s = pm.compare(model_dict={model.model[s]: model.trace[s]
-                                                  for model in models},
-                                      **kwargs)
-            # read out column names
-            cols = compare_df_s.columns.tolist()
-            # include subject column
-            compare_df_s['subject'] = s
-            # include model column
-            compare_df_s.index.name = 'model'
-            compare_df_s = compare_df_s.reset_index()
-            # reorder columns so that subject and model come first
-            compare_df_s = compare_df_s[['subject', 'model'] + cols]
-            df.append(compare_df_s)
-        df = pd.concat(df).reset_index(drop=True)
-
-    return df
-    
 
 
 def format_data(df):

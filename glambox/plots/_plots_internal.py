@@ -1,6 +1,7 @@
 #!/usr/bin/python
 import numpy as np
 import pandas as pd
+from pymc3.stats import hpd, summary
 import matplotlib.pyplot as plt
 import seaborn as sns
 import statsmodels.api as sm
@@ -1563,14 +1564,7 @@ def compare_parameters_hierarchical(model,
 def compare_parameters_individual(model,
                          parameters,
                          comparisons=None,
-                         xlimits=dict(v=dict(dist=(0, 1),
-                                             delta=(-0.5, 0.5)),
-                                      gamma=dict(dist=(-1, 1),
-                                                 delta=(-1.5, 1.5)),
-                                      s=dict(dist=(0, 0.5),
-                                             delta=(-0.1, 0.1)),
-                                      tau=dict(dist=(0, 3),
-                                               delta=(-1, 1))),
+                         xlimits=None,
                          fontsize=7):
     """Summary
 
@@ -1586,6 +1580,20 @@ def compare_parameters_individual(model,
                        'gamma': r'$\gamma$',
                        's': r'$\sigma$',
                        'tau': r'$\tau$'}
+
+    # set default and update xlimits
+    if xlimits is None:
+        xlimits = {}
+    xlimits_default = dict(v=dict(dist=(0, 1),
+                                             delta=(-0.5, 0.5)),
+                                      gamma=dict(dist=(-1, 1),
+                                                 delta=(-1.5, 1.5)),
+                                      s=dict(dist=(0, 0.5),
+                                             delta=(-0.1, 0.1)),
+                                      tau=dict(dist=(0, 3),
+                                               delta=(-1, 1)))
+    xlimits_default.update(xlimits)
+    xlimits = xlimits_default
 
     if comparisons is None:
         comparisons = []

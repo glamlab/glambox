@@ -1,5 +1,4 @@
 #!/usr/bin/python
-
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
@@ -93,6 +92,8 @@ def compute_gaze_influence_score(data, n_items=None):
     gaze_influence_score = (tmp[True] - tmp[False]).values
 
     return gaze_influence_score
+
+
 
 
 def compute_mean_rt(df):
@@ -272,111 +273,6 @@ def se(series):
     se = series.std() / np.sqrt(n)
     return se
 
-
-def aggregate_subject_level_data(data, n_items):
-    """
-    Compute subject-level response characteristics on:
-    RT, P(choose best), gaze influence score
-
-    The gaze influence score is defined
-    as the average difference between
-    the corrected choice probability
-    of all positive and negative relative gaze values
-    (see manuscript)
-
-    Input
-    ---
-    df : dataframe
-        aggregate response data
-
-    n_items : int
-        number of choice alternatives in the data
-
-    Returns
-    ---
-    df : dataframe
-        df of subject-level response characteristics
-    """
-    data = data.copy()
-
-    # add best chosen variable
-    data = add_best_chosen(data)
-
-    # Summarize variables
-    subject_summary = data.groupby('subject').agg({
-        'rt': ['mean', std, 'min', 'max', se, q1, q3, iqr],
-        'best_chosen':
-        'mean'
-    })
-    # Influence of gaze on P(choose left)
-    subject_summary['gaze_influence'] = compute_gaze_influence_score(
-        data, n_items=n_items)
-
-    # subject_summary['dataset'] = data.groupby('subject')['dataset'].head(1).values
-
-    return subject_summary
-
-
-def aggregate_group_level_data(data, n_items):
-    """
-    Compute group-level response characteristics on:
-    RT, P(choose best), gaze influence score
-
-    The gaze influence score is defined
-    as the average difference between
-    the corrected choice probability
-    of all positive and negative relative gaze values
-    (see manuscript)
-
-    Input
-    ---
-    df : dataframe
-        aggregate response data
-
-    n_items : int
-        number of choice alternatives in the data
-
-    Returns
-    ---
-    df : dataframe
-        df of group-level response characteristics
-    """
-    subject_summary = aggregate_subject_level_data(data, n_items)
-    group_summary = subject_summary.agg({
-        ('rt', 'mean'): ['mean', std, 'min', 'max', se, iqr],
-        ('best_chosen', 'mean'): ['mean', std, 'min', 'max', se, iqr],
-        'gaze_influence': ['mean', std, 'min', 'max', se, iqr]
-    })
-    group_summary = group_summary[[('rt', 'mean'), ('best_chosen', 'mean'),
-                                   ('gaze_influence')]].copy()
-    group_summary.columns = ['Mean RT', 'P(choose best)', 'Gaze Influence']
-    return group_summary.T
-
-
-
-def compare_parameters(model, parameters, comparisons=None, **kwargs):
-    """Perform comparisons between parameters and return statistics as DataFrame
-    
-    Args:
-        model ([type]): [description]
-        parameters ([type]): [description]
-        comparisons ([type], optional): [description]. Defaults to None.
-    
-    Raises:
-        ValueError: [description]
-    
-    Returns:
-        pandas.DataFrame: Distribution statistics of parameter differences.
-    """
-    if model.type == 'individual':
-        comparison_df = compare_parameters_individual(
-            model=model, parameters=parameters, comparisons=comparisons)
-    elif model.type == 'hierarchical':
-        comparison_df = compare_parameters_hierarchical(
-            model=model, parameters=parameters, comparisons=comparisons)
-    else:
-        raise ValueError('Model type not understood.')
-    return comparison_df
 
 
 def compare_parameters_hierarchical(model,
