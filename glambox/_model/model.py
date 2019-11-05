@@ -115,7 +115,7 @@ class GLAM(object):
         Returns 
         -------
         None 
-            Adds data to GLAM model instance
+            Adds `data` to GLAM model instance
         """
 
         # Set random seed
@@ -225,7 +225,7 @@ class GLAM(object):
                    within_dependent=[],
                    **kwargs):
         """
-        Create GLAM PyMC3 model
+        Build the GLAM PyMC3 model, specifying model kind and dependencies.
 
         Parameters
         ----------
@@ -252,7 +252,7 @@ class GLAM(object):
         Returns
         -------
         None
-            Adds PyMC3 model, depends_on, within_dependent and design 
+            Adds PyMC3 `model`, `depends_on`, `within_dependent` and `design` 
             to GLAM model object
         """
         self.type = kind
@@ -271,19 +271,21 @@ class GLAM(object):
 
     def fit(self, method='MCMC', **kwargs):
         """
-        Fit GLAM models
+        Perform parameter estimation of the model.
 
-        Input
-        ---
+        Parameters
+        ----------
         method : string ['MCMC', 'VI'], optional
             specifies fitting method to use,
             can be either 'MCMC' for MCMC-sampling
-            or 'VI' for variantional inference
+            or 'VI' for variational inference.
+            Defaults to 'MCMC'.
 
         Returns
-        ---
-        Adds estimated parameter trace as well as estimates
-        to GLAM model object
+        -------
+        None
+            Adds `trace` and well as `estimates`
+            to GLAM model object
         """
         self.trace = fit_models(self.model, method=method, **kwargs)
         self.estimates = get_estimates(self)
@@ -291,11 +293,12 @@ class GLAM(object):
     def compute_waic(self):
         """
         Compute WAIC for all appended
-        PyMC3 models 
+        PyMC3 models.
 
         Returns
-        ---
-        Adds WAIC to GLAM model object
+        -------
+        None
+            Adds WAIC to GLAM model object.
         """
         if not isinstance(self.model, list):
             self.waic = pm.waic(trace=self.trace, model=self.model)
@@ -313,17 +316,19 @@ class GLAM(object):
         """
         Predict choices and RTs for included data
 
-        Input
-        ---
+        Parameters
+        ----------
         n_repeats : int, optional
-            number of repeats of each trial
+            Number of repeats of each trial
             included in data during prediction
+            Defaults to 1.
 
         boundary : float, optional
-            magnitude of decision boundary
+            Magnitude of decision boundary.
+            Defaults to 1.0
 
         error_weight : float, optional
-            float between [0,1],
+            float between [0, 1],
             defaults to 0.05
             determining probability that choice and
             RT are drawn according to a unifrom
@@ -331,10 +336,12 @@ class GLAM(object):
             (see manuscript)
 
         verbose : bool, optional
+            Toggle verbosity.
             
         Returns
-        ---
-        Adds predicted data to GLAM model object
+        -------
+        None
+            Adds `predictions` to GLAM model object
         """
         self.prediction = predict(self,
                                   n_repeats=n_repeats,
@@ -344,18 +351,21 @@ class GLAM(object):
 
     def exchange_data(self, new_data, verbose=True):
         """
-        Exchange GLAM model data
+        Exchange GLAM model data.
+        Useful for out-of-sample predictions using fitted parameters.
 
-        Input
-        ---
-        new_data : dataframe
+        Parameters
+        ----------
+        new_data : pandas.DataFrame
             new data to exchange old data with
 
         verbose : bool, optional
+            Toggle verbosity.
             
         Returns
-        ---
-        new_data replaces data attribute of GLAM model object
+        -------
+        None
+            `new_data` replaces `data` attribute of GLAM model object
         """
         if verbose:
             print(
