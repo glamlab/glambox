@@ -383,12 +383,12 @@ def make_models(df,
     Create PyMC3 GLAM model instances,
     given a response dataset
 
-    Input
-    ---
-    df : dataframe
+    Parameters
+    ----------
+    df : pandas.DataFrame
         response data
 
-    kind : string
+    kind : str
         specifying the assumed parameter structure:
         'pooled':
             one single parameter set for all
@@ -402,6 +402,7 @@ def make_models(df,
             group-level distributions
 
     verbose : bool, optional
+        Toggle verbosity.
 
     design : dict, optional
         dict with one entry per model parameter,
@@ -409,7 +410,7 @@ def make_models(df,
         (see utils.get_design)
 
     Returns
-    ---
+    -------
     PyMC3 GLAM model instances
     """
 
@@ -481,11 +482,11 @@ def generate_subject_model_parameters(parameter,
                                       testval,
                                       within_dependent=False):
     """
-    Generate a subject-level model parameter
+    Generate a subject-level model parameter.
 
-    Input
-    ---
-    parameter : string
+    Parameters
+    ----------
+    parameter : str
         one of ['v', 'gamma', 's', 'tau']
 
     design : dict
@@ -511,7 +512,7 @@ def generate_subject_model_parameters(parameter,
         defaults to False
 
     Returns
-    ---
+    -------
     PyMC3 parameter variable
     """
 
@@ -599,8 +600,8 @@ def make_subject_model(rts,
     """
     Create subject-level PyMC3 model
 
-    Input
-    ---
+    Parameters
+    ----------
     rts : array_like, int or float
         response times in seconds per trial
 
@@ -617,7 +618,7 @@ def make_subject_model(rts,
         shape: (trials x alternatives)
 
     error_ll : float
-        likelihood of erronous choice model, 
+        likelihood of erroneous choice model, 
         between [0,1]
 
     [v_val, gamma_val, s_val, tau_val] : float, optional
@@ -648,11 +649,11 @@ def make_subject_model(rts,
 
     design : dict, optional
         dict with one entry per model parameter,
-        speciying the parameter's dependency structure
+        specifying the parameter's dependency structure
         (see utils.get_design)
 
     Returns
-    ---
+    -------
     PyMC3 model instance
     """
     with pm.Model() as glam_individual:
@@ -764,9 +765,9 @@ def generate_hierarchical_model_parameters(parameter,
     """
     Generate a hierarchical-level model parameter distribution
 
-    Input
-    ---
-    parameter : string
+    Parameters
+    ----------
+    parameter : str
         one of ['v', 'gamma', 's', 'tau']
 
     n_subjects : int
@@ -775,7 +776,7 @@ def generate_hierarchical_model_parameters(parameter,
 
     design : dict
         dict with one entry per model parameter,
-        speciying the parameter's dependency structure
+        specifying the parameter's dependency structure
         (see utils.get_design)
 
     [mu_mean, mu_sd] : float
@@ -796,7 +797,7 @@ def generate_hierarchical_model_parameters(parameter,
 
     val : float
         if specified, parameter is deterministically set 
-        to this value for all subejcts 
+        to this value for all subjects 
 
     offset : bool, optional
         if True, subject-level parameters are modeled as 
@@ -804,11 +805,11 @@ def generate_hierarchical_model_parameters(parameter,
         if False, subject-level parameters are modeled as
         distributed around the group mean,
         defaults to True
-        For furtehr details, see: 
+        For further details, see: 
         https://twiecki.io/blog/2017/02/08/bayesian-hierchical-non-centered/
 
     Returns
-    ---
+    -------
     PyMC3 parameter variable
     """
 
@@ -946,8 +947,8 @@ def make_hierarchical_model(rts,
     """
     Create hierarchical PyMC3 model
 
-    Input
-    ---
+    Parameters
+    ----------
     rts : array_like, int or float
         response times in seconds per trial
 
@@ -964,7 +965,7 @@ def make_hierarchical_model(rts,
         shape: (trials x alternatives)
 
     error_ll : array_like, floats
-        likelihood of erronous choice model
+        likelihood of erroneous choice model
         for each subject, between [0,1]
 
     subject_idx : array_like, int
@@ -1003,7 +1004,7 @@ def make_hierarchical_model(rts,
 
     design : dict, optional
         dict with one entry per model parameter,
-        speciying the parameter's dependency structure
+        specifying the parameter's dependency structure
         (see utils.get_design)
 
     offset : bool, optional
@@ -1012,7 +1013,7 @@ def make_hierarchical_model(rts,
         if False, subject-level parameters are modeled as
         distributed around the group mean,
         defaults to True
-        For furtehr details, see: 
+        For further details, see: 
         https://twiecki.io/blog/2017/02/08/bayesian-hierchical-non-centered/
 
     f : int, optional
@@ -1023,11 +1024,11 @@ def make_hierarchical_model(rts,
 
     design : dict, optional
         dict with one entry per model parameter,
-        speciying the parameter's dependency structure
+        specifying the parameter's dependency structure
         (see utils.get_design)
 
     Returns
-    ---
+    -------
     PyMC3 model instance
     """
 
