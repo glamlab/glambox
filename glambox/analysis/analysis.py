@@ -15,18 +15,31 @@ def aggregate_subject_level_data(data, n_items):
     of all positive and negative relative gaze values
     (see manuscript)
 
-    Input
-    ---
-    df : dataframe
-        aggregate response data
+    Parameters
+    ----------
+    data : pandas.DataFrame
+        DataFrame containing the experimental data.  
+        Each row corresponds to one trial.  
+        Must include the following columns:  
 
+        - `subject` (int, consecutive, starting with 0)
+        - `trial` (int, starting with 0)
+        - `choice` (int, items should be 0, 1, ..., N)
+        - `rt` (float, in seconds) 
+        - additional variables coding groups or conditions (str or int)
+        
+        For each item `i` in the choice set:  
+
+        - `item_value_i`: The item value (float, best on a scale between 1 and 10)
+        - `gaze_i`: The fraction of total trial time the item was looked at in the trial (float, between 0 and 1)
+    
     n_items : int
         number of choice alternatives in the data
 
     Returns
-    ---
-    df : dataframe
-        df of subject-level response characteristics
+    -------
+    pandas.DataFrame
+        DataFrame of subject-level response characteristics.
     """
     data = data.copy()
 
@@ -43,8 +56,6 @@ def aggregate_subject_level_data(data, n_items):
     subject_summary['gaze_influence'] = compute_gaze_influence_score(
         data, n_items=n_items)
 
-    # subject_summary['dataset'] = data.groupby('subject')['dataset'].head(1).values
-
     return subject_summary
 
 
@@ -59,18 +70,31 @@ def aggregate_group_level_data(data, n_items):
     of all positive and negative relative gaze values
     (see manuscript)
 
-    Input
-    ---
-    df : dataframe
-        aggregate response data
+    Parameters
+    ----------
+    data : pandas.DataFrame
+        DataFrame containing the experimental data.  
+        Each row corresponds to one trial.  
+        Must include the following columns:  
+
+        - `subject` (int, consecutive, starting with 0)
+        - `trial` (int, starting with 0)
+        - `choice` (int, items should be 0, 1, ..., N)
+        - `rt` (float, in seconds) 
+        - additional variables coding groups or conditions (str or int)
+        
+        For each item `i` in the choice set:  
+
+        - `item_value_i`: The item value (float, best on a scale between 1 and 10)
+        - `gaze_i`: The fraction of total trial time the item was looked at in the trial (float, between 0 and 1)
 
     n_items : int
         number of choice alternatives in the data
 
     Returns
-    ---
-    df : dataframe
-        df of group-level response characteristics
+    -------
+    pandas.DataFrame
+        DataFrame of group-level response characteristics
     """
     subject_summary = aggregate_subject_level_data(data, n_items)
     group_summary = subject_summary.agg({
@@ -85,19 +109,31 @@ def aggregate_group_level_data(data, n_items):
 
 
 
-def compare_parameters(model, parameters, comparisons=None, **kwargs):
-    """Perform comparisons between parameters and return statistics as DataFrame
+def compare_parameters(model,
+                       parameters=['v', 's', 'gamma', 'tau'],
+                       comparisons=None, **kwargs):
+    """
+    Perform comparisons between parameters and return statistics as DataFrame
     
-    Args:
-        model ([type]): [description]
-        parameters ([type]): [description]
-        comparisons ([type], optional): [description]. Defaults to None.
+    Parameters
+    ----------
+    model : glambox.GLAM
+        Fitted glambox.GLAM instance
     
-    Raises:
-        ValueError: [description]
+    parameters : list of str, optional
+        List of parameters to perform comparisons on.
+        Defaults to all model parameters.
     
-    Returns:
-        pandas.DataFrame: Distribution statistics of parameter differences.
+    comparisons : list of tuples, optional
+        List of comparisons between groups or conditions.
+        Each comparison must be given as a tuple
+        (e.g., [('A', 'B'), ('A', 'C')])
+        Defaults to None.
+    
+    Returns
+    -------
+    pandas.DataFrame
+        Distribution statistics of parameter differences.
     """
     if model.type == 'individual':
         comparison_df = compare_parameters_individual(
@@ -112,14 +148,21 @@ def compare_parameters(model, parameters, comparisons=None, **kwargs):
 
 
 def compare_models(models, **kwargs):
-    """Compares multiple models.
+    """
+    Compares multiple fitted models.
     
-    Args:
-        models (list): List of fitted GLAM model instances.
-        **kwargs (optionsl): Additional keyword arguments to be passed to pymc3.compare
+    Parameters
+    ----------
+    models : list of glambox.GLAM
+        List of fitted GLAM model instances.
     
-    Returns:
-        pandas.DataFrame containing information criteria for each model.
+    **kwargs : optional
+        Additional keyword arguments to be passed to pymc3.compare
+    
+    Returns
+    -------
+    pandas.DataFrame
+        DataFrame containing information criteria for each model.
     """
 
     # Check that more than one model is entered
