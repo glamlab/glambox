@@ -213,7 +213,7 @@ class GLAM(object):
             return
 
     def make_model(self,
-                   kind,
+                   kind='individual',
                    depends_on=dict(v=None,
                                    gamma=None,
                                    s=None,
@@ -224,11 +224,11 @@ class GLAM(object):
         """
         Create GLAM PyMC3 model
 
-        Input
-        ---
-        kind : string
+        Parameters
+        ----------
+        kind : str, optional
             should be one of ['individual', 'hierarchical', 'pooled'],
-            defaults to 'hierarchical'
+            defaults to 'individual'
 
         depends_on : dict, optional
             dictionary specifying for each GLAM model parameter
@@ -247,9 +247,10 @@ class GLAM(object):
             in depends_on
 
         Returns
-        ---
-        Adds PyMC3 model, depends_on, within_dependent and design
-        to GLAM model object
+        -------
+        None
+            Adds PyMC3 model, depends_on, within_dependent and design 
+            to GLAM model object
         """
         self.type = kind
         self.depends_on = depends_on
