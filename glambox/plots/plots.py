@@ -21,18 +21,18 @@ def plot_behaviour_aggregate(bar_data,
     """
     Create a group-level aggregate plot with 
     the following four metrics:
-    A) RT ~ (max value - mean value othres)
-    B) P(choose best) ~ (item value - mean value others)
-    C) P(choose best) ~ (item gaze - mean gaze others)
-    D) Corrected P(choose best) ~ (item gaze - mean gaze others)
+    A) RT ~ (max value - max value others)
+    B) P(choose best) ~ (item value - max value others)
+    C) P(choose best) ~ (item gaze - max gaze others)
+    D) Corrected P(choose best) ~ (item gaze - max gaze others)
     For further details on these measures, see the manuscript
 
-    Input
-    ---
-    bar_data : dataframe
+    Parameters
+    ----------
+    bar_data : pandas.DataFrame
         response data to plot as bars
 
-    line_data : list of dataframes, optional
+    line_data : list of pandas.DataFrames, optional
         response data to plot as colored lines
 
     line_labels : array_like, strings, optional
@@ -59,8 +59,9 @@ def plot_behaviour_aggregate(bar_data,
         the respective metrics
 
     Returns
-    ---
-    matplotlib figure and axes object
+    -------
+    Tuple
+        matplotlib figure and axes object
     """
     fig, axs = plt.subplots(1, 4, figsize=cm2inch(18, 4.5), dpi=330)
 
@@ -144,9 +145,9 @@ def plot_behaviour_associations(data,
     For further details on these measures,
     see the manuscript
 
-    Input
-    ---
-    data : dataframe
+    Parameters
+    ----------
+    data : pandas.DataFrame
         response data
 
     nbins : int, optional
@@ -178,8 +179,9 @@ def plot_behaviour_associations(data,
         the respective metrics
 
     Returns
-    ---
-    matplotlib figure object
+    -------
+    Tuple
+        matplotlib figure object, axs
 
     """
 
@@ -363,12 +365,12 @@ def plot_individual_fit(observed,
     For details on these measures, 
     see the manuscript
 
-    Input
-    ---
-    observed : dataframe
+    Parameters
+    ----------
+    observed : pandas.DataFrame
         observed response data
 
-    predictions : list of dataframe
+    predictions : list of pandas.DataFrame
         predicted response datasets
 
     prediction_labels : array_like, strings, optional
@@ -395,7 +397,8 @@ def plot_individual_fit(observed,
 
     Returns
     ---
-    matplotlib figure object
+    Tuple
+        matplotlib figure object, axs
     """
 
     # count number of predictions
@@ -580,19 +583,29 @@ def plot_individual_fit(observed,
     return fig, axs
 
 
-def compare_parameters(model, parameters, comparisons=None, **kwargs):
-    """[summary]
+def compare_parameters(model,
+                       parameters=['v', 's', 'gamma', 'tau'],
+                       comparisons=None, **kwargs):
+    """Plot posterior distributions of parameters
+    and differences between groups or conditions.
     
-    Args:
-        model ([type]): [description]
-        parameters ([type]): [description]
-        comparisons ([type], optional): [description]. Defaults to None.
+    Parameters
+    ----------
+    model : glambox.GLAM instance
+        A fitted GLAM instance.
+    parameters : list of str, optional
+        A list of parameters to be plotted. 
+        Defaults to all model parameters.
+    comparisons : List of tuples, optional
+        List of pairwise comparisons between groups
+        or conditions to be plotted. Each comparison
+        must be given as a tuple of two conditions
+        (e.g., [('A', 'B'), ('A', 'C')])
     
-    Raises:
-        ValueError: [description]
-    
-    Returns:
-        [type]: [description]
+    Returns
+    -------
+    Tuple
+        matplotlib figure object, axs
     """
     if model.type == 'individual':
         fig, axs = compare_parameters_individual(
@@ -612,8 +625,8 @@ def traceplot(trace, varnames='all', combine_chains=False,
     This is tested for traces that come out of individual
     and hierarchical GLAM fits.
 
-    Input
-    ---
+    Parameters
+    ----------
     trace : PyMC.MultiTrace)
         a trace object.
     
@@ -627,7 +640,8 @@ def traceplot(trace, varnames='all', combine_chains=False,
         reference values per parameter.
 
     Returns
-    ---
+    -------
+    Tuple
         matplotlib figure and axes objects
     """
     if varnames == 'all':
