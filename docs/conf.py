@@ -4,6 +4,15 @@
 # list see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
+# Try to fix missing autodoc on RTD
+# https://stackoverflow.com/a/41078541
+import mock
+
+MOCK_MODULES = ['numpy', 'pandas', 'statsmodels', 'matplotlib', 'matplotlib.pyplot',
+                'seaborn', 'pymc3', 'theano']
+for mod_name in MOCK_MODULES:
+    sys.modules[mod_name] = mock.Mock()
+
 # -- Path setup --------------------------------------------------------------
 
 # If extensions (or modules to document with autodoc) are in another directory,
