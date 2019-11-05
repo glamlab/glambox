@@ -16,7 +16,7 @@ GLAMbox is written for Python 3.7. It further requires the following packages to
 
    Home <self>
    quickstart
-   GLAMbox functions <glambox>
+   API Reference <glambox>
    license
 
 

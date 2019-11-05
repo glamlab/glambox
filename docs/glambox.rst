@@ -1,4 +1,4 @@
-glambox package
+API Reference
 ===============
 
 The GLAM class
