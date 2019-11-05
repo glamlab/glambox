@@ -16,7 +16,9 @@ GLAMbox is written for Python 3.7. It further requires the following packages to
 
    Home <self>
    quickstart
+   GLAMbox functions <glambox>
    license
+
 
 .. toctree::
    :maxdepth: 2
@@ -30,4 +32,5 @@ Indices and tables
 ==================
 
 * :ref:`genindex`
+* :ref:`modindex`
 * :ref:`search`
