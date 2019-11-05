@@ -22,15 +22,12 @@ GLAMbox is written for Python 3.7. It further requires the following packages to
    :maxdepth: 2
    :caption: Examples
 
-   examples/example1
-   examples/example2
-   examples/example3
-
-.. automodule:: glambox
+   examples/Example_1_Individual_estimation
+   examples/Example_2_Hierarchical_estimation
+   examples/Example_3_Parameter_recovery
 
 Indices and tables
 ==================
 
 * :ref:`genindex`
-* :ref:`modindex`
 * :ref:`search`
