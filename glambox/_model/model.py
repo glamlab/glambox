@@ -9,7 +9,6 @@ from .utils import get_design, get_estimates, format_data
 from .fit import fit_models
 from .components import *
 
-
 class GLAM(object):
     """GLAM model instance that includes data, pymc3.model.Model instance,
     trace, parameter estimates, fit indices and predictions.
@@ -17,22 +16,24 @@ class GLAM(object):
     Parameters
     ----------
     data : pandas.DataFrame
-        DataFrame containing the experimental data. 
-        Each row corresponds to one trial. Must include the following columns:
+        DataFrame containing the experimental data.  
+        Each row corresponds to one trial.  
+        Must include the following columns:  
+
         - `subject` (int, consecutive, starting with 0)
         - `trial` (int, starting with 0)
         - `choice` (int, items should be 0, 1, ..., N)
         - `rt` (float, in seconds) 
-        - for each item $i$ in the choice set:
-            - `item_value_i`: The item value (float, best on a scale between 1 and 10)
-            - `gaze_i`: The fraction of total trial time the item was looked at
-                        in the trial (float, between 0 and 1)
         - additional variables coding groups or conditions (str or int)
+        
+        For each item `i` in the choice set:  
+
+        - `item_value_i`: The item value (float, best on a scale between 1 and 10)
+        - `gaze_i`: The fraction of total trial time the item was looked at in the trial (float, between 0 and 1)
     
     name : str
         A name for the model. Useful if multiple models are fitted and compared.
     """
-
     def __init__(self, data=None, name=None):
         self.data = data
         if self.data is not None:
