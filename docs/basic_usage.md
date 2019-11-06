@@ -1,4 +1,4 @@
-# Quickstart Guide
+# Basic Usage
 
 ## Data format, the `GLAM` class
 
