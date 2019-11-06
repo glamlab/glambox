@@ -1,6 +1,7 @@
 #!/usr/bin/python
 import numpy as np
 import pandas as pd
+import pymc3 as pm
 from ._analysis_internal import *
 
 
