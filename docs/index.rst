@@ -64,7 +64,7 @@ In this example, we demonstrate individual model fitting, model comparisons betw
 In the second example, we demonstrate how to setup a hierarchical model with multiple groups, and compare parameter estimates between groups.
 
 
-:doc:`Example 3: Paraeter Recovery <examples/Example_3_Parameter_recovery>`
+:doc:`Example 3: Parameter Recovery <examples/Example_3_Parameter_recovery>`
 ----------------------------------------------------------------------------
 In the last example, we demonstrate how to perform a basic parameter recovery analyis for a given dataset, using GLAMbox.
 
@@ -92,5 +92,4 @@ Indices and tables
 ==================
 
 * :ref:`genindex`
-* :ref:`modindex`
 * :ref:`search`
