@@ -20,7 +20,7 @@ sys.path.insert(0, os.path.abspath('..'))
 import mock
 
 MOCK_MODULES = [
-    'numpy', 'pandas',
+    # 'numpy', 'pandas',
     'statsmodels', 'statsmodels.api', 'statsmodels.stats', 'statsmodels.stats.outliers_influence',
     'matplotlib', 'matplotlib.pyplot', 'seaborn',
     'theano', 'theano.tensor', 
