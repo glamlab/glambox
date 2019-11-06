@@ -19,7 +19,13 @@ sys.path.insert(0, os.path.abspath('..'))
 # https://stackoverflow.com/a/41078541
 import mock
 
-MOCK_MODULES = ['numpy', 'pandas', 'statsmodels', 'statsmodels.api', 'statsmodels.stats', 'matplotlib', 'matplotlib.pyplot', 'seaborn', 'theano', 'theano.tensor', 'pymc3', 'pymc3.stats']
+MOCK_MODULES = [
+    'numpy', 'pandas',
+    'statsmodels', 'statsmodels.api', 'statsmodels.stats', 'statsmodels.stats.outliers_influence',
+    'matplotlib', 'matplotlib.pyplot', 'seaborn',
+    'theano', 'theano.tensor', 
+    'pymc3', 'pymc3.stats'
+    ]
 
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = mock.Mock()
