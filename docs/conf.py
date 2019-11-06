@@ -17,12 +17,12 @@ sys.path.insert(0, os.path.abspath('..'))
 
 # Try to fix missing autodoc on RTD
 # https://stackoverflow.com/a/41078541
-# import mock
+import mock
 
-# MOCK_MODULES = ['numpy', 'pandas', 'statsmodels', 'matplotlib', 'matplotlib.pyplot',
-#                 'seaborn', 'theano', 'theano.tensor']
-# for mod_name in MOCK_MODULES:
-#     sys.modules[mod_name] = mock.Mock()
+MOCK_MODULES = ['numpy', 'pandas', 'statsmodels', 'statsmodels.api', 'matplotlib', 'matplotlib.pyplot', 'seaborn', 'theano', 'theano.tensor', 'pymc3']
+
+for mod_name in MOCK_MODULES:
+    sys.modules[mod_name] = mock.Mock()
 
 # -- Project information -----------------------------------------------------
 
