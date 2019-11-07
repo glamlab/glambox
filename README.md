@@ -47,6 +47,22 @@ model.prediction.to_csv('prediction.csv')
 
 A more detailed overview of the available functions can be found in the [Basic usage section](#basic-usage) and the [API Reference](https://glambox.readthedocs.io/en/latest/glambox.html).
 
+## Application Examples
+
+This repository includes Jupyter notebooks with full code for three usage examples outlined in the [BioRxiv preprint](https://www.biorxiv.org/content/10.1101/741678v1). The notebook files for these examples can be found in the `examples` folder of this repository. They can be downloaded and run interactively with [Jupyter](https://www.jupyter.org) (also included in the Anaconda Python distribution). Fully rendered (non-interactive) html versions can be found on the [documentation page](https://glambox.readthedocs.io).
+
+### Example 1: Individual gaze biases
+
+In this example, we demonstrate individual model fitting, model comparisons between model variants, and out-of-sample prediction. ([Jupyter](https://github.com/glamlab/glambox/blob/master/Example_1_Individual_estimation.ipynb), [html](https://glambox.readthedocs.io/en/latest/examples/Example_1_Individual_estimation.html))
+
+### Example 2: Hierarchical parameter estimation
+
+In the second example, we demonstrate how to setup a hierarchical model with multiple groups, and compare parameter estimates between groups. ([Jupyter](https://github.com/glamlab/glambox/blob/master/Example_2_Hierarchical_estimation.ipynb), [html](https://glambox.readthedocs.io/en/latest/examples/Example_2_Hierarchical_estimation.html))
+
+### Example 3: Parameter Recovery
+
+In the last example, we demonstrate how to perform a basic parameter recovery analyis for a given dataset, using GLAMbox. ([Jupyter](https://github.com/glamlab/glambox/blob/master/Example_3_Parameter_recovery.ipynb), [html](https://glambox.readthedocs.io/en/latest/examples/Example_3_Parameter_recovery.html))
+
 ## Basic usage
 
 ### Data format, the `GLAM` class
@@ -82,7 +98,7 @@ Next, the respective PyMC3 model, which will later be used to estimate the model
 model.make_model(kind='individual',
                  depends_on=dict(v='speed'),
                  gamma_val=1)
-````
+```
 
 ### Inference
 

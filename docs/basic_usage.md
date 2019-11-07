@@ -33,9 +33,9 @@ Next, the respective PyMC3 model, which will later be used to estimate the model
 model.make_model(kind='individual',
                  depends_on=dict(v='speed'),
                  gamma_val=1)
-````
+```
 
-### Inference
+## Inference
 
 Once the PyMC3 model is built, parameters can be estimated using the `fit` method:
 
