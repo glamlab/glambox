@@ -45,7 +45,7 @@ model.predict()
 model.prediction.to_csv('prediction.csv')
 ```
 
-A more detailed overview of the available functions can be found in the [Basic usage section](## Basic usage) and the [API Reference](https://glambox.readthedocs.io/en/latest/glambox.html).
+A more detailed overview of the available functions can be found in the [Basic usage section](#Basic usage) and the [API Reference](https://glambox.readthedocs.io/en/latest/glambox.html).
 
 ## Basic usage
 
