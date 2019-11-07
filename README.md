@@ -4,7 +4,7 @@ GLAMbox is a Python toolbox for investigating the association between gaze alloc
 
 See the [BioRxiv preprint](https://www.biorxiv.org/content/10.1101/741678v1) for detailed background, model description and example applications.
 
-A full documentation page of the toolbox is available at [https://glambox.readthedocs](https://glambox.readthedocs.io).
+A full documentation page of the toolbox is available at [https://glambox.readthedocs.io](https://glambox.readthedocs.io).
 
 ## Installation
 
