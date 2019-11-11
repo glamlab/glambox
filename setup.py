@@ -39,7 +39,7 @@ setup(
     download_url="https://github.com/glamlab/glambox/archive/%s.tar.gz" % __version__,
     install_requires=get_requirements(),
     maintainer="Felix Molter <felixmolter@gmail.com>, Armin W. Thomas <athms.research@gmail.com>",
-    maintainer_email="glambox.berlin@gmail.com",
+    maintainer_email="glamlab.berlin@gmail.com",
     packages=find_packages(exclude=["tests", "test_*"]),
     tests_require=tests_require,
     license="MIT",
