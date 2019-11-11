@@ -17,6 +17,13 @@ With the Python environment fully set up, the GLAMbox module can be installed fr
 
 This command also installs all of GLAMbox's dependencies, which are listed in the :code:`requirements.txt` file in the `Github repository <https://www.github.com/glamlab/glambox>`_.
 
+.. tip::
+
+    Using ``conda`` you can install ``glambox`` into a new environment, separate from your base environment:
+    
+    1. Create a new environment named glambox: ``conda create -n glambox anaconda``
+    2. Activate it: ``conda activate glambox``
+    3. Install the ``glambox`` module and its dependencies: ``pip install glambox``
 
 Quickstart
 ^^^^^^^^^^
