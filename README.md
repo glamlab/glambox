@@ -1,12 +1,67 @@
 # GLAMbox
 
-GLAMbox is a Python toolbox for investigating the association between gaze allocation and decision behaviour, and applying the Gaze-weighted Linear Accumulator Model ([Thomas, Molter et al., 2019](https://www.nature.com/articles/s41562-019-0584-8)).
+GLAMbox is a Python toolbox for investigating the association between gaze allocation and decision behaviour, and applying the Gaze-weighted Linear Accumulator Model ([Thomas, Molter et al., 2019](https://www.nature.com/articles/s41562-019-0584-8), [full text available online](https://www.nature.com/articles/s41562-019-0584-8.epdf?author_access_token=xeQN3rCxVzEjDW1KIzHcQtRgN0jAjWel9jnR3ZoTv0Pkem38lvjffFaw7PdV4X2RsPW5yjioXGDc2z-KxEoWWx_Onqu7nmdR2xmxV4sWJOfWwlsBoqzj9rGEA70bYbJZyqrAIz51der3mHG62s1Ltg%3D%3D)).
 
 See the [BioRxiv preprint](https://www.biorxiv.org/content/10.1101/741678v1) for detailed background, model description and example applications.
 
-## Dependencies
+A full documentation page of the toolbox is available at [https://glambox.readthedocs.io](https://glambox.readthedocs.io).
 
-GLAMbox is written for Python 3.7. It further requires the following packages to be installed: numpy, scipy, pandas, statsmodels, pymc3, theano, matplotlib, seaborn.
+## Installation
+
+GLAMbox is written for Python 3.7 and requires a working Python environment running on your computer. We recommend to install the [Anaconda Distribution](https://www.anaconda.com/distribution/) (available for all major platforms).
+With the Python environment fully set up, the GLAMbox module can be installed from the command line using pip:
+
+```bash
+pip install glambox
+```
+
+This command also installs all of GLAMbox's dependencies, which are listed in the `requirements.txt`.
+
+## Quickstart
+
+Fitting the GLAM to a dataset can be done in just a few lines of code:
+
+```py
+import glambox as gb
+import pandas as pd
+
+# load dataset (format must be GLAMbox compatible, of course)
+data = pd.read_csv('data.csv')
+
+# create the GLAM model object
+model = gb.GLAM(data)
+
+# build the PyMC3 model
+model.make_model(kind='individual')
+
+# perform MCMC sampling
+model.fit()
+
+# inspect parameter estimates
+print(model.estimates)
+
+# predict data using MAP estimates, save predictions
+model.predict()
+model.prediction.to_csv('prediction.csv')
+```
+
+A more detailed overview of the available functions can be found in the [Basic usage section](#basic-usage) and the [API Reference](https://glambox.readthedocs.io/en/latest/glambox.html).
+
+## Application Examples
+
+This repository includes Jupyter notebooks with full code for three usage examples outlined in the [BioRxiv preprint](https://www.biorxiv.org/content/10.1101/741678v1). The notebook files for these examples can be found in the `examples` folder of this repository. They can be downloaded and run interactively with [Jupyter](https://www.jupyter.org) (also included in the Anaconda Python distribution). Fully rendered (non-interactive) html versions can be found on the [documentation page](https://glambox.readthedocs.io).
+
+### Example 1: Individual gaze biases
+
+In this example, we demonstrate individual model fitting, model comparisons between model variants, and out-of-sample prediction. ([Jupyter](https://github.com/glamlab/glambox/blob/master/Example_1_Individual_estimation.ipynb), [html](https://glambox.readthedocs.io/en/latest/examples/Example_1_Individual_estimation.html))
+
+### Example 2: Hierarchical parameter estimation
+
+In the second example, we demonstrate how to setup a hierarchical model with multiple groups, and compare parameter estimates between groups. ([Jupyter](https://github.com/glamlab/glambox/blob/master/Example_2_Hierarchical_estimation.ipynb), [html](https://glambox.readthedocs.io/en/latest/examples/Example_2_Hierarchical_estimation.html))
+
+### Example 3: Parameter Recovery
+
+In the last example, we demonstrate how to perform a basic parameter recovery analyis for a given dataset, using GLAMbox. ([Jupyter](https://github.com/glamlab/glambox/blob/master/Example_3_Parameter_recovery.ipynb), [html](https://glambox.readthedocs.io/en/latest/examples/Example_3_Parameter_recovery.html))
 
 ## Basic usage
 
@@ -43,7 +98,7 @@ Next, the respective PyMC3 model, which will later be used to estimate the model
 model.make_model(kind='individual',
                  depends_on=dict(v='speed'),
                  gamma_val=1)
-````
+```
 
 ### Inference
 
@@ -60,6 +115,27 @@ The `fit` method defaults to Metropolis Hastings Markov-Chain-Monte-Carlo (MCMC)
 ### Accessing parameter estimates
 
 After parameter estimation is completed, the resulting estimates can be accessed with the `estimates` attribute of the GLAM model instance. This returns a table with one row for each set of parameter estimates for each individual and condition in the data. For each parameter, a maximum a posteriori (MAP) estimate is given, in addition to the 95\% Highest-Posterior Density Interval (HPD). If the parameters were estimated hierarchically, the table also contains estimates of the group-level parameters. 
+
+
+
+### Comparing parameters between groups or conditions
+
+Parameter estimates can be compared between different experimental groups or conditions (specified with the `depends_on` keyword when calling `make_model`) using the `compare_parameters` function from the `analysis` module. It takes as input the fitted GLAM instance, a list of parameters (`'v'`, `'s'`, `'gamma'`, `'tau'`), and a list of pairwise comparisons between groups or conditions. The comparison argument expects a list of tuples (e.g., `[('group1', 'group2'), ('group1', 'group3')]`). For example, given a fitted model instance (here `glam`) a comparison of the $\gamma$ parameter between two groups (`group1` and `group2`) can be computed as: 
+
+```py
+from gb.analysis import compare_parameters
+comparison = compare_parameters(model=glam, 
+                                parameters=['gamma'],
+                                comparisons=[('group1', 'group2')])
+```
+
+The function then returns a table with one row per specified comparison, and columns containing the mean posterior difference, percentage of the posterior above zero, and corresponding 95\% HPD interval. If supplied with a hierarchical model, the function computes differences between group-level parameters. If an individual type model is given, it returns comparison statistics for each individual.
+
+Comparisons can  be visualized using the `compare_parameters` function from the `plots` module. It takes the same input as its analogue in the `analysis` module. It plots posterior distributions of parameters and the posterior distributions of any differences specified using the `comparisons` argument. For a usage example and plot see [usage example 2](https://glambox.readthedocs.io/en/latest/examples/Example_2_Hierarchical_estimation.html) in the full documentation.
+
+### Comparing model variants
+
+Model comparisons between multiple GLAM variants (e.g., full and restricted variants) can be performed using the `compare_models` function, which wraps the function of the same name from the PyMC3 library. The `compare_models` function takes as input a list of fitted model instances that are to be compared. Additional keyword arguments can be given and are passed on to the underlying PyMC3 `compare` function. This allows the user, for example, to specify the information criterion used for the comparison via the `ic` argument (`'WAIC'` or `'LOO'` for Leave-One-Out cross validation). It returns a table containing an estimate of the specified information criterion, standard errors, difference to the best-fitting model, standard error of the difference, and other output variables from PyMC3 for each inputted model (and subject, if individually estimated models were given). We refer the reader to [usage example 1](https://glambox.readthedocs.io/en/latest/examples/Example_1_Individual_estimation.html) in the full documentation for the full code and exemplary output from the `compare_models` function.
 
 ### Predicting choices and response times
 
