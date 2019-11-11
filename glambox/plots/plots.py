@@ -128,19 +128,24 @@ def plot_behaviour_associations(data,
                                     'gaze_influence': (None, None)
                                 }):
     """
-    Plot individual differences on
-    the following three panels:
-    D) p(choose best) ~ response time
-    E) gaze influence score ~ response time
-    F) gaze influence score ~ p(choose best)
+    Visualize the association of inviduals'
+    - Response time
+    - Probability of choosing the
+      highest-valued item P(choose best)
+    - Behavioural induflence of gaze allocation
+      on choice probability (gaze influence)
 
-    In addition to each correlation plot,
-    distributions of the three underlying 
-    behavioural measures are given in
-    panels A-C:
+    Panels A-C:
+    Distribution of individuals'
     A) Response time
     B) P(choose best)
     C) Gaze influence score
+
+    Panels D-F:
+    Plot the association of:
+    D) p(choose best) ~ response time
+    E) gaze influence score ~ response time
+    F) gaze influence score ~ p(choose best)
 
     For further details on these measures,
     see the manuscript
@@ -215,16 +220,16 @@ def plot_behaviour_associations(data,
         rt_tickstep = 1.5
     else:
         rt_tickstep = 0.75
-    rt_ticks = np.arange(rt_range[0], rt_range[1] + rt_tickstep,
-                         rt_tickstep)
+    rt_ticks = np.round(np.arange(rt_range[0], rt_range[1] + rt_tickstep,
+                                  rt_tickstep), 1)
 
     best_chosen_range = extract_range(subject_summary['best_chosen']['mean'],
                                       bound=limits['p_choose_best'])
-    best_chosen_ticks = np.arange(0, 1.1, 0.2)
+    best_chosen_ticks = np.round(np.arange(0, 1.1, 0.2), 1)
 
     gaze_influence_range = extract_range(subject_summary['gaze_influence'],
                                          bound=limits['gaze_influence'])
-    gaze_influence_ticks = np.arange(-1, 1.1, 0.2)
+    gaze_influence_ticks = np.round(np.arange(-1, 1.1, 0.2), 1)
 
     # Scatter plots
     plot_correlation(subject_summary['best_chosen']['mean'],
@@ -287,22 +292,22 @@ def plot_behaviour_associations(data,
     # Marginal histograms
     ax00.hist(subject_summary['rt']['mean'],
               bins=np.linspace(rt_range[0], rt_range[1], nbins + 1),
-              color='C0')
+              color='k')
 
     ax01.hist(subject_summary['best_chosen']['mean'],
               bins=np.linspace(best_chosen_range[0], best_chosen_range[1],
                                nbins + 1),
-              color='C0')
+              color='k')
 
     ax02.hist(subject_summary['gaze_influence'],
               bins=np.linspace(gaze_influence_range[0],
                                gaze_influence_range[1], nbins + 1),
-              color='C0')
+              color='k')
 
     hist_lim = np.max(
-        [ax00.get_ylim()[1],
-         ax01.get_ylim()[1],
-         ax02.get_ylim()[1]]).astype(np.int) + 1
+       [ax00.get_ylim()[1],
+        ax01.get_ylim()[1],
+        ax02.get_ylim()[1]]).astype(np.int) + 1
 
     # Labels
     for label, ax in zip(list('ABC'), [ax00, ax01, ax02]):
@@ -328,7 +333,7 @@ def plot_behaviour_associations(data,
                                                  ['Mean RT (s)', 'P(choose best)', 'Gaze influence\non P(choice | value)'],
                                                  [rt_range, best_chosen_range, gaze_influence_range]) :
         ax.set_xticks(ax_xticks)
-        ax.set_xticklabels(ax_xticks)
+        ax.set_xticklabels(ax_xticks, fontsize=fontsize)
         ax.set_xlim(ax_xlim)
         ax.set_ylim([0, hist_lim])
         ax.set_yticks([0, hist_lim])
@@ -339,9 +344,9 @@ def plot_behaviour_associations(data,
     for ax in [ax00, ax01, ax02, ax10, ax11, ax12]:
         sns.despine(ax=ax)
 
-    #fig.tight_layout()
+    fig.tight_layout()
 
-    return fig#, [ax00, ax01, ax02, ax10, ax11, ax12]
+    return fig, [ax00, ax01, ax02, ax10, ax11, ax12]
 
 
 def plot_individual_fit(observed,
