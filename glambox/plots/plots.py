@@ -1,10 +1,14 @@
 #!/usr/bin/python
+from string import ascii_uppercase
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 import seaborn as sns
-from ._plots_internal import *
+
 from glambox.analysis import aggregate_subject_level_data
+
+from ._plots_internal import *
 
 
 def plot_behaviour_aggregate(bar_data,
@@ -408,6 +412,12 @@ def plot_individual_fit(observed,
 
     # count number of predictions
     n_predictions = len(predictions)
+
+    # define colors for predictions
+    if colors is None:
+        colors = ['C{}'.format(i) for i in range(n_predictions)]
+    else:
+        assert len(colors) == n_predictions, "Number of predictions does not match number of colors given."
     # define prediction labels
     if prediction_labels is None:
         prediction_labels = [
@@ -459,13 +469,13 @@ def plot_individual_fit(observed,
                           prediction_subject_summary['rt']['mean'],
                           marker='o',
                           color='none',
-                          edgecolor='C0',
+                          edgecolor=colors[m],
                           linewidth=0.5,
                           s=30)
         axs[m, 0].scatter(observed_subject_summary['rt']['mean'],
                           prediction_subject_summary['rt']['mean'],
                           marker='o',
-                          color='C0',
+                          color=colors[m],
                           alpha=0.5,
                           linewidth=0,
                           s=30)
@@ -475,13 +485,13 @@ def plot_individual_fit(observed,
                           prediction_subject_summary['best_chosen']['mean'],
                           marker='o',
                           color='none',
-                          edgecolor='C0',
+                          edgecolor=colors[m],
                           linewidth=0.5,
                           s=30)
         axs[m, 1].scatter(observed_subject_summary['best_chosen']['mean'],
                           prediction_subject_summary['best_chosen']['mean'],
                           marker='o',
-                          color='C0',
+                          color=colors[m],
                           alpha=0.5,
                           linewidth=0,
                           s=30)
@@ -491,13 +501,13 @@ def plot_individual_fit(observed,
                           prediction_subject_summary['gaze_influence'],
                           marker='o',
                           color='none',
-                          edgecolor='C0',
+                          edgecolor=colors[m],
                           linewidth=0.5,
                           s=30)
         axs[m, 2].scatter(observed_subject_summary['gaze_influence'],
                           prediction_subject_summary['gaze_influence'],
                           marker='o',
-                          color='C0',
+                          color=colors[m],
                           alpha=0.5,
                           linewidth=0,
                           s=30)
@@ -563,8 +573,8 @@ def plot_individual_fit(observed,
         ax.set_xlim(gaze_influence_range)
         ax.set_ylim(gaze_influence_range)
        
-    # label panels
-    for label, ax in zip(list('ABCDEF'), axs.ravel()):
+    # label panels, 
+    for label, ax in zip(ascii_uppercase, axs.ravel()):
         ax.text(-0.4,
                 1.1,
                 label,
