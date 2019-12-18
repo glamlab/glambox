@@ -2,7 +2,7 @@
 
 GLAMbox is a Python toolbox for investigating the association between gaze allocation and decision behaviour, and applying the Gaze-weighted Linear Accumulator Model ([Thomas, Molter et al., 2019](https://www.nature.com/articles/s41562-019-0584-8), [full text available online](https://www.nature.com/articles/s41562-019-0584-8.epdf?author_access_token=xeQN3rCxVzEjDW1KIzHcQtRgN0jAjWel9jnR3ZoTv0Pkem38lvjffFaw7PdV4X2RsPW5yjioXGDc2z-KxEoWWx_Onqu7nmdR2xmxV4sWJOfWwlsBoqzj9rGEA70bYbJZyqrAIz51der3mHG62s1Ltg%3D%3D)).
 
-See the [BioRxiv preprint](https://www.biorxiv.org/content/10.1101/741678v1) for detailed background, model description and example applications.
+See the [paper](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0226428) for detailed background, model description and example applications.
 
 A full documentation page of the toolbox is available at [https://glambox.readthedocs.io](https://glambox.readthedocs.io).
 
