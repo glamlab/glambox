@@ -91,9 +91,9 @@ In the last example, we demonstrate how to perform a basic parameter recovery an
    :maxdepth: 2
    :caption: Examples
 
-   examples/Example_1_Individual_estimation
-   examples/Example_2_Hierarchical_estimation
-   examples/Example_3_Parameter_recovery
+   examples/Example_1_Individual_estimation.ipynb
+   examples/Example_2_Hierarchical_estimation.ipynb
+   examples/Example_3_Parameter_recovery.ipynb
 
 Indices and tables
 ==================
