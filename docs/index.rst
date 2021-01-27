@@ -21,7 +21,7 @@ This command also installs all of GLAMbox's dependencies, which are listed in th
 
     Using ``conda`` you can install ``glambox`` into a new environment, separate from your base environment:
     
-    1. Create a new environment named glambox: ``conda create -n glambox anaconda``
+    1. Create a new environment named glambox: ``conda create -n glambox python=3.7``
     2. Activate it: ``conda activate glambox``
     3. Install the ``glambox`` module and its dependencies: ``pip install glambox``
 
